@@ -72,7 +72,9 @@ Observed details
   (Pages demo: Back, separator, items).
 - Mobile sheet DOM: `.sheet__overlay > (.sheet__backdrop.sheet__backdrop--blur, scroll container > section.sheet__content.sheet__content--left.sidebar__mobile-sheet[data-placement] > (dismiss button, section.sheet__dialog.sidebar__mobile-dialog > div.sidebar__mobile, div.sidebar__mobile-overlay-container))`.
 - Icon-only collapse removes submenus from the tree entirely (rows lose `aria-expanded`); expanding again restores
-  them with the previous expansion state and without animation.
+  them with the previous expansion state. Pro does both at once; here open submenus fold away while the panel
+  narrows and leave the tree when the 200ms width transition ends, and unfold with the panel when it expands
+  (see §5 "Icon rail animation").
 
 ---
 
@@ -128,8 +130,8 @@ calc(var(--spacing)*.5)`. On rows: `--sidebar-menu-item-offset` (0, indent × (l
 |---|---|---|
 | provider | flex, w-full, min-h-svh; `overflow-x: clip` when it contains an offcanvas wrapper | 1280×800 |
 | .sidebar | sticky top-0, flex-col, shrink-0, h-svh, width var, min-width collapsed var, bg-background, border-color var(--border), transition width (duration/ease) + box-shadow .15s ease-out | 240×800, bg `--background` |
-| collapsed (not offcanvas) | width 48px, overflow-x clip; header/footer/content px-1.5; header items-center, `> *` justify-center gap-0 w-auto p-0; header `[data-sidebar=label]` hidden | 48px |
-| icon labels | `[data-sidebar=label]` and `[data-slot=chip]` animate opacity/max-width/margin/visibility; collapsed → opacity 0, max-width 0, invisible (visibility delayed by duration) | |
+| collapsed (not offcanvas) | width 48px, overflow-x clip; content/footer padding-inline `(rail − 1rem − 5×spacing) / 2` (6px), header `rail / 2 − 4×spacing` (8px, centres a `px-1` logo row), header menus `margin-inline: 1.5×spacing − .5rem`; no re-alignment (Pro: header/footer/content px-1.5, header items-center, `> *` justify-center gap-0 w-auto p-0, header labels hidden) | 48px |
+| icon labels | `[data-sidebar=label]`, `[data-slot=chip]` and `.sidebar__menu-chip` animate opacity/max-width/margin/visibility; trigger and actions animate opacity/visibility; collapsed → opacity 0, max-width 0, invisible (visibility delayed by duration) | |
 | offcanvas | wrapper width var → 0 (floating: + 4×spacing); aside z-20, translate/visibility transition; collapsed `translate: -100%` (right: 100%), visibility hidden | |
 | mobile | `@media (width < 48rem)` hides `.sidebar` and the wrapper | |
 | --default | `box-shadow: inset -1px 0 0 var(--sidebar-edge-outline)` (right side: `1px`); rail hover/focus-visible → `var(--color-default-hover)` | |
@@ -137,14 +139,14 @@ calc(var(--spacing)*.5)`. On rows: `--sidebar-menu-item-offset` (0, indent × (l
 | --inset | transparent, no border/shadow; main becomes card: m-2 ms-0, rounded radius×2, border, bg-surface, shadow-surface, min-h calc(100svh-1rem), margin transition; collapsed → ms-2 | main 240,8,1032×784 |
 | --right | order 1 | |
 | header | flex-col gap-2 px-4 pt-4 pb-2 | h 64 (brand row 40) |
-| content | flex-col flex-1 min-h-0 gap-1 px-3 overflow-y-auto (gap-0.5 collapsed) | |
+| content | flex-col flex-1 min-h-0 gap-1 px-3 overflow-y-auto (gap-0.5 on the rail); header/content/footer padding and gap transition with the width (icon mode) | |
 | footer | flex-col gap-1 px-3 pt-2 pb-4 | |
 | separator | my-2 w-auto | |
-| group | flex-col gap-1; `+ group` mt-2 (mt-0 collapsed) | |
-| group-label | px-2 py-1.5 text-xs font-medium tracking-normal muted, ellipsis, select-none; hidden collapsed | h 28 |
+| group | flex-col gap-1; `+ group` mt-2 (mt-0 on the rail, margin transition) | |
+| group-label | px-2 py-1.5 text-xs font-medium tracking-normal muted, ellipsis, select-none; on the rail folds to height 0 / py-0 / opacity 0 with `margin-block-end: −1×spacing` (height auto ↔ 0 via `interpolate-size: allow-keywords` on `.sidebar`; Pro: `display: none`) | h 28 |
 | menu | flex-col gap-0.5 outline-none forced-color-adjust-none; `[data-focus-visible]` focus ring | gap 2 |
-| menu-section | flex-col gap-0.5; not first → mt-3 (mt-0 collapsed) | |
-| menu-header | px-2 py-1.5 text-xs font-medium tracking-wider uppercase muted; hidden collapsed | h 28, 0.6px tracking |
+| menu-section | flex-col gap-0.5; not first → mt-3 (mt-0 on the rail, margin transition) | |
+| menu-header | px-2 py-1.5 text-xs font-medium tracking-wider uppercase muted; folds like the group label on the rail | h 28, 0.6px tracking |
 | menu-item | relative flex w-full items-center text-foreground, cursor interactive, box-shadow transition .15s; disabled → status-disabled | |
 | guide lines | `::before` absolute, top/bottom −row-gap/2, left indent/2, width count×indent, repeating 1px lines; `hover` mode fades in on menu hover (.15s) | x = row x + 8 |
 | item-content | flex min-h-9 gap-3 py-1.5, **padding-inline .5rem**, rounded `calc(var(--radius)*2)`, width `100% - offset`, margin-inline-start offset; hover/current/actions-active → bg-default; focus-visible → ring | 216×36, r16; nested 200 wide at +16 |
@@ -155,7 +157,7 @@ calc(var(--spacing)*.5)`. On rows: `--sidebar-menu-item-offset` (0, indent × (l
 | trigger | size-5 flex center; hidden when row has no children | 20px |
 | actions | hidden; flex on hover / current / hovered / action focus-visible / open menu, and always in `.sidebar__mobile` | |
 | action | p-1 rounded radius, `--button-bg*` vars (default-hover), transitions; pressed scale .98 | |
-| icon rail rows | collapsed icon: content justify-center px-0; trigger/actions/label/chip/action hidden; guide lines off | 36×36 at x 6 |
+| icon rail rows | row content keeps `justify-start` and `.5rem` padding (icon box at 6 + 8 = 14px, centred); label/chip/trigger/actions fade and are clipped by the row; guide lines off (Pro: content justify-center px-0, parts `display: none`) | 36×36 at x 6 |
 | rail | absolute inset-y-0 w-4 z-10 transparent; left side right −2px (right side left −2px); cursor e-/w-resize by side/state | 226→242 |
 | main | relative flex-col flex-1 min-w-0 min-h-svh | |
 | mobile sheet | left/right sheet content: radius 0, width 80vw, max 500px; dialog full width, radius 0, overflow hidden; overlay container `display: contents`; `.sidebar__mobile` flex-col h-full | 320 wide at 400px |
@@ -172,6 +174,15 @@ inline on the aside: everything spacing-based scales (rows 29.6px; 28.8px in Mee
 
 - **Collapse**: trigger, rail click, or `mod+b`. `mod` matches Ctrl or Cmd (Meta also worked on Windows);
   other modifiers must match exactly (Ctrl+Shift+B did nothing); `preventDefault()` on match. Width transition 200ms ease.
+- **Icon rail animation** (deliberate change from Pro, requested by the user): Pro hides labels, chips, group
+  labels and submenus with `display: none` and centres the rows the moment the state flips, so the icons jump to
+  the middle of the still-wide rows and then travel back with the shrinking panel. Here nothing changes alignment:
+  every icon stays start-aligned and only drifts with the animated panel padding (20 → 14px for menu icons,
+  20 → 12px for a logo row, measured per frame in Edge: ≤ 2.5px per frame, no jumps), labels/chips/chevrons/actions
+  fade and get clipped by the narrowing rows, group labels and menu headers fold to 0, group / section margins and the
+  content gap shrink, and open submenus fold away (WAAPI, 200ms ease-in-out) before they leave the tree at the end of
+  the transition (`SidebarRailContext` phase, 200ms). Expanding plays it in reverse; restored submenus unfold over
+  200ms `ease` with the panel.
 - **Cookie**: uncontrolled toggles write `sidebar_state=<bool>` (path `/`).
 - **Tooltips (icon rail)**: OSS `.tooltip` (no arrow), placement right (left for `side="right"`), offset 3px,
   opens after the OSS `--tooltip-delay` (measured ~1510ms after pointer enter), anchored to the row; the row gets
@@ -182,9 +193,13 @@ inline on the aside: everything spacing-based scales (rows 29.6px; 28.8px in Mee
 - **Pressability**: rows with `href` or `onAction` are actionable (`data-react-aria-pressable`), parent rows
   toggle; plain rows without link/handler (and parent rows on the rail, whose submenus are removed) are not
   pressable.
-- **Demo-level details**: Complex / Agent Hub drop the header Segment and the wide "New chat" button on the rail
-  (via `useSidebar`), footer user-menu texts and chevrons carry `data-sidebar="label"`, Meeting Notes opens its
-  Command palette with Cmd/Ctrl+K.
+- **Demo-level details**: Complex / Agent Hub take the header Segment and the wide "New chat" button off the rail
+  (Pro unmounts them via `useSidebar`; the stories fold the Segment with a grid-rows wrapper and shrink "New chat"
+  with a `data-sidebar="label"` wrapper so nothing jumps), footer user-menu texts and chevrons carry
+  `data-sidebar="label"`, custom rows reach the rail position with the arbitrary variant
+  `[.sidebar[data-collapsible=icon][data-state=collapsed]_&]:…` (With Avatar drops its row padding so the 32px avatar
+  is centred; it no longer hides the name with `group-data-[state=collapsed]:hidden`, the label fade does that),
+  Meeting Notes opens its Command palette with Cmd/Ctrl+K.
 - **Submenu expand**: wrapper height 0 → auto and opacity 0 → 1, both 220ms `cubic-bezier(.16,1,.3,1)`.
   **Collapse**: height → 0 in ~200ms (ease-in-out curve), opacity 1 → 0 in 100ms `cubic-bezier(.23,1,.32,1)`;
   `aria-hidden` + `pointer-events:none` during exit, wrapper removed afterwards. Pressing a row with children
@@ -252,6 +267,9 @@ No heavy optional peers → root export.
   visually hidden RAC chevron button (screen readers, removes RAC's dev warning); the mobile dialog gets
   `aria-label="Sidebar"`; when the focused page slides away, focus moves to the new page's menu.
 - `.sidebar__menu-actions` gets `margin-inline-start: auto` in CSS instead of the `ml-auto` class seen in the demos.
+- Icon rail animation: see §5. Group labels / menu headers rely on `interpolate-size` to animate their height;
+  browsers without it snap the height but keep the fade. Offcanvas collapse no longer hides group labels, menu
+  headers and section spacing (Pro did, which shifted the content while the panel slid out).
 - `showGuideLines={false}` renders `data-guide-lines="never"`.
 - Icon Only story shows tooltips through `tooltipProps` (the docs describe tooltips; the live demo shows none).
 - Meeting Notes' command palette uses the Pro `Command` component (opaque backdrop, md dialog, input group with

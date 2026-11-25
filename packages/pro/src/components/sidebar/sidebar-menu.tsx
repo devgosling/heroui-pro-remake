@@ -41,8 +41,10 @@ import {cx} from "tailwind-variants";
 import {composeTwRenderProps, useMergedRef} from "../../utils";
 
 import {
+  SIDEBAR_RAIL_DURATION,
   SidebarMenuSettingsContext,
   SidebarMobileContext,
+  SidebarRailContext,
   prefersReducedMotion,
   useSidebarContext,
 } from "./sidebar-context";
@@ -156,11 +158,17 @@ function hasChildRows(collection: SidebarCollection, node: SidebarCollectionNode
 }
 
 interface SidebarTreeMotionSectionProps {
+  /** Grow in when mounted open (submenus coming back while the icon rail expands). */
+  appear?: boolean;
   children: ReactNode;
   isExpanded: boolean;
 }
 
-const SidebarTreeMotionSection = ({children, isExpanded}: SidebarTreeMotionSectionProps) => {
+const SidebarTreeMotionSection = ({
+  appear,
+  children,
+  isExpanded,
+}: SidebarTreeMotionSectionProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const animationsRef = useRef<Animation[]>([]);
   const previousRef = useRef<boolean | null>(null);
@@ -180,9 +188,9 @@ const SidebarTreeMotionSection = ({children, isExpanded}: SidebarTreeMotionSecti
 
     if (!element) return;
 
-    // Sections that are open when they first mount (initial render, or submenus coming back after
-    // the icon rail expands) appear without animation.
-    if (previous === null || previous === isExpanded) return;
+    // Sections that are open when they first mount appear without animation, except submenus that
+    // come back while the icon rail expands: those unfold together with the panel.
+    if (previous === null ? !(appear && isExpanded) : previous === isExpanded) return;
 
     // A freshly mounted section grows from nothing; an interrupted one continues from where it is.
     const fromHeight = isNewElement ? 0 : element.getBoundingClientRect().height;
@@ -207,15 +215,17 @@ const SidebarTreeMotionSection = ({children, isExpanded}: SidebarTreeMotionSecti
     if (isExpanded) {
       setIsExiting(false);
 
+      // Unfolding with the icon rail follows the panel's width transition.
+      const timing =
+        previous === null
+          ? {duration: SIDEBAR_RAIL_DURATION, easing: "ease"}
+          : {duration: ENTER_DURATION, easing: ENTER_EASING};
       const toHeight = element.getBoundingClientRect().height;
-      const height = element.animate([{height: `${fromHeight}px`}, {height: `${toHeight}px`}], {
-        duration: ENTER_DURATION,
-        easing: ENTER_EASING,
-      });
-      const opacity = element.animate([{opacity: fromOpacity}, {opacity: 1}], {
-        duration: ENTER_DURATION,
-        easing: ENTER_EASING,
-      });
+      const height = element.animate(
+        [{height: `${fromHeight}px`}, {height: `${toHeight}px`}],
+        timing,
+      );
+      const opacity = element.animate([{opacity: fromOpacity}, {opacity: 1}], timing);
 
       height.onfinish = () => element.style.removeProperty("overflow");
       animationsRef.current = [height, opacity];
@@ -240,9 +250,19 @@ const SidebarTreeMotionSection = ({children, isExpanded}: SidebarTreeMotionSecti
       };
       animationsRef.current = [height, opacity];
     }
-  }, [isExpanded]);
+  }, [appear, isExpanded]);
 
-  useEffect(() => () => animationsRef.current.forEach((animation) => animation.cancel()), []);
+  useEffect(
+    () => () => {
+      animationsRef.current.forEach((animation) => animation.cancel());
+      animationsRef.current = [];
+      // A remount (React StrictMode re-runs effects) starts over like a fresh section, so an
+      // appearing submenu still unfolds instead of keeping its cancelled animation.
+      previousRef.current = null;
+      lastElementRef.current = null;
+    },
+    [],
+  );
 
   if (!isPresent) return null;
 
@@ -269,6 +289,13 @@ interface SidebarCollectionLevelProps {
 
 const SidebarCollectionLevel = ({collection, firstKey}: SidebarCollectionLevelProps) => {
   const state = use(TreeStateContext);
+  const sidebar = useSidebarContext();
+  const railPhase = use(SidebarRailContext);
+  const mobile = use(SidebarMobileContext);
+  // Open submenus fold away as soon as the panel starts collapsing to the icon rail; their rows
+  // leave the tree once the width transition is over (see Sidebar.MenuItem).
+  const isIconCollapsed =
+    sidebar.collapsible === "icon" && sidebar.state === "collapsed" && !mobile.isInMobile;
   const rendered: ReactNode[] = [];
   let node = getNode(collection, firstKey);
 
@@ -281,7 +308,8 @@ const SidebarCollectionLevel = ({collection, firstKey}: SidebarCollectionLevelPr
         rendered.push(
           <SidebarTreeMotionSection
             key={`${String(node.key)}:children`}
-            isExpanded={!!state?.expandedKeys.has(node.key)}
+            appear={railPhase === "expanding"}
+            isExpanded={!!state?.expandedKeys.has(node.key) && !isIconCollapsed}
           >
             <SidebarCollectionLevel collection={collection} firstKey={node.firstChildKey} />
           </SidebarTreeMotionSection>,
@@ -469,8 +497,12 @@ const SidebarMenuItem = <T extends object = object>({
   });
 
   const isIconCollapsed = collapsible === "icon" && state === "collapsed" && !mobile.isInMobile;
-  // On the icon rail nested items are dropped from the tree (the expanded keys are kept).
-  const hasSubmenu = submenus.length > 0 && !isIconCollapsed;
+  // On the icon rail nested items are dropped from the tree (the expanded keys are kept). That
+  // happens once the panel has finished collapsing, so an open submenu can fold away with it.
+  // Only rows with submenus subscribe to the rail phase (React's `use` may run conditionally).
+  const railPhase = submenus.length > 0 ? use(SidebarRailContext) : null;
+  const isOnIconRail = isIconCollapsed && railPhase !== "collapsing";
+  const hasSubmenu = submenus.length > 0 && !isOnIconRail;
   // React Aria requires an expand button on expandable rows for screen reader users. Items that
   // only show a `Sidebar.MenuIndicator` get a visually hidden one.
   const needsHiddenTrigger = hasSubmenu && !containsElementOfType(content, SidebarMenuTrigger);

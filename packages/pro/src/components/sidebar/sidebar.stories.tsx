@@ -8,7 +8,7 @@ import React from "react";
 import {Command} from "../command";
 import {Segment} from "../segment";
 
-import {Sidebar, useSidebar, useSidebarPages} from "./index";
+import {Sidebar, useSidebarPages} from "./index";
 
 const meta = {
   argTypes: {
@@ -33,12 +33,38 @@ type Story = StoryObj<typeof meta>;
  * -----------------------------------------------------------------------------------------------*/
 const COMPACT = {"--spacing": "0.2rem"} as React.CSSProperties;
 
-/** Whether the desktop panel is collapsed to its icon rail (always false inside the mobile sheet). */
-const useIsIconRail = () => {
-  const {collapsible, isMobile, state} = useSidebar();
+/*
+ * Custom header / footer content follows the icon rail with the arbitrary variant
+ * `[.sidebar[data-collapsible=icon][data-state=collapsed]_&]:…` (it never matches inside the mobile
+ * sheet) plus a 200ms transition, so nothing jumps or disappears at once.
+ */
 
-  return !isMobile && collapsible === "icon" && state === "collapsed";
-};
+/** Folds away (height + fade) while the desktop panel collapses to its icon rail, and back. */
+const RailFold = ({children, className = ""}: {children: ReactNode; className?: string}) => (
+  <div
+    className={`grid grid-rows-[1fr] transition-[grid-template-rows,margin,opacity,visibility] duration-200 motion-reduce:transition-none [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:invisible [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:grid-rows-[0fr] [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:opacity-0 ${className}`}
+  >
+    {/* The padding / negative margin pair keeps focus rings visible inside the clipping box. */}
+    <div className="-m-1 min-h-0 overflow-hidden p-1">{children}</div>
+  </div>
+);
+
+/**
+ * Shrinks to nothing (and fades) on the rail. `data-sidebar="label"` brings the fade / max-width
+ * animation; the 2px padding / negative margin pair keeps the child's focus ring unclipped.
+ */
+const RailShrink = ({children}: {children: ReactNode}) => (
+  <div className="-m-0.5 flex min-w-0 flex-1 p-0.5" data-sidebar="label">
+    {children}
+  </div>
+);
+
+/** A footer row with a wide button that shrinks away on the rail and an icon button that stays. */
+const RailButtonRow = ({children}: {children: ReactNode}) => (
+  <div className="flex items-center gap-2 px-2 py-2 transition-[gap,padding] duration-200 motion-reduce:transition-none [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:gap-0 [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:px-[calc(0.5rem-var(--spacing)*1.5)]">
+    {children}
+  </div>
+);
 
 const Logo = ({className, letter}: {className: string; letter: string}) => (
   <div className={`flex size-6 shrink-0 items-center justify-center rounded-md ${className}`}>
@@ -207,7 +233,7 @@ const UserMenuTrigger = ({
 }) => (
   <Dropdown>
     <Dropdown.Trigger
-      className={`flex w-full items-center gap-2 rounded-xl py-1.5 text-left outline-none hover:bg-default ${className}`}
+      className={`flex w-full items-center gap-2 rounded-xl py-1.5 text-left transition-[padding,background-color] duration-200 outline-none hover:bg-default motion-reduce:transition-none [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:px-[calc(0.5rem-var(--spacing)*1.5)] ${className}`}
     >
       {avatar}
       {subtitle ? (
@@ -393,9 +419,8 @@ const teamspaceChildren: NavItem[] = [
 ];
 
 const ComplexSidebarBody = () => {
-  // Like the Pro demo, the section switcher and the wide "New chat" button are dropped on the rail.
-  const isIconRail = useIsIconRail();
-
+  // Like the Pro demo, the section switcher and the wide "New chat" button leave the rail; here they
+  // fold / shrink away with the panel instead of disappearing at once.
   return (
     <>
       <Sidebar.Header>
@@ -417,7 +442,9 @@ const ComplexSidebarBody = () => {
             </button>
           </div>
         </div>
-        {isIconRail ? null : <ComplexHeaderSegment />}
+        <RailFold className="[.sidebar[data-collapsible=icon][data-state=collapsed]_&]:-mt-2">
+          <ComplexHeaderSegment />
+        </RailFold>
       </Sidebar.Header>
       <Sidebar.Content>
         <Sidebar.Group className="[&>.sidebar\_\_group-label]:capitalize">
@@ -531,10 +558,10 @@ const ComplexSidebarBody = () => {
             {icon: "gravity-ui:trash-bin", id: "util-trash", label: "Trash"},
           ])}
         </Sidebar.Menu>
-        <div className="flex items-center justify-center gap-2 px-2 py-2">
-          {isIconRail ? null : (
+        <RailButtonRow>
+          <RailShrink>
             <Button
-              className="flex h-10 flex-1 gap-2 bg-surface text-sm text-muted shadow-surface"
+              className="flex h-10 w-full gap-2 bg-surface text-sm text-muted shadow-surface"
               size="sm"
               variant="tertiary"
             >
@@ -542,11 +569,11 @@ const ComplexSidebarBody = () => {
               <span>New chat</span>
               <ShortcutKbd>N</ShortcutKbd>
             </Button>
-          )}
-          <Button isIconOnly aria-label="Compose" size="sm" variant="tertiary">
+          </RailShrink>
+          <Button isIconOnly aria-label="Compose" className="shrink-0" size="sm" variant="tertiary">
             <Icon className="size-4 text-muted" icon="gravity-ui:pencil" />
           </Button>
-        </div>
+        </RailButtonRow>
       </Sidebar.Footer>
     </>
   );
@@ -1037,15 +1064,13 @@ export const CollapsibleGroups: Story = {
 const AvatarBody = () => (
   <>
     <Sidebar.Header>
-      <div className="flex items-center gap-3 px-1 py-2">
+      {/* A 32px avatar sits centred on the rail without the row's `px-1`. */}
+      <div className="flex items-center gap-3 px-1 py-2 transition-[padding] duration-200 group-data-[collapsible=icon]:group-data-[state=collapsed]:px-0 motion-reduce:transition-none">
         <Avatar className="size-8 shrink-0">
           <Avatar.Image alt="Theo Park" src={AVATAR_B} />
           <Avatar.Fallback>TP</Avatar.Fallback>
         </Avatar>
-        <div
-          className="flex min-w-0 flex-col group-data-[state=collapsed]:hidden"
-          data-sidebar="label"
-        >
+        <div className="flex min-w-0 flex-col" data-sidebar="label">
           <span className="text-sm leading-tight font-medium text-foreground">Theo Park</span>
           <span className="text-xs leading-tight text-muted">theo@parcel.dev</span>
         </div>
@@ -1440,8 +1465,6 @@ export const MeetingNotes: Story = {
  * Agent Hub
  * -----------------------------------------------------------------------------------------------*/
 const AgentHubBody = () => {
-  const isIconRail = useIsIconRail();
-
   return (
     <>
       <Sidebar.Header>
@@ -1617,10 +1640,10 @@ const AgentHubBody = () => {
       </Sidebar.Content>
       <Sidebar.Separator />
       <Sidebar.Footer className="gap-0">
-        <div className="flex items-center justify-center gap-2 px-2 py-2">
-          {isIconRail ? null : (
+        <RailButtonRow>
+          <RailShrink>
             <Button
-              className="flex h-9 flex-1 gap-2 bg-surface text-sm text-muted shadow-surface"
+              className="flex h-9 w-full gap-2 bg-surface text-sm text-muted shadow-surface"
               size="sm"
               variant="tertiary"
             >
@@ -1628,12 +1651,12 @@ const AgentHubBody = () => {
               <span>New chat</span>
               <ShortcutKbd>N</ShortcutKbd>
             </Button>
-          )}
-          <Button isIconOnly aria-label="Compose" size="sm" variant="tertiary">
+          </RailShrink>
+          <Button isIconOnly aria-label="Compose" className="shrink-0" size="sm" variant="tertiary">
             <Icon className="size-4 text-muted" icon="gravity-ui:pencil" />
           </Button>
-        </div>
-        <div className="px-2 pb-2">
+        </RailButtonRow>
+        <div className="px-2 pb-2 transition-[padding] duration-200 motion-reduce:transition-none [.sidebar[data-collapsible=icon][data-state=collapsed]_&]:px-0">
           <UserMenuTrigger avatar={<UserAvatar name="Owen Blake" src={AVATAR_C} />} name="Owen" />
         </div>
       </Sidebar.Footer>

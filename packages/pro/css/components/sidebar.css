@@ -24,6 +24,8 @@
   @apply sticky top-0 flex h-svh shrink-0 flex-col border-border bg-background;
   width: var(--sidebar-width);
   min-width: var(--sidebar-width-collapsed);
+  /* Lets group labels animate between their natural height and 0 where supported */
+  interpolate-size: allow-keywords;
 
   /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
   transition:
@@ -37,36 +39,44 @@
   --sidebar-edge-outline: #ffffff1a;
 }
 
-/* Collapsed to the icon rail */
+/*
+ * Collapsed to the icon rail.
+ *
+ * Nothing is re-aligned or removed when the state flips: paddings, gaps and margins animate together
+ * with the width, labels fade out while the narrowing panel clips them, and every icon stays
+ * start-aligned. Rows keep `padding-inline: 0.5rem`, and the panel padding is derived from the rail
+ * width, so the `size-5` icon box ends up centred in the rail (6px + 8px at the default spacing; any
+ * `--spacing` scale works) without ever jumping. Expanding plays the same in reverse.
+ */
 .sidebar[data-state="collapsed"]:not([data-collapsible="offcanvas"]) {
   @apply overflow-x-clip;
   width: var(--sidebar-width-collapsed);
 
-  & .sidebar__header,
+  & .sidebar__content,
   & .sidebar__footer {
-    @apply px-1.5;
+    padding-inline: calc((var(--sidebar-width-collapsed) - 1rem - var(--spacing) * 5) / 2);
   }
 
+  /* A logo row (`px-1` with a `size-6` logo, like Pro's demos) ends up centred in the rail */
   & .sidebar__header {
-    @apply items-center;
+    padding-inline: calc(var(--sidebar-width-collapsed) / 2 - var(--spacing) * 4);
   }
 
-  & .sidebar__header > * {
-    @apply w-auto justify-center gap-0 p-0;
-  }
-
-  & .sidebar__header [data-sidebar="label"] {
-    @apply hidden;
-  }
-
-  & .sidebar__content {
-    @apply px-1.5;
+  /* ...while menus in the header line up with the content rows */
+  & .sidebar__header > .sidebar__menu {
+    margin-inline: calc(var(--spacing) * 1.5 - 0.5rem);
   }
 }
 
-/* Labels and chips fade / shrink while the icon rail animates */
+.sidebar[data-collapsible="icon"] .sidebar__header > .sidebar__menu {
+  transition: margin var(--sidebar-duration) var(--sidebar-ease);
+  @apply motion-reduce:transition-none;
+}
+
+/* Labels, chips, chevrons and row actions fade / shrink while the icon rail animates */
 .sidebar[data-collapsible="icon"] [data-sidebar="label"],
-.sidebar[data-collapsible="icon"] [data-slot="chip"] {
+.sidebar[data-collapsible="icon"] [data-slot="chip"],
+.sidebar[data-collapsible="icon"] .sidebar__menu-chip {
   @apply visible max-w-full overflow-hidden whitespace-nowrap;
   transition:
     opacity var(--sidebar-duration) var(--sidebar-ease),
@@ -77,9 +87,26 @@
 }
 
 .sidebar[data-collapsible="icon"][data-state="collapsed"] [data-sidebar="label"],
-.sidebar[data-collapsible="icon"][data-state="collapsed"] [data-slot="chip"] {
+.sidebar[data-collapsible="icon"][data-state="collapsed"] [data-slot="chip"],
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__menu-chip {
   @apply pointer-events-none invisible m-0 max-w-0 opacity-0;
   transition-delay: 0s, 0s, 0s, var(--sidebar-duration);
+}
+
+/* No overflow clipping here: it would cut off the focus ring of the action buttons */
+.sidebar[data-collapsible="icon"] .sidebar__menu-trigger,
+.sidebar[data-collapsible="icon"] .sidebar__menu-actions {
+  @apply visible;
+  transition:
+    opacity var(--sidebar-duration) var(--sidebar-ease),
+    visibility 0s linear;
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__menu-trigger,
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__menu-actions {
+  @apply pointer-events-none invisible opacity-0;
+  transition-delay: 0s, var(--sidebar-duration);
 }
 
 .sidebar[data-collapsible="icon"] [data-slot="list-box-item"] {
@@ -87,7 +114,7 @@
 }
 
 .sidebar[data-collapsible="icon"][data-state="collapsed"] [data-slot="list-box-item"] {
-  @apply justify-center gap-0 p-2.5;
+  @apply gap-0 p-2.5;
 }
 
 /* Offcanvas: a spacer collapses to 0 while the panel slides out */
@@ -201,12 +228,20 @@
   @apply flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3;
 }
 
-.sidebar[data-state="collapsed"] .sidebar__content {
-  @apply gap-0.5;
-}
-
 .sidebar__footer {
   @apply flex flex-col gap-1 px-3 pt-2 pb-4;
+}
+
+/* Paddings and gaps follow the icon rail's width transition */
+.sidebar[data-collapsible="icon"] :is(.sidebar__header, .sidebar__content, .sidebar__footer) {
+  transition:
+    padding var(--sidebar-duration) var(--sidebar-ease),
+    gap var(--sidebar-duration) var(--sidebar-ease);
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__content {
+  @apply gap-0.5;
 }
 
 .sidebar__separator {
@@ -232,11 +267,43 @@
   @apply motion-reduce:transition-none;
 }
 
-.sidebar[data-state="collapsed"] .sidebar__group-label {
-  @apply hidden;
+/*
+ * Icon rail: group labels and menu headers fold to zero height (natural height <-> 0 through
+ * `interpolate-size`; browsers without it snap the height but still fade), the group gap is
+ * cancelled by a negative margin, and the spacing between groups / sections shrinks with them.
+ */
+.sidebar[data-collapsible="icon"] :is(.sidebar__group-label, .sidebar__menu-header) {
+  @apply visible;
+  height: auto;
+  transition:
+    opacity var(--sidebar-duration) var(--sidebar-ease),
+    height var(--sidebar-duration) var(--sidebar-ease),
+    padding var(--sidebar-duration) var(--sidebar-ease),
+    margin var(--sidebar-duration) var(--sidebar-ease),
+    visibility 0s linear;
+  @apply motion-reduce:transition-none;
 }
 
-.sidebar[data-state="collapsed"] .sidebar__group + .sidebar__group {
+.sidebar[data-collapsible="icon"][data-state="collapsed"]
+  :is(.sidebar__group-label, .sidebar__menu-header) {
+  @apply pointer-events-none invisible h-0 overflow-hidden py-0 opacity-0;
+  transition-delay: 0s, 0s, 0s, 0s, var(--sidebar-duration);
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__group-label {
+  margin-block-end: calc(var(--spacing) * -1);
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__menu-header {
+  margin-block-end: calc(var(--sidebar-menu-row-gap) * -1);
+}
+
+.sidebar[data-collapsible="icon"] :is(.sidebar__group, .sidebar__menu-section) {
+  transition: margin var(--sidebar-duration) var(--sidebar-ease);
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__group + .sidebar__group {
   @apply mt-0;
 }
 
@@ -269,16 +336,12 @@
   }
 }
 
-.sidebar[data-state="collapsed"] .sidebar__menu-section:not(:first-child) {
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__menu-section:not(:first-child) {
   @apply mt-0;
 }
 
 .sidebar__menu-header {
   @apply px-2 py-1.5 text-xs font-medium tracking-wider text-muted uppercase select-none;
-}
-
-.sidebar[data-state="collapsed"] .sidebar__menu-header {
-  @apply hidden;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -502,27 +565,16 @@
   background-color: var(--button-bg-hover);
 }
 
-/* Icon rail: only the icon stays visible */
+/*
+ * Icon rail: only the icon stays visible. The row keeps its start alignment and padding; the label,
+ * chip, chevron and actions fade (see the icon-rail rules at the top) and are clipped by the row.
+ */
 .sidebar[data-collapsible="icon"] .sidebar__menu-item {
   @apply w-full;
 }
 
-.sidebar[data-collapsible="icon"][data-state="collapsed"] {
-  & .sidebar__menu-item-content {
-    @apply justify-center px-0;
-  }
-
-  & .sidebar__menu-trigger,
-  & .sidebar__menu-actions,
-  & .sidebar__menu-label,
-  & .sidebar__menu-chip,
-  & .sidebar__menu-action {
-    @apply hidden;
-  }
-
-  & .sidebar__menu-item::before {
-    content: none;
-  }
+.sidebar[data-collapsible="icon"][data-state="collapsed"] .sidebar__menu-item::before {
+  content: none;
 }
 
 /* ------------------------------------------------------------------------------------------------

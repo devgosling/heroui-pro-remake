@@ -36,6 +36,12 @@ export interface UseSidebarReturn {
   state: SidebarState;
 }
 
+/** Which way the icon rail is animating right now (`null` once the width transition is over). */
+export type SidebarRailPhase = "collapsing" | "expanding" | null;
+
+/** Length of the panel width transition (`--sidebar-duration`). */
+export const SIDEBAR_RAIL_DURATION = 200;
+
 export interface SidebarContextValue extends UseSidebarReturn {
   /** Disables nested `Sidebar.Menu` expand/collapse animations. */
   reduceMotion: boolean;
@@ -46,6 +52,12 @@ export interface SidebarContextValue extends UseSidebarReturn {
  * Contexts
  * -----------------------------------------------------------------------------------------------*/
 export const SidebarContext = createContext<SidebarContextValue | null>(null);
+
+/**
+ * Internal: the icon rail phase, set for `SIDEBAR_RAIL_DURATION` ms after the desktop state flips.
+ * Kept apart from `SidebarContext` so its reset only re-renders rows that have submenus.
+ */
+export const SidebarRailContext = createContext<SidebarRailPhase>(null);
 
 /** Set by `Sidebar.Mobile` so descendants know they live inside the mobile sheet. */
 export const SidebarMobileContext = createContext<{isInMobile: boolean; close: () => void}>({

@@ -3,6 +3,7 @@
 import type {
   SidebarCollapsible,
   SidebarContextValue,
+  SidebarRailPhase,
   SidebarSide,
   SidebarVariant,
 } from "./sidebar-context";
@@ -13,9 +14,11 @@ import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {UNSAFE_PortalProvider} from "react-aria/PortalProvider";
 
 import {
+  SIDEBAR_RAIL_DURATION,
   SidebarContext,
   SidebarMenuSettingsContext,
   SidebarMobileContext,
+  SidebarRailContext,
   useIsMobile,
   useSidebarContext,
   useSidebarShortcut,
@@ -94,6 +97,24 @@ const SidebarProvider = ({
   const state = collapsible === "none" || isOpen ? "expanded" : "collapsed";
   const slots = useMemo(() => sidebarVariants({side, variant}), [side, variant]);
 
+  // While the panel width animates, open submenus fold away (or unfold) with it instead of being
+  // dropped from / added to the tree at once (see Sidebar.MenuItem).
+  const [railState, setRailState] = useState(state);
+  const [railPhase, setRailPhase] = useState<SidebarRailPhase>(null);
+
+  if (railState !== state) {
+    setRailState(state);
+    setRailPhase(state === "collapsed" ? "collapsing" : "expanding");
+  }
+
+  useEffect(() => {
+    if (!railPhase) return;
+
+    const timer = window.setTimeout(() => setRailPhase(null), SIDEBAR_RAIL_DURATION);
+
+    return () => window.clearTimeout(timer);
+  }, [railPhase, railState]);
+
   const contextValue = useMemo<SidebarContextValue>(
     () => ({
       collapsible,
@@ -150,13 +171,15 @@ const SidebarProvider = ({
 
   return (
     <SidebarContext value={contextValue}>
-      {navigate ? (
-        <RouterProvider navigate={routerNavigate as (href: string) => void}>
-          {provider}
-        </RouterProvider>
-      ) : (
-        provider
-      )}
+      <SidebarRailContext value={railPhase}>
+        {navigate ? (
+          <RouterProvider navigate={routerNavigate as (href: string) => void}>
+            {provider}
+          </RouterProvider>
+        ) : (
+          provider
+        )}
+      </SidebarRailContext>
     </SidebarContext>
   );
 };
