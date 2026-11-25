@@ -60,12 +60,15 @@
   @apply flex min-w-0 flex-1 flex-col;
 }
 
+/* Pro sizes these to fit-content with no cap, so with nowrap a long text never ellipsizes and runs
+   under the action. max-w-full keeps the fit-content width but caps it at the content box, which
+   lets the ellipsis kick in (deliberate deviation, see specs/item-card.md). */
 .item-card__title {
-  @apply w-fit truncate text-sm font-medium text-foreground;
+  @apply w-fit max-w-full truncate text-sm font-medium text-foreground;
 }
 
 .item-card__description {
-  @apply mt-0.5 w-fit truncate text-xs text-muted;
+  @apply mt-0.5 w-fit max-w-full truncate text-xs text-muted;
 }
 
 /* ------------------------------------------------------------------------------------------------

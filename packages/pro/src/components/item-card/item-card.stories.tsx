@@ -6,6 +6,7 @@ import {Icon} from "@iconify/react";
 
 import {InlineSelect} from "../inline-select";
 import {PressableFeedback} from "../pressable-feedback";
+import {Segment} from "../segment";
 
 import {ItemCard} from "./index";
 
@@ -495,6 +496,56 @@ export const Pressable: Story = {
         </ItemCard.Content>
         <ItemCard.Action>
           <Chevron />
+        </ItemCard.Action>
+      </ItemCard>
+    </Frame>
+  ),
+};
+
+/* -------------------------------------------------------------------------------------------------
+ * Narrow row (our deviation: long text ellipsizes instead of running under the action)
+ * -----------------------------------------------------------------------------------------------*/
+export const NarrowRow: Story = {
+  render: ({variant}) => (
+    <Frame className="w-[320px] space-y-2">
+      <ItemCard variant={variant}>
+        <ItemCard.Icon>
+          <Icon icon="gravity-ui:palette" />
+        </ItemCard.Icon>
+        <ItemCard.Content>
+          <ItemCard.Title>Appearance</ItemCard.Title>
+          <ItemCard.Description>Light, dark or match your device's setting</ItemCard.Description>
+        </ItemCard.Content>
+        <ItemCard.Action>
+          <Segment aria-label="Color scheme" defaultSelectedKey="system" size="sm">
+            <Segment.Item aria-label="Light" id="light">
+              <Icon icon="gravity-ui:sun" />
+            </Segment.Item>
+            <Segment.Item aria-label="Dark" id="dark">
+              <Icon icon="gravity-ui:moon" />
+            </Segment.Item>
+            <Segment.Item aria-label="System" id="system">
+              <Icon icon="gravity-ui:display" />
+            </Segment.Item>
+          </Segment>
+        </ItemCard.Action>
+      </ItemCard>
+      <ItemCard variant={variant}>
+        <ItemCard.Icon>
+          <Icon icon="gravity-ui:bell" />
+        </ItemCard.Icon>
+        <ItemCard.Content>
+          <ItemCard.Title>Notifications for comments, mentions and replies</ItemCard.Title>
+          <ItemCard.Description>Sent to your inbox and to the mobile app</ItemCard.Description>
+        </ItemCard.Content>
+        <ItemCard.Action>
+          <Switch defaultSelected aria-label="Toggle notifications">
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+            </Switch.Content>
+          </Switch>
         </ItemCard.Action>
       </ItemCard>
     </Frame>

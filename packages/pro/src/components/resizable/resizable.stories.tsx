@@ -405,7 +405,7 @@ const CustomIndicatorExample = () => {
               isDragging ? "bg-accent text-accent-foreground" : "bg-background text-muted"
             }`}
           >
-            <Icon className="size-3.5" icon="gravity-ui:arrows-left-right" />
+            <Icon className="size-3.5" icon="gravity-ui:arrows-expand-horizontal" />
           </Resizable.Indicator>
         </Resizable.Handle>
         <Resizable.Panel defaultSize={50} minSize={20}>

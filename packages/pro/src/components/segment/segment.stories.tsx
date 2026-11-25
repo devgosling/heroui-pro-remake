@@ -45,10 +45,10 @@ export const ThemeSwitcher: Story = {
   render: () => (
     <Segment aria-label="Color scheme" defaultSelectedKey="system" size="sm">
       <Segment.Item aria-label="Light" id="light">
-        <Icon icon="gravity-ui:sun-fill" />
+        <Icon icon="gravity-ui:sun" />
       </Segment.Item>
       <Segment.Item aria-label="Dark" id="dark">
-        <Icon icon="gravity-ui:moon-fill" />
+        <Icon icon="gravity-ui:moon" />
       </Segment.Item>
       <Segment.Item aria-label="System" id="system">
         <Icon icon="gravity-ui:display" />

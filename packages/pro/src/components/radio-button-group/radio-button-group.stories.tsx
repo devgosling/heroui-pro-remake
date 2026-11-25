@@ -331,7 +331,7 @@ export const IconCards: Story = {
       },
       {
         description: "Private cloud, named engineers and bespoke terms.",
-        icon: "gravity-ui:crown",
+        icon: "gravity-ui:crown-diamond",
         id: "summit",
         label: "Summit",
         price: 349,

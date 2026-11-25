@@ -1270,7 +1270,7 @@ const kindIcon = {
   Folder: "gravity-ui:folder-fill",
   Image: "gravity-ui:picture",
   Text: "gravity-ui:file-text",
-  Video: "gravity-ui:film",
+  Video: "gravity-ui:filmstrip",
 } as const;
 
 const fileColumns: DataGridColumn<FileNode>[] = [

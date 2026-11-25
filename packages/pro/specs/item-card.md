@@ -120,8 +120,8 @@ button keeps the browser's native `outline: auto` focus ring, exactly like the P
 | `__icon` | 36×36, `border-radius: var(--radius)` (8px), `bg var(--default)`, `color var(--foreground)`, flex centre, `flex-shrink:0` | `flex size-9 shrink-0 items-center justify-center bg-default text-foreground` |
 | `__icon svg` | 16×16 | `size-4` |
 | `__content` | `display:flex; flex-direction:column; flex:1; min-width:0` | `flex min-w-0 flex-1 flex-col` |
-| `__title` | 14px/20px, weight 500, `var(--foreground)`, `overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:fit-content` | `w-fit truncate text-sm font-medium text-foreground` |
-| `__description` | 12px/16px, `var(--muted)`, `margin-top:2px`, truncate, `width:fit-content` | `mt-0.5 w-fit truncate text-xs text-muted` |
+| `__title` | 14px/20px, weight 500, `var(--foreground)`, `overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:fit-content` | `w-fit max-w-full truncate text-sm font-medium text-foreground` (`max-w-full` is ours, see below) |
+| `__description` | 12px/16px, `var(--muted)`, `margin-top:2px`, truncate, `width:fit-content` | `mt-0.5 w-fit max-w-full truncate text-xs text-muted` (`max-w-full` is ours, see below) |
 | `__action` | `flex-shrink:0; margin-inline-start:auto; padding-inline-start:8px` | `ms-auto shrink-0 ps-2` |
 
 Measured offsets inside a default card (light & dark identical): icon at (16, 13); title at (64, 12);
@@ -129,10 +129,12 @@ description at (64, 34); a 16px chevron action ends 16px from the right edge; an
 36px tall at y=13. Demo frames are `w-[500px]` (email setting `w-[600px]`), `p-6`, stacks `space-y-2` /
 `space-y-3` / `space-y-4`.
 
-**Truncation quirk (kept):** `width: fit-content` + `nowrap` means fit-content resolves to the full text
-width, so long titles/descriptions do not ellipsize; they overflow `__content`. Verified on the Pro page
-by replacing the text (title 440px inside a 336px content box). The remake uses the same CSS and behaves
-the same.
+**Truncation (deliberate deviation from Pro):** in Pro, `width: fit-content` + `nowrap` resolves to the
+full text width, so long titles/descriptions do not ellipsize; they overflow `__content` and run under
+`__action`. Verified on the Pro page by replacing the text (title 440px inside a 336px content box). The
+remake adds `max-width: 100%` to both, so the text keeps its fit-content width while it fits and
+ellipsizes at the content box once it doesn't (seen in a 375px consumer row: a 181px description under
+a segment action in a 131px content box). Short texts render exactly as in Pro. Story: `NarrowRow`.
 
 ### Pressable host (native button)
 Classes added by the demo: `relative w-full cursor-pointer overflow-hidden`. Inherited button styles from

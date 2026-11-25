@@ -255,7 +255,7 @@ export const CustomIcons: Story = {
         </NumberStepper.DecrementButton>
         <NumberStepper.Value />
         <NumberStepper.IncrementButton>
-          <Icon icon="gravity-ui:sun-fill" />
+          <Icon icon="gravity-ui:sun" />
         </NumberStepper.IncrementButton>
       </NumberStepper.Group>
     </NumberStepper>
