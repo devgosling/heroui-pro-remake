@@ -12,18 +12,24 @@ const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
 const reactScanDist = pathJoin(dirname(require.resolve("react-scan/package.json")), "dist");
 
+// Relative POSIX globs (resolved against this config dir). Absolute Windows paths break
+// Storybook's story indexer, so never `path.join` these.
+const STORY_GLOBS = [
+  "../../react/src/**/*.stories.@(ts|tsx)",
+  "../../pro/src/**/*.stories.@(ts|tsx)",
+];
+
 export const getStories = () => {
   const __STORYBOOK_READY_ONLY__ = process.env.STORYBOOK_READY_ONLY === "true";
 
-  if (!__STORYBOOK_READY_ONLY__)
-    return [pathJoin(__dirname, "../../react/src/**/*.stories.@(ts|tsx)")];
+  if (!__STORYBOOK_READY_ONLY__) return STORY_GLOBS;
 
-  const readyStories = globSync(
-    pathJoin(__dirname, "../../react/src/**/*.stories.@(ts|tsx)"),
+  const readyStories = STORY_GLOBS.flatMap((pattern) =>
+    globSync(pattern, {cwd: __dirname, posix: true}),
   ).filter((file: string) => {
-    const content = fsReadFileSync(file, "utf-8");
+    const content = fsReadFileSync(pathJoin(__dirname, file), "utf-8");
 
-    return /title:\s*["']Components/.test(content);
+    return /title:\s*["'](Components|Pro)\//.test(content);
   });
 
   return readyStories;

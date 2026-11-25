@@ -20,12 +20,26 @@
 <script src="/react-scan/install-hook.global.js"></script>
 
 <style>
+  /* Font and text colour follow the theme tokens, so changing --font-sans / --foreground (or the
+     theme) reaches every story, like in a real HeroUI app. */
   html,
   body,
   #storybook-root {
     height: 100%;
-    font-family:
-      Inter, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-      "Segoe UI Symbol", "Noto Color Emoji";
+    font-family: var(
+      --font-sans,
+      Inter,
+      ui-sans-serif,
+      system-ui,
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      "Segoe UI Symbol",
+      "Noto Color Emoji"
+    );
+  }
+
+  body {
+    color: var(--foreground);
   }
 </style>

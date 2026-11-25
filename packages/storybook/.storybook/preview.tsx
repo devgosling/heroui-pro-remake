@@ -1,5 +1,7 @@
 import type {Preview} from "@storybook/react";
 
+import {createOverlayScrollbars} from "@heroui/pro";
+
 import {withInternationalization} from "./addons/i18n/decorator";
 import {i18nGlobalType} from "./addons/i18n/preview";
 import {DEFAULT_REACT_SCAN} from "./addons/react-scan/constants";
@@ -14,6 +16,12 @@ import {themeGlobalType} from "./addons/theme/preview";
 import {DocsContainer} from "./components/docs-container";
 
 import "./globals.css";
+
+// Thin, theme-aware overlay scrollbars that never take layout space (same as the showcase app).
+if (typeof document !== "undefined") {
+  if (document.body) createOverlayScrollbars(document);
+  else document.addEventListener("DOMContentLoaded", () => createOverlayScrollbars(document));
+}
 
 const parameters: Preview["parameters"] = {
   layout: "fullscreen",
