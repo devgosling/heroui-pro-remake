@@ -1,0 +1,121 @@
+/* Number Pad - numeric keypad (web port of the HeroUI Pro Native component) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (column of rows)
+ * ------------------------------------------------------------------------------------------------ */
+.number-pad {
+  @apply flex w-full flex-col gap-2 select-none;
+
+  /* Fast taps on touch screens must not trigger double-tap zoom */
+  touch-action: manipulation;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Row (equal-width cells)
+ * ------------------------------------------------------------------------------------------------ */
+.number-pad__row {
+  /* Native spaces keys 6dp apart within a row and rows 8dp apart (measured in the demo video) */
+  @apply flex w-full flex-row gap-1.5;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Cells: Key, Backspace and Spacer share the surface geometry and the press feedback
+ * ------------------------------------------------------------------------------------------------ */
+.number-pad__key,
+.number-pad__backspace,
+.number-pad__spacer {
+  /* Press feedback (overridable per key through the `animation` prop) */
+  --number-pad-key-scale: 0.97;
+  --number-pad-key-duration: 150ms;
+  /* Reanimated's default withTiming easing (ease-in-out quad) */
+  --number-pad-key-easing: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+
+  @apply relative isolate flex h-16 min-w-0 flex-1 basis-0 items-center justify-center overflow-hidden bg-transparent text-foreground outline-none select-none no-highlight;
+  /* Native draws 16dp continuous (squircle) corners whose curve spans ~23dp; a 20px circular
+     radius (theme radius x 2.5) matches that silhouette best. */
+  border-radius: calc(var(--radius) * 2.5);
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+
+  /* The surface colour switches instantly (as on Native); only the scale is animated.
+     CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: transform var(--number-pad-key-duration) var(--number-pad-key-easing);
+  @apply transform-gpu motion-reduce:transition-none;
+}
+
+button.number-pad__key,
+button.number-pad__backspace,
+button.number-pad__spacer {
+  cursor: var(--cursor-interactive);
+
+  &[data-pressed="true"] {
+    @apply bg-default-hover;
+    transform: scale(var(--number-pad-key-scale));
+  }
+
+  /* Wins over a custom scale passed inline through `animation={{state: "disabled", scale}}` */
+  &[data-animation="disabled"][data-pressed="true"] {
+    transform: none;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* Digit keys sit on a filled surface */
+.number-pad__key {
+  @apply bg-default;
+
+  @media (hover: hover) {
+    &:hover:not([data-disabled="true"]),
+    &[data-hovered="true"] {
+      @apply bg-default-hover;
+    }
+  }
+}
+
+/* Backspace and the Spacer action are transparent until hovered / pressed */
+.number-pad__backspace,
+.number-pad__spacer[data-action="true"] {
+  @media (hover: hover) {
+    &:hover:not([data-disabled="true"]):not([data-pressed="true"]),
+    &[data-hovered="true"]:not([data-pressed="true"]) {
+      @apply bg-default;
+    }
+  }
+}
+
+/* Inert spacer: keeps the grid aligned, never interactive */
+div.number-pad__spacer {
+  @apply pointer-events-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Key background (absolute-fill layer behind the cell content)
+ * ------------------------------------------------------------------------------------------------ */
+.number-pad__key-background {
+  @apply pointer-events-none absolute inset-0 -z-1 overflow-hidden;
+  border-radius: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Key label
+ * ------------------------------------------------------------------------------------------------ */
+.number-pad__key-label {
+  @apply pointer-events-none text-3xl leading-none font-semibold text-foreground tabular-nums;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Backspace icon (size / colour come from `iconProps`)
+ * ------------------------------------------------------------------------------------------------ */
+.number-pad__backspace-icon {
+  @apply pointer-events-none shrink-0 text-foreground rtl:-scale-x-100;
+}

@@ -1,0 +1,59 @@
+/* Wheel Picker Group - web port of the HeroUI Pro Native component: a row of WheelPicker columns that
+   share the row height, the visible-row count, one selection band and one pair of fade masks.
+   The shared overlays also carry the WheelPicker classes (`.wheel-picker__indicator`,
+   `.wheel-picker__mask`, ...), so their look comes from wheel-picker.css; this file only adds the
+   group layout, stacking, focus and disabled handling. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (role="group")
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker-group {
+  /* Layout shared by every column (the itemHeight / visibleCount props set these inline) */
+  --wheel-picker-group-item-height: 44px;
+  --wheel-picker-group-visible-count: 5;
+  /* ...and handed to the shared overlays, which reuse the WheelPicker overlay styles */
+  --wheel-picker-item-height: var(--wheel-picker-group-item-height);
+  --wheel-picker-visible-count: var(--wheel-picker-group-visible-count);
+
+  @apply relative isolate flex w-full items-stretch select-none;
+  height: calc(var(--wheel-picker-group-visible-count) * var(--wheel-picker-group-item-height));
+
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* The group dims as a whole: nested wheels disabled through the group do not dim a second time */
+.wheel-picker-group[data-disabled="true"] .wheel-picker[data-in-group="true"] {
+  @apply opacity-100;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Columns (nested WheelPickers: `flex-1` comes from wheel-picker.css)
+ * ------------------------------------------------------------------------------------------------ */
+
+/* A focused column rings its own segment of the centre row instead of the whole column */
+.wheel-picker-group
+  .wheel-picker[data-in-group="true"][data-focus-visible="true"]:not(
+    :has(.wheel-picker__indicator-highlight)
+  ) {
+  box-shadow: none;
+
+  &::after {
+    @apply pointer-events-none absolute inset-x-0 z-3 rounded-2xl status-focused ring-inset;
+    content: "";
+    top: calc((var(--wheel-picker-visible-count) - 1) / 2 * var(--wheel-picker-item-height));
+    height: var(--wheel-picker-item-height);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shared indicator (one band across every column)
+ * ------------------------------------------------------------------------------------------------ */
+
+/* Behind the columns inside the isolated root, so rows paint over the band. The shared mask keeps
+   `z-2` from wheel-picker.css and fades every column at once. */
+.wheel-picker-group .wheel-picker-group__indicator {
+  @apply -z-1;
+}

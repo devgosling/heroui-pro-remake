@@ -1,0 +1,222 @@
+/* Morph Tabs - web port of the HeroUI Pro Native component.
+ *
+ * The pills morph between "icon" and "icon + label" following the pager position:
+ *   --morph-tabs-progress (root, page units, written every frame by the pager)
+ *   --morph-tabs-index    (trigger, its page index)
+ * give every trigger --morph-tabs-trigger-progress (1 on its own page, 0 one page away), which
+ * drives the pill flex-grow, the label width / opacity and the icon opacity. No React render per frame.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs {
+  --morph-tabs-progress: 0;
+
+  @apply relative flex min-h-0 w-full flex-col;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * List (header row / tablist)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__list {
+  @apply flex w-full shrink-0 items-center gap-2 px-4 py-0.5;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (pill)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__trigger {
+  /* |position - index| folded into 0..1 */
+  --morph-tabs-trigger-progress: max(
+    0,
+    1 -
+      max(
+        var(--morph-tabs-progress) - var(--morph-tabs-index, -2),
+        var(--morph-tabs-index, -2) - var(--morph-tabs-progress)
+      )
+  );
+  --morph-tabs-trigger-morph: var(--morph-tabs-trigger-progress);
+
+  /* 42 px high; a collapsed pill is 17 + 18 (icon) + 17 = 52 px wide, measured in the Native demo.
+     rounded-3xl (= 3 x --radius) is fully round at the default radius and follows --radius like
+     the OSS Button / Tabs. */
+  @apply relative isolate flex h-10.5 shrink items-center justify-center rounded-3xl border-0 bg-default px-4.25 text-base font-medium text-foreground outline-none select-none no-highlight;
+  flex-basis: auto;
+  /* The active pill takes the free row space; neighbours split it mid-swipe */
+  flex-grow: calc(
+    var(--morph-tabs-trigger-grow-from, 0) +
+      (var(--morph-tabs-trigger-grow-to, 1) - var(--morph-tabs-trigger-grow-from, 0)) *
+      var(--morph-tabs-trigger-morph)
+  );
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    transform 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+  @apply transform-gpu motion-reduce:transition-none;
+
+  /* animation={false} / animation="disable-all": snap to the selected state */
+  &[data-morph="snap"] {
+    --morph-tabs-trigger-morph: var(--morph-tabs-trigger-selected, 0);
+  }
+
+  /* isAnimatedStyleActive={false}: no morph flex-grow */
+  &[data-animated-style="false"] {
+    flex-grow: 0;
+  }
+
+  @media (hover: hover) {
+    &:hover:not([data-disabled="true"]),
+    &[data-hovered="true"] {
+      background-color: var(--default-hover);
+    }
+  }
+
+  &:active:not([data-disabled="true"]),
+  &[data-pressed="true"] {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger background (absolute fill behind the pill content, empty by default)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__trigger-background {
+  @apply pointer-events-none absolute inset-0 -z-1 rounded-[inherit];
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon (stays visible, brightens as its page becomes active)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__icon {
+  --morph-tabs-icon-morph: var(--morph-tabs-trigger-progress, 1);
+
+  @apply relative flex shrink-0 items-center justify-center;
+  opacity: calc(
+    var(--morph-tabs-icon-opacity-from, 0.5) +
+      (var(--morph-tabs-icon-opacity-to, 1) - var(--morph-tabs-icon-opacity-from, 0.5)) *
+      var(--morph-tabs-icon-morph)
+  );
+
+  /* 18 px glyphs like the Native demo (override with a size utility on the icon) */
+  & svg {
+    @apply size-4.5 shrink-0;
+  }
+
+  &[data-morph="snap"] {
+    --morph-tabs-icon-morph: var(--morph-tabs-trigger-selected, 1);
+  }
+
+  &[data-animated-style="false"] {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label (clipping container 0 -> measured width, fades in as the pill expands)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__label {
+  --morph-tabs-label-morph: var(--morph-tabs-trigger-progress, 1);
+
+  @apply relative block min-w-0 shrink overflow-hidden;
+  /* --morph-tabs-label-width is measured on the client; the fallback only matters before that */
+  max-width: calc(var(--morph-tabs-label-width, 20em) * var(--morph-tabs-label-morph));
+  opacity: calc(
+    var(--morph-tabs-label-opacity-from, 0) +
+      (var(--morph-tabs-label-opacity-to, 1) - var(--morph-tabs-label-opacity-from, 0)) *
+      var(--morph-tabs-label-morph)
+  );
+
+  &[data-morph="snap"] {
+    --morph-tabs-label-morph: var(--morph-tabs-trigger-selected, 1);
+  }
+
+  &[data-animated-style="false"] {
+    max-width: none;
+    opacity: 1;
+  }
+}
+
+/* The inline-start padding is the icon gap, so it collapses together with the label */
+.morph-tabs__label-text {
+  /* Natural width (the container clips it), so its box size always reflects the measured width */
+  @apply block w-max overflow-hidden ps-1.5 text-start whitespace-nowrap;
+  text-overflow: clip;
+
+  &[data-ellipsize="tail"] {
+    @apply max-w-full;
+    text-overflow: ellipsis;
+  }
+
+  &[data-multiline="true"] {
+    @apply w-auto;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--morph-tabs-label-lines, 2);
+    line-clamp: var(--morph-tabs-label-lines, 2);
+    white-space: normal;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Pager (swipeable, pointer driven) + track
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__pager {
+  @apply relative min-h-0 w-full flex-1 overflow-hidden;
+  /* Horizontal moves belong to the pager, vertical ones still scroll the page */
+  touch-action: pan-y pinch-zoom;
+
+  &[data-swipe-enabled="false"] {
+    touch-action: auto;
+  }
+
+  &[data-dragging="true"] {
+    @apply cursor-grabbing select-none;
+  }
+}
+
+.morph-tabs__track {
+  @apply flex h-full w-full;
+  translate: calc(var(--morph-tabs-progress) * -100%) 0;
+
+  &:where(:dir(rtl), [dir="rtl"] *) {
+    translate: calc(var(--morph-tabs-progress) * 100%) 0;
+  }
+}
+
+.morph-tabs__pager[data-dragging="true"] > .morph-tabs__track {
+  will-change: translate;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (one page, scrolls vertically on its own)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-tabs__content {
+  /* Stop the per-frame pager position at the page boundary: page content does not need it, and
+     not inheriting it keeps style recalculation during swipes limited to the header and track. */
+  --morph-tabs-progress: initial;
+
+  @apply relative h-full w-full min-w-0 shrink-0 grow-0 basis-full overflow-x-hidden overflow-y-auto overscroll-y-contain outline-none;
+
+  &[data-focus-visible="true"] {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+}
+
+.morph-tabs__pager[data-swipe-enabled="true"] > .morph-tabs__track > .morph-tabs__content {
+  touch-action: pan-y pinch-zoom;
+}

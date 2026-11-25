@@ -17,6 +17,7 @@
 
 // Charts (no recharts import)
 export * from "./components/chart-tooltip";
+export * from "./components/stacked-meter";
 
 // Data Display
 export * from "./components/action-bar";
@@ -32,6 +33,7 @@ export * from "./components/item-card-group";
 export * from "./components/kanban";
 export * from "./components/kpi-group";
 export * from "./components/list-view";
+export * from "./components/swipeable-row";
 export * from "./components/timeline";
 export * from "./components/widget";
 
@@ -52,6 +54,11 @@ export * from "./components/prompt-suggestion";
 export * from "./components/reasoning";
 export * from "./components/text-shimmer";
 
+// Buttons (ported from HeroUI Pro Native)
+export * from "./components/fab";
+export * from "./components/morph-button";
+export * from "./components/slide-button";
+
 // Feedback
 export * from "./components/emoji-reaction-button";
 export * from "./components/number-value";
@@ -68,18 +75,24 @@ export * from "./components/checkbox-button-group";
 export * from "./components/drop-zone";
 export * from "./components/inline-select";
 export * from "./components/native-select";
+export * from "./components/number-pad";
 export * from "./components/radio-button-group";
+export * from "./components/wheel-picker";
+export * from "./components/wheel-picker-group";
 
 // Navigation
 export * from "./components/command";
 export * from "./components/context-menu";
+export * from "./components/morph-tabs";
 export * from "./components/navbar";
 export * from "./components/segment";
 export * from "./components/sidebar";
 export * from "./components/stepper";
+export * from "./components/swipeable-tabs";
 
 // Overlays
 export * from "./components/emoji-picker";
 
 // Utilities
+export * from "./components/haptics-provider";
 export * from "./components/overlay-scrollbars";

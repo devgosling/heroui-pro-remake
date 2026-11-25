@@ -1,0 +1,212 @@
+/* Morph Button - pressable surface that springs between its collapsed and expanded content
+   (web port of the HeroUI Pro Native component) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (the collapsed-size footprint)
+ *
+ * The collapsed content stays in flow, so the root always has the collapsed size and the surface
+ * overflows it without moving siblings. The surface size is written by the spring to
+ * --morph-button-surface-width / --morph-button-surface-height; until then it fills the root.
+ * ------------------------------------------------------------------------------------------------ */
+.morph-button {
+  /* Constant radius (= rounded-3xl, 24px by default, measured on the expanded corners in the demo):
+     a full pill at the default 40px collapsed height, a rounded panel when open */
+  --morph-button-radius: calc(var(--radius) * 3);
+
+  /* Surface colors (primary: inverted, high contrast) */
+  --morph-button-bg: var(--foreground);
+  --morph-button-bg-hover: color-mix(in oklab, var(--foreground) 88%, var(--background) 12%);
+  --morph-button-fg: var(--background);
+
+  /* Animated surface size (inline values from the spring win over these defaults) */
+  --morph-button-surface-width: 100%;
+  --morph-button-surface-height: 100%;
+  --morph-button-progress: 0;
+
+  /* Direction anchors: 0 = pinned to the start / top edge, 1 = pinned to the end / bottom edge.
+     Default = top: grows upward, centered horizontally. */
+  --morph-button-anchor-x: 0.5;
+  --morph-button-anchor-y: 1;
+  --morph-button-justify: center;
+  --morph-button-align: flex-end;
+
+  @apply relative isolate flex h-fit w-fit shrink-0;
+  color: var(--morph-button-fg);
+
+  /* Lift above siblings while the surface is larger than the footprint */
+  &[data-open="true"],
+  &[data-morphing="true"] {
+    @apply z-50;
+  }
+
+  &[data-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Variants
+ * ------------------------------------------------------------------------------------------------ */
+.morph-button--primary {
+  /* No styles as this is the default variant */
+}
+
+.morph-button--secondary {
+  --morph-button-bg: var(--default);
+  --morph-button-bg-hover: var(--default-hover);
+  --morph-button-fg: var(--default-foreground);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Directions (logical: start / end mirror in RTL)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-button--top {
+  /* No styles as this is the default direction */
+}
+
+.morph-button--top-end {
+  --morph-button-anchor-x: 0;
+  --morph-button-anchor-y: 1;
+  --morph-button-justify: flex-start;
+  --morph-button-align: flex-end;
+}
+
+.morph-button--end {
+  --morph-button-anchor-x: 0;
+  --morph-button-anchor-y: 0.5;
+  --morph-button-justify: flex-start;
+  --morph-button-align: center;
+}
+
+.morph-button--bottom-end {
+  --morph-button-anchor-x: 0;
+  --morph-button-anchor-y: 0;
+  --morph-button-justify: flex-start;
+  --morph-button-align: flex-start;
+}
+
+.morph-button--bottom {
+  --morph-button-anchor-x: 0.5;
+  --morph-button-anchor-y: 0;
+  --morph-button-justify: center;
+  --morph-button-align: flex-start;
+}
+
+.morph-button--bottom-start {
+  --morph-button-anchor-x: 1;
+  --morph-button-anchor-y: 0;
+  --morph-button-justify: flex-end;
+  --morph-button-align: flex-start;
+}
+
+.morph-button--start {
+  --morph-button-anchor-x: 1;
+  --morph-button-anchor-y: 0.5;
+  --morph-button-justify: flex-end;
+  --morph-button-align: center;
+}
+
+.morph-button--top-start {
+  --morph-button-anchor-x: 1;
+  --morph-button-anchor-y: 1;
+  --morph-button-justify: flex-end;
+  --morph-button-align: flex-end;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Surface (background) and expanded viewport (clips the panel) share the animated geometry
+ * ------------------------------------------------------------------------------------------------ */
+.morph-button__surface,
+.morph-button__expanded {
+  @apply absolute;
+  inset-inline-start: calc(
+    (100% - var(--morph-button-surface-width)) * var(--morph-button-anchor-x)
+  );
+  top: calc((100% - var(--morph-button-surface-height)) * var(--morph-button-anchor-y));
+  width: var(--morph-button-surface-width);
+  height: var(--morph-button-surface-height);
+  border-radius: var(--morph-button-radius);
+}
+
+.morph-button__surface {
+  @apply pointer-events-none z-0;
+  background-color: var(--morph-button-bg);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: background-color 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+}
+
+@media (hover: hover) {
+  .morph-button:has(
+      > .morph-button__collapsed-content:not([data-open="true"]):not([data-disabled="true"]):hover
+    )
+    > .morph-button__surface,
+  .morph-button:has(> .morph-button__collapsed-content[data-hovered="true"])
+    > .morph-button__surface {
+    background-color: var(--morph-button-bg-hover);
+  }
+}
+
+.morph-button__expanded {
+  @apply z-2 flex overflow-hidden;
+  justify-content: var(--morph-button-justify);
+  align-items: var(--morph-button-align);
+
+  /* Closed: let presses fall through to the collapsed content and the page */
+  &:not([data-open="true"]) {
+    @apply pointer-events-none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Collapsed content (in-flow trigger button; defines the footprint)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-button__collapsed-content {
+  @apply relative z-1 flex h-10 shrink-0 items-center gap-2 px-4 text-sm font-medium whitespace-nowrap outline-none select-none no-highlight;
+  border-radius: var(--morph-button-radius);
+  cursor: var(--cursor-interactive);
+  transform-origin: center;
+
+  /* Cross-fade timing comes from the `animation` prop (defaults: 200ms, ease-in-out-quad) */
+  transition:
+    opacity var(--morph-button-opacity-duration, 200ms)
+      var(--morph-button-opacity-easing, var(--ease-in-out-quad)),
+    scale var(--morph-button-scale-duration, 200ms)
+      var(--morph-button-scale-easing, var(--ease-in-out-quad));
+  @apply motion-reduce:transition-none;
+
+  &[data-open="true"] {
+    @apply pointer-events-none;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"] {
+    cursor: var(--cursor-disabled);
+  }
+
+  & svg {
+    @apply size-4 shrink-0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Expanded content (panel at its natural size, anchored to the pinned edge of the viewport)
+ * ------------------------------------------------------------------------------------------------ */
+.morph-button__expanded-content {
+  @apply flex w-max max-w-[calc(100vw-2rem)] flex-none flex-col gap-3 p-5 text-start outline-none;
+  transform-origin: center;
+
+  transition:
+    opacity var(--morph-button-opacity-duration, 200ms)
+      var(--morph-button-opacity-easing, var(--ease-in-out-quad)),
+    scale var(--morph-button-scale-duration, 200ms)
+      var(--morph-button-scale-easing, var(--ease-in-out-quad)),
+    visibility 0s linear var(--morph-button-visibility-delay, 0ms);
+  @apply motion-reduce:transition-none;
+}

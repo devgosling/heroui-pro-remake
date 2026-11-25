@@ -1,0 +1,178 @@
+/* Stacked Meter - one track split into proportional coloured segments plus a legend
+   (web port of the HeroUI Pro Native StackedMeter) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.stacked-meter {
+  /* Share transition (Native: withTiming, 300 ms, ease-in-out quad). Overridable per segment. */
+  --stacked-meter-grow-duration: 300ms;
+  --stacked-meter-grow-easing: var(--ease-in-out-quad);
+  /* Fixed start size of every segment before the shares are added (Native: ~2dp, like the gap) */
+  --stacked-meter-segment-basis: calc(var(--spacing) * 0.5);
+
+  @apply flex w-full min-w-0 flex-col gap-3;
+
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.stacked-meter--sm,
+.stacked-meter--md,
+.stacked-meter--lg {
+  /* Sizes only change the track (see .stacked-meter__track--*) */
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label
+ * ------------------------------------------------------------------------------------------------ */
+.stacked-meter__label {
+  @apply text-base font-semibold text-foreground;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Track - transparent 2px gaps between segments, rounded ends clip the first / last segment
+ * ------------------------------------------------------------------------------------------------ */
+.stacked-meter__track {
+  @apply relative flex h-2 w-full min-w-0 items-stretch gap-0.5 overflow-hidden rounded-sm;
+}
+
+.stacked-meter__track--sm {
+  @apply h-1 rounded-xs;
+}
+
+.stacked-meter__track--md {
+  /* No styles as this is the default size */
+}
+
+.stacked-meter__track--lg {
+  @apply h-3 rounded-md;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Segment + empty remainder (inline flex: share in percent, basis --stacked-meter-segment-basis)
+ * ------------------------------------------------------------------------------------------------ */
+.stacked-meter__segment,
+.stacked-meter__remainder {
+  @apply relative h-full min-w-0 shrink;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: flex-grow var(--stacked-meter-grow-duration) var(--stacked-meter-grow-easing);
+  @apply motion-reduce:transition-none;
+
+  &[data-animation="disabled"] {
+    transition: none;
+  }
+}
+
+.stacked-meter[data-animation="disabled"]
+  :where(.stacked-meter__segment, .stacked-meter__remainder) {
+  transition: none;
+}
+
+.stacked-meter__remainder {
+  @apply overflow-hidden bg-default;
+}
+
+/* Theme hook behind the empty remainder (e.g. a glass layer); empty by default */
+.stacked-meter__track-background {
+  @apply pointer-events-none absolute inset-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Segment / legend indicator colours
+ * colorClassName utilities (e.g. bg-[#3178c6]) live in the utilities layer and win over these.
+ * ------------------------------------------------------------------------------------------------ */
+.stacked-meter__segment,
+.stacked-meter__legend-indicator {
+  --stacked-meter-color: var(--chart-1);
+
+  background-color: var(--stacked-meter-color);
+}
+
+.stacked-meter__segment--default,
+.stacked-meter__legend-indicator--default {
+  --stacked-meter-color: var(--default-foreground);
+}
+
+.stacked-meter__segment--accent,
+.stacked-meter__legend-indicator--accent {
+  --stacked-meter-color: var(--accent);
+}
+
+.stacked-meter__segment--success,
+.stacked-meter__legend-indicator--success {
+  --stacked-meter-color: var(--success);
+}
+
+.stacked-meter__segment--warning,
+.stacked-meter__legend-indicator--warning {
+  --stacked-meter-color: var(--warning);
+}
+
+.stacked-meter__segment--danger,
+.stacked-meter__legend-indicator--danger {
+  --stacked-meter-color: var(--danger);
+}
+
+.stacked-meter__segment--chart-1,
+.stacked-meter__legend-indicator--chart-1 {
+  --stacked-meter-color: var(--chart-1);
+}
+
+.stacked-meter__segment--chart-2,
+.stacked-meter__legend-indicator--chart-2 {
+  --stacked-meter-color: var(--chart-2);
+}
+
+.stacked-meter__segment--chart-3,
+.stacked-meter__legend-indicator--chart-3 {
+  --stacked-meter-color: var(--chart-3);
+}
+
+.stacked-meter__segment--chart-4,
+.stacked-meter__legend-indicator--chart-4 {
+  --stacked-meter-color: var(--chart-4);
+}
+
+.stacked-meter__segment--chart-5,
+.stacked-meter__legend-indicator--chart-5 {
+  --stacked-meter-color: var(--chart-5);
+}
+
+/* Keep the data colours in Windows high-contrast mode */
+@media (forced-colors: active) {
+  .stacked-meter__segment,
+  .stacked-meter__legend-indicator {
+    forced-color-adjust: none;
+  }
+
+  .stacked-meter__track {
+    outline: 1px solid CanvasText;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Legend
+ * ------------------------------------------------------------------------------------------------ */
+.stacked-meter__legend {
+  @apply flex flex-wrap items-center gap-x-4 gap-y-1.5;
+}
+
+.stacked-meter__legend-item {
+  @apply flex min-w-0 items-center gap-1.5 text-sm;
+}
+
+.stacked-meter__legend-indicator {
+  @apply size-2 shrink-0 rounded-full;
+}
+
+.stacked-meter__legend-label {
+  @apply font-semibold text-foreground;
+}
+
+.stacked-meter__legend-value {
+  @apply text-muted tabular-nums;
+}

@@ -1,0 +1,270 @@
+/* FAB - floating action button that expands into a speed-dial column (HeroUI Pro Native port) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Shared progress
+ * The driver writes --fab-progress (0 idle, 1 open, 2 close) on the root and on the portal layer.
+ * Every part maps it piecewise-linearly over the [idle, open, close] states:
+ *   value = idle + (open - idle) * --fab-open + (close - open) * --fab-close
+ * ------------------------------------------------------------------------------------------------ */
+.fab,
+.fab__portal {
+  --fab-progress: 0;
+  --fab-open: min(var(--fab-progress), 1);
+  --fab-close: max(calc(var(--fab-progress) - 1), 0);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (position it with utilities: `absolute bottom-6 right-6`, `fixed bottom-6 end-6`, ...)
+ * ------------------------------------------------------------------------------------------------ */
+.fab {
+  @apply relative inline-flex shrink-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (48px accent circle; its content rotates with the progress)
+ * ------------------------------------------------------------------------------------------------ */
+.fab__trigger {
+  @apply relative inline-flex size-12 shrink-0 items-center justify-center rounded-full border-0 bg-accent p-0 text-accent-foreground shadow-surface outline-none select-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* Rotation (deg) for [idle, open, close]; FAB.Trigger `animation.rotate.value` overrides */
+  --fab-trigger-rotate-idle: 0;
+  --fab-trigger-rotate-open: 45;
+  --fab-trigger-rotate-close: 0;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  & svg {
+    @apply size-5.5 shrink-0;
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      background-color: var(--accent-hover);
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    background-color: var(--accent-hover);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.fab__trigger-content {
+  @apply pointer-events-none inline-flex items-center justify-center;
+  rotate: calc(
+    (
+        var(--fab-trigger-rotate-idle) +
+          (var(--fab-trigger-rotate-open) - var(--fab-trigger-rotate-idle)) * var(--fab-open) +
+          (var(--fab-trigger-rotate-close) - var(--fab-trigger-rotate-open)) * var(--fab-close)
+      ) *
+      1deg
+  );
+
+  &[data-animated="false"] {
+    rotate: none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Portal layer (fixed to the viewport, or covering a custom `container`)
+ * ------------------------------------------------------------------------------------------------ */
+.fab__portal {
+  @apply pointer-events-none fixed inset-0 z-50;
+
+  &[data-contained="true"] {
+    @apply absolute;
+  }
+
+  /* Nothing is interactive while the close animation plays */
+  &[data-exiting="true"],
+  &[data-exiting="true"] * {
+    pointer-events: none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Overlay (dims the screen; pressing it closes the FAB)
+ * ------------------------------------------------------------------------------------------------ */
+.fab__overlay {
+  @apply pointer-events-auto absolute inset-0 bg-black/20;
+
+  /* Opacity for [idle, open, close]; FAB.Overlay `animation.opacity.value` overrides */
+  --fab-overlay-opacity-idle: 0;
+  --fab-overlay-opacity-open: 1;
+  --fab-overlay-opacity-close: 0;
+
+  opacity: calc(
+    var(--fab-overlay-opacity-idle) +
+      (var(--fab-overlay-opacity-open) - var(--fab-overlay-opacity-idle)) * var(--fab-open) +
+      (var(--fab-overlay-opacity-close) - var(--fab-overlay-opacity-open)) * var(--fab-close)
+  );
+
+  &[data-animated="false"] {
+    opacity: 1;
+  }
+}
+
+/* Blur variant: the blur radius (and a light tint) follow the progress instead of the opacity */
+.fab__overlay--blur {
+  @apply bg-transparent;
+
+  /* 0-100, FAB.Overlay `blurViewProps.intensity` overrides; 100 = 20px blur */
+  --fab-overlay-blur-intensity: 50;
+  --fab-overlay-blur-level: calc(var(--fab-open) - var(--fab-close));
+  --fab-overlay-tint: var(--background);
+
+  -webkit-backdrop-filter: blur(
+    calc(var(--fab-overlay-blur-intensity) * var(--fab-overlay-blur-level) * 0.2px)
+  );
+  backdrop-filter: blur(
+    calc(var(--fab-overlay-blur-intensity) * var(--fab-overlay-blur-level) * 0.2px)
+  );
+
+  &::before {
+    @apply pointer-events-none absolute inset-0;
+    content: "";
+    background-color: var(--fab-overlay-tint);
+    opacity: calc(var(--fab-overlay-blur-level) * var(--fab-overlay-blur-intensity) * 0.006);
+  }
+
+  &[data-tint="light"] {
+    --fab-overlay-tint: var(--color-white);
+  }
+
+  &[data-tint="dark"] {
+    --fab-overlay-tint: var(--color-black);
+  }
+
+  &[data-tint="none"] {
+    --fab-overlay-tint: transparent;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (column of items next to the trigger; hugs the trigger edge)
+ * ------------------------------------------------------------------------------------------------ */
+.fab__content {
+  @apply pointer-events-none absolute top-0 left-0 flex w-max flex-col items-end gap-2.5 outline-none;
+
+  /* Direction the items travel from (towards the trigger) */
+  --fab-item-dir-x: 0;
+  --fab-item-dir-y: 1;
+
+  &[data-align="start"] {
+    @apply items-start;
+  }
+
+  &[data-align="center"] {
+    @apply items-center;
+  }
+
+  &[data-align="end"] {
+    @apply items-end;
+  }
+
+  &[data-placement="bottom"] {
+    --fab-item-dir-y: -1;
+  }
+
+  &[data-placement="left"] {
+    --fab-item-dir-x: 1;
+    --fab-item-dir-y: 0;
+    @apply items-end rtl:items-start;
+  }
+
+  &[data-placement="right"] {
+    --fab-item-dir-x: -1;
+    --fab-item-dir-y: 0;
+    @apply items-start rtl:items-end;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (40px rounded action row, radius 2xl = 16px at the default --radius; appears with the
+ * progress, staggered from the trigger)
+ * ------------------------------------------------------------------------------------------------ */
+.fab__item {
+  @apply pointer-events-auto relative isolate inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border-0 bg-overlay px-4 py-0 text-sm font-medium whitespace-nowrap text-overlay-foreground shadow-surface outline-none select-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* Visibility 0..1: the item's window of the open phase minus its window of the close phase */
+  --fab-item-v: calc(
+    clamp(0, (var(--fab-open) - var(--fab-item-open-start, 0)) / var(--fab-item-window, 1), 1) -
+      clamp(0, (var(--fab-close) - var(--fab-item-close-start, 0)) / var(--fab-item-window, 1), 1)
+  );
+  --fab-item-hidden: calc(1 - var(--fab-item-v));
+
+  opacity: var(--fab-item-v);
+  translate: calc(
+      var(--fab-item-dir-x) * var(--fab-item-hidden) * var(--fab-item-translate, 16) * 1px
+    )
+    calc(var(--fab-item-dir-y) * var(--fab-item-hidden) * var(--fab-item-translate, 16) * 1px);
+  scale: calc(
+    var(--fab-item-scale-from, 0.9) +
+      (var(--fab-item-scale-to, 1) - var(--fab-item-scale-from, 0.9)) * var(--fab-item-v)
+  );
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: background-color 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+
+  & svg {
+    @apply size-4 shrink-0;
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      background-color: color-mix(in oklab, var(--overlay) 94%, var(--overlay-foreground) 6%);
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    background-color: color-mix(in oklab, var(--overlay) 90%, var(--overlay-foreground) 10%);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  /* Static items (animation off) are simply visible while mounted */
+  &[data-animated="false"] {
+    --fab-item-v: 1;
+  }
+
+  /* status-disabled would override the animated opacity, so scale it instead */
+  &:disabled,
+  &[data-disabled="true"] {
+    opacity: calc(var(--fab-item-v) * var(--disabled-opacity));
+    cursor: var(--cursor-disabled);
+    pointer-events: none;
+  }
+}
+
+.fab__item-background {
+  @apply pointer-events-none absolute inset-0 -z-1 overflow-hidden;
+  border-radius: inherit;
+}
+
+.fab__item-label {
+  @apply whitespace-nowrap;
+}

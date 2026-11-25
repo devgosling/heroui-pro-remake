@@ -1,0 +1,181 @@
+/* Slide Button - slide-to-confirm control (web port of the HeroUI Pro Native SlideButton)
+ *
+ * Geometry is driven by custom properties on the root:
+ *   --slide-button-progress     0..1, written by JS on every gesture / animation frame
+ *   --slide-button-thumb-width  measured thumb width (falls back to the default w-20)
+ * The content container is an inline-size query container, so 100cqw is the track width the thumb
+ * travels in; the thumb, the overlay fill and the underlay clip are all derived from it in CSS.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (track container)
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button {
+  /* Variant tokens - the base carries the default variant */
+  --slide-button-label-color: var(--accent);
+  --slide-button-fill: var(--accent-soft);
+  --slide-button-thumb-background: var(--surface);
+  --slide-button-thumb-foreground: var(--muted);
+
+  /* Geometry: 56px track, 6px inset, 80x44 thumb; radii follow --radius (pill by default) */
+  --slide-button-progress: 0;
+  --slide-button-padding: 0.375rem;
+  --slide-button-radius: calc(var(--radius) * 3.5);
+  --slide-button-thumb-radius: max(
+    0px,
+    calc(var(--slide-button-radius) - var(--slide-button-padding))
+  );
+  --slide-button-thumb-width: 5rem;
+  --slide-button-direction: 1;
+
+  @apply relative isolate flex h-14 w-full min-w-0 shrink-0 bg-default select-none no-highlight;
+  padding: var(--slide-button-padding);
+  border-radius: var(--slide-button-radius);
+  -webkit-touch-callout: none;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    opacity 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+
+  &:where(:dir(rtl), [dir="rtl"], [dir="rtl"] *) {
+    --slide-button-direction: -1;
+  }
+
+  &[data-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.slide-button--default {
+  /* No styles as the base carries the default variant */
+}
+
+/* The thumb stays a surface for every variant (the docs example renders a success-colored spinner
+ * inside the success thumb); the variant colors the label, the fill and the thumb icon. */
+.slide-button--accent {
+  --slide-button-thumb-foreground: var(--accent);
+}
+
+.slide-button--success {
+  --slide-button-label-color: var(--success);
+  --slide-button-fill: var(--success-soft);
+  --slide-button-thumb-foreground: var(--success);
+}
+
+.slide-button--danger {
+  --slide-button-label-color: var(--danger);
+  --slide-button-fill: var(--danger-soft);
+  --slide-button-thumb-foreground: var(--danger);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content container (area the thumb travels in)
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button__content {
+  @apply relative z-1 min-w-0 flex-1;
+  container-type: inline-size;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Container background (optional layer behind the content, e.g. a gradient or blur)
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button__background {
+  @apply pointer-events-none absolute inset-0 z-0 overflow-hidden;
+  border-radius: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Underlay - clip wrapper anchored to the end, shrinks as the thumb slides (edge under the thumb)
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button__underlay {
+  @apply pointer-events-none absolute inset-y-0 end-0 z-0 overflow-hidden;
+  width: max(
+    0px,
+    calc(
+      100cqw - var(--slide-button-thumb-width) / 2 - var(--slide-button-progress) *
+        (100cqw - var(--slide-button-thumb-width))
+    )
+  );
+}
+
+.slide-button__underlay-content {
+  @apply absolute inset-y-0 end-0 flex items-center justify-center;
+  width: 100cqw;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Overlay - progress fill, grows from the start up to the thumb's trailing edge
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button__overlay {
+  @apply pointer-events-none absolute inset-y-0 start-0 z-1 overflow-hidden;
+  width: calc(
+    var(--slide-button-thumb-width) + var(--slide-button-progress) *
+      (100cqw - var(--slide-button-thumb-width))
+  );
+  border-radius: var(--slide-button-thumb-radius);
+}
+
+.slide-button__overlay-content {
+  @apply absolute inset-y-0 start-0 flex items-center justify-center;
+  width: 100cqw;
+  background-color: var(--slide-button-fill);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Thumb (draggable handle)
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button__thumb {
+  @apply absolute inset-y-0 start-0 z-2 m-0 flex w-20 items-center justify-center border-0 p-0 shadow-surface outline-none select-none no-highlight;
+  border-radius: var(--slide-button-thumb-radius);
+  background-color: var(--slide-button-thumb-background);
+  color: var(--slide-button-thumb-foreground);
+  translate: calc(var(--slide-button-progress) * (100cqw - 100%) * var(--slide-button-direction)) 0;
+  /* Horizontal drags belong to the thumb; vertical swipes still scroll the page */
+  touch-action: pan-y;
+  cursor: grab;
+  will-change: translate;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  &[data-dragging="true"] {
+    cursor: grabbing;
+  }
+
+  &[data-completed="true"] {
+    cursor: default;
+  }
+
+  /* isAnimatedStyleActive={false}: the consumer positions the thumb */
+  &[data-animated-style="false"] {
+    translate: none;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+}
+
+.slide-button__thumb-icon {
+  @apply pointer-events-none size-5 shrink-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label (inherits the variant color)
+ * ------------------------------------------------------------------------------------------------ */
+.slide-button__label {
+  @apply min-w-0 truncate px-2 text-sm font-medium;
+  color: var(--slide-button-label-color);
+}
+
+/* Completion announcement for screen readers */
+.slide-button__live {
+  @apply sr-only;
+}

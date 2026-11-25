@@ -23,6 +23,7 @@
 @import "./components/pie-chart.css" layer(components);
 @import "./components/radar-chart.css" layer(components);
 @import "./components/radial-chart.css" layer(components);
+@import "./components/stacked-meter.css" layer(components);
 
 /* Feedback */
 @import "./components/pressable-feedback.css" layer(components);
@@ -30,6 +31,11 @@
 @import "./components/trend-chip.css" layer(components);
 @import "./components/emoji-reaction-button.css" layer(components);
 @import "./components/rating.css" layer(components);
+
+/* Buttons (HeroUI Pro Native) */
+@import "./components/fab.css" layer(components);
+@import "./components/morph-button.css" layer(components);
+@import "./components/slide-button.css" layer(components);
 
 /* Layout */
 @import "./components/resizable.css" layer(components);
@@ -46,6 +52,9 @@
 @import "./components/native-select.css" layer(components);
 @import "./components/radio-button-group.css" layer(components);
 @import "./components/rich-text-editor.css" layer(components);
+@import "./components/number-pad.css" layer(components);
+@import "./components/wheel-picker.css" layer(components);
+@import "./components/wheel-picker-group.css" layer(components);
 
 /* Data display */
 @import "./components/kpi.css" layer(components);
@@ -66,6 +75,7 @@
 @import "./components/map.css" layer(components);
 @import "./components/timeline.css" layer(components);
 @import "./components/widget.css" layer(components);
+@import "./components/swipeable-row.css" layer(components);
 
 /* Navigation */
 @import "./components/segment.css" layer(components);
@@ -75,6 +85,8 @@
 @import "./components/navbar.css" layer(components);
 @import "./components/sidebar.css" layer(components);
 @import "./components/app-layout.css" layer(components);
+@import "./components/morph-tabs.css" layer(components);
+@import "./components/swipeable-tabs.css" layer(components);
 
 /* Overlays */
 @import "./components/emoji-picker.css" layer(components);

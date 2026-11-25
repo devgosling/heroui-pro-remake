@@ -207,6 +207,13 @@ const Sidebar = ({route}: {route: Route}) => {
 /* -------------------------------------------------------------------------------------------------
  * Overview
  * -----------------------------------------------------------------------------------------------*/
+/** Marks components ported from HeroUI Pro Native. */
+const NativeBadge = () => (
+  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-soft-foreground">
+    Native
+  </span>
+);
+
 const Card = ({children, href}: {children: ReactNode; href: string}) => (
   <a
     className="flex items-center justify-between gap-3 rounded-2xl bg-surface p-4 shadow-surface transition-transform hover:-translate-y-0.5"
@@ -269,7 +276,10 @@ const ProOverview = () => {
               return (
                 <Card key={item.slug} href={hrefFor("pro", item.slug)}>
                   <span className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium">{item.name}</span>
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      {item.name}
+                      {item.origin === "native" ? <NativeBadge /> : null}
+                    </span>
                     <span className="text-xs text-muted tabular-nums">
                       {count} / {item.proVariants} Varianten
                     </span>
@@ -422,20 +432,25 @@ const ProPage = ({entry}: {entry: CatalogEntry}) => {
   return (
     <ComponentPage
       badge={
-        <span className="flex items-center gap-1.5 rounded-full bg-default px-2.5 py-0.5 text-xs text-default-foreground">
-          <span className={`size-1.5 rounded-full ${STATUS_DOT[status]}`} />
-          {STATUS_LABEL[status]} · {count}/{entry.proVariants} Varianten
-        </span>
+        <>
+          <span className="flex items-center gap-1.5 rounded-full bg-default px-2.5 py-0.5 text-xs text-default-foreground">
+            <span className={`size-1.5 rounded-full ${STATUS_DOT[status]}`} />
+            {STATUS_LABEL[status]} · {count}/{entry.proVariants} Varianten
+          </span>
+          {entry.origin === "native" ? <NativeBadge /> : null}
+        </>
       }
       file={STORY_FILES[entry.slug]}
       links={
         <a
           className="flex w-fit items-center gap-1 text-sm text-muted hover:text-foreground"
-          href={PRO_DOCS_URL(entry.slug)}
+          href={PRO_DOCS_URL(entry)}
           rel="noreferrer"
           target="_blank"
         >
-          Original auf heroui.pro vergleichen
+          {entry.origin === "native"
+            ? "Original in HeroUI Pro Native vergleichen (für das Web nachgebaut)"
+            : "Original auf heroui.pro vergleichen"}
           <Icon className="size-3.5" icon="gravity-ui:arrow-up-right-from-square" />
         </a>
       }

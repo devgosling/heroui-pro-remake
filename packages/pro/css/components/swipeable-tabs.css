@@ -1,0 +1,189 @@
+/* SwipeableTabs - tabs whose pages you swipe between, with an indicator that follows the swipe
+ * (web port of the HeroUI Pro Native component). The tab list reuses the HeroUI Tabs look; the
+ * pager and the indicator are driven by the fractional page position exposed as
+ * --swipeable-tabs-progress on the root. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs {
+  @apply relative flex min-h-0 min-w-0 flex-col;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * List (pill surface in the primary variant, bare row in the secondary variant)
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__list {
+  @apply relative isolate inline-flex max-w-full shrink-0 items-center self-start bg-default p-1;
+  border-radius: calc(var(--radius) * 2.5);
+
+  /* The scroll view owns the padding so the scrolled triggers clip at the pill edge. */
+  &:has(> .swipeable-tabs__scroll-view) {
+    @apply p-0;
+  }
+}
+
+.swipeable-tabs__list--secondary {
+  @apply rounded-none bg-transparent p-0;
+}
+
+/* Optional layer behind the list surface (custom backgrounds such as a blur). */
+.swipeable-tabs__list-background {
+  @apply pointer-events-none absolute inset-0 -z-1 overflow-hidden;
+  border-radius: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * ScrollView (horizontal scroller for many triggers; the selected trigger scrolls into view)
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__scroll-view {
+  @apply relative min-w-0 flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain;
+  border-radius: inherit;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.swipeable-tabs__scroll-view-content {
+  @apply relative isolate inline-flex w-max min-w-full items-center p-1;
+}
+
+.swipeable-tabs__scroll-view-content--secondary {
+  @apply p-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__trigger {
+  @apply relative z-1 flex h-8 shrink-0 items-center justify-center gap-1.5 px-3 text-center text-base font-medium whitespace-nowrap text-muted outline-none select-none no-highlight;
+  border-radius: calc(var(--radius) * 3);
+  cursor: var(--cursor-interactive);
+
+  /* The label colour switches instantly with the selection (as in the Native demo: within one
+   * frame), only hover opacity and the focus ring animate.
+   * CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    opacity 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  &[data-selected="true"] {
+    @apply text-segment-foreground;
+  }
+
+  @media (hover: hover) {
+    &:not([data-selected="true"]):not([data-disabled="true"]):hover,
+    &[data-hovered="true"]:not([data-selected="true"]):not([data-disabled="true"]) {
+      @apply opacity-70;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  & svg {
+    @apply size-4 shrink-0;
+  }
+}
+
+.swipeable-tabs__trigger--secondary {
+  @apply rounded-none;
+
+  &[data-selected="true"] {
+    @apply text-foreground;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__label {
+  @apply truncate;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Separator (between two triggers, hidden while either of them is selected)
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__separator {
+  @apply pointer-events-none h-4 w-px shrink-0 self-center rounded-sm bg-muted/25;
+
+  /* Duration comes from the `animation` prop (200ms by default). */
+  transition-property: opacity;
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (interpolates between the measured triggers with the pager position)
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__indicator {
+  @apply pointer-events-none absolute top-0 left-0 z-0 bg-segment opacity-0 shadow-surface;
+  border-radius: calc(var(--radius) * 3);
+  width: var(--swipeable-tabs-indicator-width, 0px);
+  height: var(--swipeable-tabs-indicator-height, 0px);
+  translate: var(--swipeable-tabs-indicator-x, 0px) var(--swipeable-tabs-indicator-y, 0px);
+
+  /* Only the first appearance fades; position and size follow the pager every frame. */
+  transition: opacity 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+
+  &[data-ready="true"] {
+    @apply opacity-100;
+  }
+}
+
+.swipeable-tabs__indicator--secondary {
+  @apply top-auto bottom-0 h-0.5 rounded-none bg-accent shadow-none;
+  translate: var(--swipeable-tabs-indicator-x, 0px) 0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Pager (pages side by side; the track moves with the fractional page position)
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__pager {
+  @apply relative min-h-0 w-full flex-1 overflow-hidden;
+
+  /* Horizontal pans belong to the pager, vertical pans and pinch-zoom stay with the browser. */
+  touch-action: pan-y pinch-zoom;
+
+  &[data-dragging="true"] {
+    @apply select-none;
+    cursor: grabbing;
+  }
+}
+
+.swipeable-tabs__pager-track {
+  @apply flex h-full w-full;
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (one page)
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-tabs__content {
+  @apply h-full w-full min-w-0 shrink-0 grow-0 basis-full overflow-x-hidden overflow-y-auto outline-none;
+
+  /* Pages are scroll containers: keep horizontal pans for the pager inside them too. */
+  touch-action: pan-y pinch-zoom;
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply ring-2 ring-focus ring-inset;
+  }
+}
+
+.swipeable-tabs__lazy-placeholder {
+  @apply flex h-full min-h-24 w-full items-center justify-center;
+}

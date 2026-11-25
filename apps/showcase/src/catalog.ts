@@ -1,11 +1,14 @@
 /**
- * Every HeroUI Pro (web) component with the number of demo variants the original documents.
+ * Every HeroUI Pro (web) component with the number of demo variants the original documents, plus the
+ * HeroUI Pro Native components that were ported to the web (`origin: "native"`).
  * The showcase compares this with the stories that exist in packages/pro.
  */
 export interface CatalogEntry {
   slug: string;
   name: string;
   proVariants: number;
+  /** "native" = ported from HeroUI Pro Native (documented there, variant count = its docs sections). */
+  origin?: "native";
 }
 
 export interface CatalogCategory {
@@ -19,6 +22,11 @@ const entry = (slug: string, name: string, proVariants: number): CatalogEntry =>
   slug,
 });
 
+const nativeEntry = (slug: string, name: string, proVariants: number): CatalogEntry => ({
+  ...entry(slug, name, proVariants),
+  origin: "native",
+});
+
 export const CATALOG: CatalogCategory[] = [
   {
     items: [
@@ -30,6 +38,7 @@ export const CATALOG: CatalogCategory[] = [
       entry("pie-chart", "Pie Chart", 7),
       entry("radar-chart", "Radar Chart", 5),
       entry("radial-chart", "Radial Chart", 5),
+      nativeEntry("stacked-meter", "Stacked Meter", 10),
     ],
     name: "Charts",
   },
@@ -51,6 +60,7 @@ export const CATALOG: CatalogCategory[] = [
       entry("kpi-group", "KPI Group", 3),
       entry("list-view", "List View", 5),
       entry("map", "Map", 10),
+      nativeEntry("swipeable-row", "Swipeable Row", 11),
       entry("timeline", "Timeline", 8),
       entry("widget", "Widget", 8),
     ],
@@ -81,6 +91,14 @@ export const CATALOG: CatalogCategory[] = [
   },
   {
     items: [
+      nativeEntry("fab", "FAB", 9),
+      nativeEntry("morph-button", "Morph Button", 9),
+      nativeEntry("slide-button", "Slide Button", 7),
+    ],
+    name: "Buttons",
+  },
+  {
+    items: [
       entry("emoji-reaction-button", "Emoji Reaction Button", 4),
       entry("number-value", "Number Value", 8),
       entry("pressable-feedback", "Pressable Feedback", 17),
@@ -103,9 +121,12 @@ export const CATALOG: CatalogCategory[] = [
       entry("drop-zone", "Drop Zone", 9),
       entry("inline-select", "Inline Select", 5),
       entry("native-select", "Native Select", 12),
+      nativeEntry("number-pad", "Number Pad", 7),
       entry("number-stepper", "Number Stepper", 13),
       entry("radio-button-group", "Radio Button Group", 12),
       entry("rich-text-editor", "Rich Text Editor", 8),
+      nativeEntry("wheel-picker", "Wheel Picker", 11),
+      nativeEntry("wheel-picker-group", "Wheel Picker Group", 9),
     ],
     name: "Forms",
   },
@@ -114,10 +135,12 @@ export const CATALOG: CatalogCategory[] = [
       entry("app-layout", "AppLayout", 14),
       entry("command", "Command", 9),
       entry("context-menu", "Context Menu", 7),
+      nativeEntry("morph-tabs", "Morph Tabs", 10),
       entry("navbar", "Navbar", 7),
       entry("segment", "Segment", 11),
       entry("sidebar", "Sidebar", 16),
       entry("stepper", "Stepper", 19),
+      nativeEntry("swipeable-tabs", "Swipeable Tabs", 11),
     ],
     name: "Navigation",
   },
@@ -129,4 +152,5 @@ export const CATALOG: CatalogCategory[] = [
 
 export const ALL_ENTRIES = CATALOG.flatMap((category) => category.items);
 
-export const PRO_DOCS_URL = (slug: string) => `https://heroui.pro/docs/react/components/${slug}`;
+export const PRO_DOCS_URL = ({origin, slug}: CatalogEntry) =>
+  `https://heroui.pro/docs/${origin === "native" ? "native" : "react"}/components/${slug}`;

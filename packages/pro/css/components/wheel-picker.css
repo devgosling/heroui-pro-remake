@@ -1,0 +1,185 @@
+/* Wheel Picker - web port of the HeroUI Pro Native component: a vertical, row-snapping wheel with
+   distance-based fade / scale / label colour, a selection band and optional fade masks.
+   The engine writes the scroll position to `--wheel-picker-offset` (rows) every frame; everything
+   below is derived from it in CSS, so rows never re-render while the wheel moves. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (viewport, role="listbox")
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker {
+  /* Layout (itemHeight / visibleCount props set these inline) */
+  --wheel-picker-item-height: 44px;
+  --wheel-picker-visible-count: 5;
+  /* Scroll position in rows (0 = first row centred) and its 0..1 progress through the list */
+  --wheel-picker-offset: 0;
+  --wheel-picker-progress: 0;
+  /* [edge, center] ranges of the per-row interpolation (the `animation` prop overrides them) */
+  --wheel-picker-opacity-edge: 0.5;
+  --wheel-picker-opacity-center: 1;
+  --wheel-picker-scale-edge: 0.85;
+  --wheel-picker-scale-center: 1;
+  --wheel-picker-label-color-edge: var(--foreground);
+  --wheel-picker-label-color-center: var(--accent-soft-foreground);
+
+  @apply relative isolate block w-full overflow-hidden outline-none select-none no-highlight;
+  height: calc(var(--wheel-picker-visible-count) * var(--wheel-picker-item-height));
+  /* Vertical drags move the wheel; horizontal pans (pagers) and pinch-zoom stay with the page */
+  touch-action: pan-x pinch-zoom;
+
+  &[data-dragging="true"] {
+    cursor: grabbing;
+  }
+
+  /* Keyboard focus rings the selection band (below); without a band the whole wheel */
+  &[data-focus-visible="true"]:not(:has(.wheel-picker__indicator-highlight)) {
+    @apply status-focused;
+  }
+
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* Wheels nested in a WheelPickerGroup share the row evenly */
+.wheel-picker[data-in-group="true"] {
+  @apply w-auto min-w-0 flex-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (scrolling track, contentContainer slot)
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker__content {
+  @apply relative z-1 flex flex-col;
+  /* Centre the selected row: (half the visible rows - offset) row heights */
+  transform: translate3d(
+    0,
+    calc(
+      ((var(--wheel-picker-visible-count) - 1) / 2 - var(--wheel-picker-offset)) *
+        var(--wheel-picker-item-height)
+    ),
+    0
+  );
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (row, role="option")
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker__item {
+  /* Absolute distance from the centre in rows (absDistance): 0 centred, 0.5 band edge, 1+ away */
+  --wheel-picker-distance: max(
+    var(--wheel-picker-index, 0) - var(--wheel-picker-offset),
+    var(--wheel-picker-offset) - var(--wheel-picker-index, 0)
+  );
+  /* 0 at the centre .. 1 at the farthest visible row, linear (measured in the demo video: with
+     the default [0.5, 1] opacity, rows one step away show 0.75 and the outermost rows 0.5) */
+  --wheel-picker-falloff: clamp(
+    0,
+    var(--wheel-picker-distance) / max(1, (var(--wheel-picker-visible-count) - 1) / 2),
+    1
+  );
+  /* Label colour only interpolates inside the half-row selection band */
+  --wheel-picker-band: clamp(0, 1 - var(--wheel-picker-distance) * 2, 1);
+  --wheel-picker-label-color: color-mix(
+    in oklab,
+    var(--wheel-picker-label-color-center) calc(var(--wheel-picker-band) * 100%),
+    var(--wheel-picker-label-color-edge)
+  );
+  /* Animated row values. WheelPicker.Item also applies them inline, so (like Native) className
+     utilities cannot override them; use the `animation` prop or the `style` prop instead. */
+  --wheel-picker-item-opacity: calc(
+    var(--wheel-picker-opacity-center) +
+      (var(--wheel-picker-opacity-edge) - var(--wheel-picker-opacity-center)) *
+      var(--wheel-picker-falloff)
+  );
+  --wheel-picker-item-scale: calc(
+    var(--wheel-picker-scale-center) +
+      (var(--wheel-picker-scale-edge) - var(--wheel-picker-scale-center)) *
+      var(--wheel-picker-falloff)
+  );
+
+  @apply relative flex w-full shrink-0 items-center justify-center gap-3 px-4 outline-none;
+  height: var(--wheel-picker-item-height);
+  cursor: var(--cursor-interactive);
+  opacity: var(--wheel-picker-item-opacity);
+  scale: var(--wheel-picker-item-scale);
+}
+
+/* animation={false} / "disabled" / "disable-all": rows snap, only the selected row is coloured */
+.wheel-picker[data-item-animation="disabled"] .wheel-picker__item {
+  --wheel-picker-label-color: var(--wheel-picker-label-color-edge);
+  --wheel-picker-item-opacity: 1;
+  --wheel-picker-item-scale: 1;
+
+  &[data-selected="true"] {
+    --wheel-picker-label-color: var(--wheel-picker-label-color-center);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item label
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker__item-label {
+  @apply min-w-0 truncate text-center text-lg;
+  color: var(--wheel-picker-label-color, var(--foreground));
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (selection band behind the centre row)
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker__indicator {
+  @apply pointer-events-none absolute inset-x-0 z-0 flex;
+  top: calc((var(--wheel-picker-visible-count) - 1) / 2 * var(--wheel-picker-item-height));
+  height: var(--wheel-picker-item-height);
+}
+
+.wheel-picker__indicator-highlight {
+  @apply relative isolate size-full rounded-2xl bg-default;
+
+  @media (forced-colors: active) {
+    outline: 1px solid CanvasText;
+  }
+}
+
+.wheel-picker[data-focus-visible="true"] .wheel-picker__indicator-highlight {
+  /* Inset so the root's overflow clipping cannot cut the ring */
+  @apply status-focused ring-inset;
+}
+
+/* Themable layer behind the band's content (empty in the default theme) */
+.wheel-picker__indicator-background {
+  @apply absolute inset-0 -z-1 overflow-hidden;
+  border-radius: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Mask (top / bottom fades into the surrounding surface)
+ * ------------------------------------------------------------------------------------------------ */
+.wheel-picker__mask {
+  --wheel-picker-mask-color: var(--background);
+
+  @apply pointer-events-none absolute inset-0 z-2;
+}
+
+.wheel-picker__mask-fade {
+  @apply absolute inset-x-0;
+  /* Default: (visibleCount - 1) / 4 rows, i.e. one row for five visible rows */
+  height: min(
+    var(
+      --wheel-picker-mask-height,
+      calc((var(--wheel-picker-visible-count) - 1) / 4 * var(--wheel-picker-item-height))
+    ),
+    50%
+  );
+}
+
+.wheel-picker__mask-fade--top {
+  @apply top-0;
+  background-image: linear-gradient(to bottom, var(--wheel-picker-mask-color), transparent);
+}
+
+.wheel-picker__mask-fade--bottom {
+  @apply bottom-0;
+  background-image: linear-gradient(to top, var(--wheel-picker-mask-color), transparent);
+}

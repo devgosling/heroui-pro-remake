@@ -1,0 +1,294 @@
+/* SwipeableRow - list row whose card is swiped to uncover action rails (port of HeroUI Pro Native) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root - owns the gesture. It never clips: add overflow-hidden to clip the card at the row edges.
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-row {
+  @apply relative isolate;
+  /* Vertical page scroll and pinch zoom stay native; horizontal travel belongs to the row */
+  touch-action: pan-y pinch-zoom;
+
+  /* Live gesture values, written by the engine every frame */
+  --swipeable-row-translation: 0px;
+  --swipeable-row-offset: 0px;
+  --swipeable-row-progress: 0;
+  --swipeable-row-start-progress: 0;
+  --swipeable-row-end-progress: 0;
+  --swipeable-row-corner-progress: 0;
+
+  /* Logical translation -> physical x */
+  --swipeable-row-direction: 1;
+
+  /* Card radius (matches the web Card) and the content radius at [rest, dragged] */
+  --swipeable-row-card-radius: min(32px, var(--radius-3xl));
+  --swipeable-row-radius-rest: var(--swipeable-row-card-radius);
+  --swipeable-row-radius-dragged: var(--swipeable-row-card-radius);
+
+  &:where(:dir(rtl), [dir="rtl"], [dir="rtl"] *) {
+    --swipeable-row-direction: -1;
+  }
+
+  &[data-dragging="true"] {
+    @apply select-none;
+    cursor: grabbing;
+  }
+
+  &[data-disabled="true"] {
+    touch-action: auto;
+  }
+
+  & img {
+    -webkit-user-drag: none;
+  }
+}
+
+.swipeable-row--standalone {
+  /* No styles as this is the default variant */
+}
+
+/* Square at rest; the corners round over the first drag distance */
+.swipeable-row--inline {
+  --swipeable-row-radius-rest: 0px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content - the card translated by the gesture
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-row__content {
+  @apply relative isolate z-1 bg-surface text-surface-foreground outline-none no-highlight;
+  border-radius: calc(
+    var(--swipeable-row-radius-rest) +
+      (var(--swipeable-row-radius-dragged) - var(--swipeable-row-radius-rest)) *
+      var(--swipeable-row-corner-progress)
+  );
+  transform: translate3d(
+    calc(var(--swipeable-row-translation) * var(--swipeable-row-direction)),
+    0,
+    0
+  );
+
+  .swipeable-row[data-dragging="true"] > & {
+    will-change: transform;
+  }
+}
+
+.swipeable-row__content--standalone {
+  @apply shadow-surface;
+
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+}
+
+/* Inline rows sit in a clipped list: draw the focus ring inside the row */
+.swipeable-row__content--inline {
+  &[data-focus-visible="true"] {
+    @apply ring-2 ring-focus ring-inset;
+  }
+}
+
+.swipeable-row__content-background {
+  @apply pointer-events-none absolute inset-0 -z-1 overflow-hidden;
+  border-radius: inherit;
+}
+
+/* Screen-reader controls that reveal / hide the rails without a swipe */
+.swipeable-row__a11y-actions {
+  @apply sr-only;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Actions - a rail anchored to a logical edge. It never moves: the card uncovers it.
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-row__actions {
+  @apply absolute inset-y-0 z-0 flex items-stretch gap-2 py-1.5;
+  visibility: hidden;
+
+  &[data-revealed="true"],
+  &[data-open="true"] {
+    visibility: visible;
+  }
+}
+
+/* Measured in the recording: actions 72 px wide and 8 px apart, 10 px from the card.
+ * The inner padding is the gap between the card and the innermost action. */
+.swipeable-row__actions--start {
+  @apply start-0 pe-2.5;
+  --swipeable-row-toward-card: 1;
+}
+
+.swipeable-row__actions--end {
+  @apply end-0 ps-2.5;
+  --swipeable-row-toward-card: -1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Action
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-row__action {
+  @apply relative flex min-w-18 shrink-0 items-center justify-center px-3 outline-none select-none no-highlight;
+  border-radius: var(--swipeable-row-card-radius);
+  cursor: var(--cursor-interactive);
+
+  /* Reveal animation of the content: [hidden, fully revealed] */
+  --swipeable-row-action-translate-from: 15px;
+  --swipeable-row-action-translate-to: 0px;
+  --swipeable-row-action-scale-from: 0.5;
+  --swipeable-row-action-scale-to: 1;
+  --swipeable-row-action-opacity-from: 0;
+  --swipeable-row-action-opacity-to: 1;
+  --swipeable-row-action-press-scale: 0.95;
+  --swipeable-row-action-press-duration: 150ms;
+  --swipeable-row-action-press-easing: var(--ease-out);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    scale var(--swipeable-row-action-press-duration) var(--swipeable-row-action-press-easing),
+    background-color 150ms var(--ease-smooth),
+    opacity 150ms var(--ease-smooth),
+    margin 200ms var(--ease-out-fluid);
+  @apply motion-reduce:transition-none;
+
+  &[data-pressed="true"] {
+    scale: var(--swipeable-row-action-press-scale);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  /* 18 px icons, measured in the Native recording */
+  & svg {
+    @apply size-4.5 shrink-0;
+  }
+}
+
+.swipeable-row__action--default {
+  @apply bg-default text-default-foreground;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover;
+    }
+  }
+}
+
+.swipeable-row__action--accent {
+  @apply bg-accent text-accent-foreground;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-accent-hover;
+    }
+  }
+}
+
+.swipeable-row__action--success {
+  @apply bg-success text-success-foreground;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-success-hover;
+    }
+  }
+}
+
+.swipeable-row__action--danger {
+  @apply bg-danger text-danger-foreground;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-danger-hover;
+    }
+  }
+}
+
+/* Only the content animates, with the action's own reveal progress (outermost action first) */
+.swipeable-row__action-content {
+  @apply pointer-events-none flex flex-col items-center justify-center gap-1;
+  --swipeable-row-action-hidden: calc(1 - var(--swipeable-row-action-progress, 1));
+
+  translate: calc(
+      (
+          var(--swipeable-row-action-translate-to) +
+            (
+              var(--swipeable-row-action-translate-from) - var(--swipeable-row-action-translate-to)
+            ) *
+            var(--swipeable-row-action-hidden)
+        ) *
+        var(--swipeable-row-toward-card, -1) * var(--swipeable-row-direction, 1)
+    )
+    0;
+  scale: calc(
+    var(--swipeable-row-action-scale-to) +
+      (var(--swipeable-row-action-scale-from) - var(--swipeable-row-action-scale-to)) *
+      var(--swipeable-row-action-hidden)
+  );
+  opacity: calc(
+    var(--swipeable-row-action-opacity-to) +
+      (var(--swipeable-row-action-opacity-from) - var(--swipeable-row-action-opacity-to)) *
+      var(--swipeable-row-action-hidden)
+  );
+}
+
+.swipeable-row__action--static {
+  --swipeable-row-action-press-scale: 1;
+
+  & .swipeable-row__action-content {
+    translate: none;
+    scale: none;
+    opacity: 1;
+  }
+}
+
+.swipeable-row__action-label {
+  @apply text-[11px] leading-4 font-medium whitespace-nowrap;
+}
+
+.swipeable-row__action-label--default {
+  @apply text-default-foreground;
+}
+
+.swipeable-row__action-label--accent {
+  @apply text-accent-foreground;
+}
+
+.swipeable-row__action-label--success {
+  @apply text-success-foreground;
+}
+
+.swipeable-row__action-label--danger {
+  @apply text-danger-foreground;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Full swipe (web extension): the outermost action grows across the uncovered area
+ * ------------------------------------------------------------------------------------------------ */
+.swipeable-row__action[data-primary="true"] {
+  @apply z-1 grow;
+}
+
+.swipeable-row__actions[data-full-swipe="true"]
+  > .swipeable-row__action:not([data-primary="true"]) {
+  @apply opacity-0;
+}
+
+.swipeable-row__actions--end[data-full-swipe="true"] > .swipeable-row__action[data-primary="true"] {
+  margin-inline-start: calc(var(--swipeable-row-full-swipe-cover, 0px) * -1);
+}
+
+.swipeable-row__actions--start[data-full-swipe="true"]
+  > .swipeable-row__action[data-primary="true"] {
+  margin-inline-end: calc(var(--swipeable-row-full-swipe-cover, 0px) * -1);
+}
