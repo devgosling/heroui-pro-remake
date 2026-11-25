@@ -951,3 +951,41 @@ export function InsideModal() {
 
 SnapPointsSequential.storyName = "Snap Points (Sequential)";
 SnapPointsCustomFade.storyName = "Snap Points (Custom Fade)";
+
+const LONG_ACTIVITY = Array.from({length: 40}, (_, index) => index + 1);
+
+/**
+ * Long content: the body scrolls once the sheet is open. Pulling down at the top of the list, or
+ * dragging the handle from any scroll position, swipes the sheet closed.
+ */
+export function LongContent() {
+  return (
+    <Sheet>
+      <Sheet.Trigger>
+        <Button variant="secondary">Activity Log</Button>
+      </Sheet.Trigger>
+      <Sheet.Backdrop>
+        <Sheet.Content className="mx-auto max-h-[95vh] max-w-[420px]">
+          <Sheet.Dialog>
+            <Sheet.Handle />
+            <Sheet.CloseTrigger />
+            <Sheet.Header>
+              <Sheet.Heading>Activity Log</Sheet.Heading>
+            </Sheet.Header>
+            <Sheet.Body>
+              {LONG_ACTIVITY.map((entry) => (
+                <div
+                  key={entry}
+                  className="flex items-center justify-between border-b border-separator py-3 text-sm"
+                >
+                  <span>Deployment #{1000 + entry}</span>
+                  <span className="text-muted">{entry} min ago</span>
+                </div>
+              ))}
+            </Sheet.Body>
+          </Sheet.Dialog>
+        </Sheet.Content>
+      </Sheet.Backdrop>
+    </Sheet>
+  );
+}

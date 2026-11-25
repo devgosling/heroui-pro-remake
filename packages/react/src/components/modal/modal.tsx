@@ -2,6 +2,7 @@
 
 import type {UseOverlayStateProps, UseOverlayStateReturn} from "../../hooks/use-overlay-state";
 import type {DOMRenderProps} from "../../utils/dom";
+import type {MobilePresentation, OverlayPresentation} from "../sheet/use-overlay-presentation";
 import type {SurfaceVariants} from "../surface";
 import type {ModalVariants} from "@heroui/styles";
 import type {ComponentPropsWithRef, ReactNode} from "react";
@@ -27,6 +28,15 @@ import {composeSlotClassName, useResolvedClassName} from "../../utils/compose";
 import {dom} from "../../utils/dom";
 import {resolveOverlayOpen, useOverlayExitHold} from "../../utils/use-overlay-exit-hold";
 import {CloseButton} from "../close-button";
+import {
+  SheetPresentationBackdrop,
+  SheetPresentationContainer,
+  SheetPresentationDialog,
+} from "../sheet/sheet-presentation";
+import {
+  useOverlayPresentation,
+  useRegisterSheetCloseTrigger,
+} from "../sheet/use-overlay-presentation";
 import {SurfaceContext} from "../surface";
 
 const DEFAULT_SURFACE_CONTEXT = {variant: "default" as SurfaceVariants["variant"]};
@@ -39,6 +49,8 @@ type ModalPlacement = "auto" | "top" | "center" | "bottom";
 type ModalContext = {
   slots?: ReturnType<typeof modalVariants>;
   placement?: ModalPlacement;
+  /** "sheet" on small screens (bottom sheet), "dialog" otherwise. */
+  presentation?: OverlayPresentation;
 };
 
 const ModalContext = createContext<ModalContext>({});
@@ -48,12 +60,20 @@ const ModalContext = createContext<ModalContext>({});
  * -----------------------------------------------------------------------------------------------*/
 interface ModalRootProps extends ComponentPropsWithRef<typeof ModalTriggerPrimitive> {
   state?: UseOverlayStateReturn;
+  /**
+   * How the modal presents on small screens (below 640px). `"sheet"` slides the modal up from the
+   * bottom edge; when the backdrop is dismissable it shows a drag handle and can be swiped down to
+   * close. `"dialog"` keeps the centred dialog everywhere.
+   * @default "sheet"
+   */
+  mobilePresentation?: MobilePresentation;
 }
 
-const ModalRoot = ({children, state, ...props}: ModalRootProps) => {
+const ModalRoot = ({children, mobilePresentation, state, ...props}: ModalRootProps) => {
+  const presentation = useOverlayPresentation(mobilePresentation);
   const modalContext = useMemo<ModalContext>(
-    () => ({slots: modalVariants(), placement: undefined}),
-    [],
+    () => ({slots: modalVariants(), placement: undefined, presentation}),
+    [presentation],
   );
 
   const controlledProps = useMemo<UseOverlayStateProps>(
@@ -117,7 +137,48 @@ interface ModalBackdropProps extends ComponentPropsWithRef<typeof ModalOverlayPr
   isDismissable?: boolean;
 }
 
-const ModalBackdrop = ({
+const ModalBackdrop = (props: ModalBackdropProps) => {
+  const context = use(ModalContext);
+  // A Backdrop controlled without a <Modal> root (isOpen / onOpenChange) has no presentation from
+  // the root, so it decides itself: bottom sheet on small screens, dialog otherwise.
+  const standalonePresentation = useOverlayPresentation();
+  const presentation = context.presentation ?? standalonePresentation;
+  const sheetContext = useMemo<ModalContext>(
+    () => ({...context, presentation: "sheet", slots: context.slots ?? modalVariants()}),
+    [context],
+  );
+
+  if (presentation !== "sheet") return <ModalDialogBackdrop {...props} />;
+
+  const {
+    children,
+    className,
+    defaultOpen,
+    isDismissable = true,
+    isOpen,
+    onOpenChange,
+    variant,
+  } = props;
+
+  return (
+    <ModalContext value={sheetContext}>
+      <SheetPresentationBackdrop
+        className={typeof className === "string" ? className : undefined}
+        defaultOpen={defaultOpen}
+        isDismissable={isDismissable}
+        isOpen={isOpen}
+        variant={variant ?? undefined}
+        onOpenChange={onOpenChange}
+      >
+        {typeof children === "function"
+          ? children({isEntering: false, isExiting: false} as Parameters<typeof children>[0])
+          : children}
+      </SheetPresentationBackdrop>
+    </ModalContext>
+  );
+};
+
+const ModalDialogBackdrop = ({
   children,
   className,
   defaultOpen,
@@ -183,7 +244,23 @@ interface ModalContainerProps extends Omit<
   size?: ModalVariants["size"];
 }
 
-const ModalContainer = ({
+const ModalContainer = (props: ModalContainerProps) => {
+  const {presentation} = use(ModalContext);
+
+  if (presentation !== "sheet") return <ModalDialogContainer {...props} />;
+
+  const {children, className} = props;
+
+  return (
+    <SheetPresentationContainer className={typeof className === "string" ? className : undefined}>
+      {typeof children === "function"
+        ? children({isEntering: false, isExiting: false} as Parameters<typeof children>[0])
+        : children}
+    </SheetPresentationContainer>
+  );
+};
+
+const ModalDialogContainer = ({
   children,
   className,
   placement = "auto",
@@ -224,7 +301,21 @@ ModalContainer.displayName = "HeroUI.Modal.Container";
 interface ModalDialogProps extends DialogPrimitiveProps {}
 
 const ModalDialog = ({children, className, ...props}: ModalDialogProps) => {
-  const {placement, slots} = use(ModalContext);
+  const {placement, presentation, slots} = use(ModalContext);
+
+  if (presentation === "sheet") {
+    return (
+      <SurfaceContext value={DEFAULT_SURFACE_CONTEXT}>
+        <SheetPresentationDialog
+          {...(props as object)}
+          className={className}
+          data-slot="modal-dialog"
+        >
+          {children}
+        </SheetPresentationDialog>
+      </SurfaceContext>
+    );
+  }
 
   return (
     <SurfaceContext value={DEFAULT_SURFACE_CONTEXT}>
@@ -394,6 +485,9 @@ interface ModalCloseTriggerProps extends ComponentPropsWithRef<typeof ButtonPrim
 
 const ModalCloseTrigger = ({className, ...rest}: ModalCloseTriggerProps) => {
   const {slots} = use(ModalContext);
+
+  // On mobile (sheet presentation) a closable modal can also be swiped away.
+  useRegisterSheetCloseTrigger();
 
   return (
     <CloseButton

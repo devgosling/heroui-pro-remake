@@ -201,6 +201,34 @@
   }
 }
 
+/* Modal / AlertDialog presented as a bottom sheet on small screens (see sheet-presentation.tsx).
+   The handle stays fixed; their own header/body/footer scroll below it with the padding they get
+   inside the regular dialog. No overscroll containment: at the top of the content a further pull
+   chains to the sheet and drags it closed. */
+.sheet__dialog--overlay > .sheet__handle {
+  @apply shrink-0;
+}
+
+.sheet__overlay-scroll {
+  @apply flex min-h-0 flex-auto flex-col overflow-hidden px-6 pt-6;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.sheet__handle + .sheet__overlay-scroll {
+  @apply pt-1;
+}
+
+/* Like .sheet__body: only scroll once the sheet is fully open, so the opening swipe stays native. */
+.sheet__content[data-expanded] .sheet__overlay-scroll {
+  @apply scrollbar overflow-y-auto [-webkit-overflow-scrolling:touch];
+}
+
+/* The dialogs' own scrolling bodies contain overscroll (right for a centred dialog over the page).
+   Inside the sheet the pull at the top must reach the sheet, so let it chain. */
+.sheet__overlay-scroll :is(.modal__body, .alert-dialog__body) {
+  overscroll-behavior-y: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sheet__backdrop,
   .sheet__content {

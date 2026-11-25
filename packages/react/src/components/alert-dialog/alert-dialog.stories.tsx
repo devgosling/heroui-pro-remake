@@ -809,3 +809,43 @@ export const CustomPortal = () => {
     </div>
   );
 };
+
+const LONG_TERMS = Array.from({length: 20}, (_, index) => index + 1);
+
+/**
+ * Long content with a close button: alert dialogs are not dismissable by default, but because this
+ * one offers an X it can be swiped away on mobile too (handle shown, pull down at the top).
+ */
+export const LongContent = () => (
+  <AlertDialog>
+    <Button variant="danger">Delete Workspace</Button>
+    <AlertDialog.Backdrop>
+      <AlertDialog.Container>
+        <AlertDialog.Dialog className="sm:max-w-[420px]">
+          <AlertDialog.CloseTrigger />
+          <AlertDialog.Header>
+            <AlertDialog.Icon status="danger" />
+            <AlertDialog.Heading>Delete this workspace?</AlertDialog.Heading>
+          </AlertDialog.Header>
+          <AlertDialog.Body>
+            <p className="mb-3">Please review what will be removed before you continue:</p>
+            {LONG_TERMS.map((item) => (
+              <p key={item} className="mb-2 text-sm text-muted">
+                {item}. All projects, files, comments and automations in this workspace, including
+                shared links and integrations, will be permanently removed.
+              </p>
+            ))}
+          </AlertDialog.Body>
+          <AlertDialog.Footer>
+            <Button slot="close" variant="tertiary">
+              Cancel
+            </Button>
+            <Button slot="close" variant="danger">
+              Delete Workspace
+            </Button>
+          </AlertDialog.Footer>
+        </AlertDialog.Dialog>
+      </AlertDialog.Container>
+    </AlertDialog.Backdrop>
+  </AlertDialog>
+);

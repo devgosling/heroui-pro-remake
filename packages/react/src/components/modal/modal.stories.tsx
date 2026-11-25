@@ -830,3 +830,40 @@ export const CustomPortal = () => {
     </div>
   );
 };
+
+const LONG_POLICY_SECTIONS = Array.from({length: 24}, (_, index) => index + 1);
+
+/**
+ * Long content: scrolls inside the modal. On mobile (sheet presentation) the handle stays at the
+ * top; pulling down at the top of the content, or dragging the handle, swipes the sheet closed.
+ */
+export const LongContent = () => (
+  <Modal>
+    <Button variant="secondary">Read Privacy Policy</Button>
+    <Modal.Backdrop>
+      <Modal.Container scroll="inside">
+        <Modal.Dialog className="sm:max-w-[420px]">
+          <Modal.CloseTrigger />
+          <Modal.Header>
+            <Modal.Heading>Privacy Policy</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
+            {LONG_POLICY_SECTIONS.map((section) => (
+              <p key={section} className="mb-3 text-sm text-muted">
+                <strong className="text-foreground">Section {section}.</strong> We only collect the
+                data needed to run your workspace, keep it encrypted at rest and in transit, and
+                never sell it. You can export or delete everything at any time from your settings.
+              </p>
+            ))}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button slot="close" variant="tertiary">
+              Decline
+            </Button>
+            <Button slot="close">Accept</Button>
+          </Modal.Footer>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
+  </Modal>
+);

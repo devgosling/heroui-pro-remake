@@ -1,6 +1,7 @@
 "use client";
 
 import type {DOMRenderProps} from "../../utils/dom";
+import type {MobilePresentation, OverlayPresentation} from "../sheet/use-overlay-presentation";
 import type {AlertDialogVariants} from "@heroui/styles";
 import type {ComponentPropsWithRef, HTMLAttributes, ReactNode} from "react";
 import type {ButtonProps as ButtonPrimitiveProps} from "react-aria-components/Button";
@@ -25,6 +26,15 @@ import {dom} from "../../utils/dom";
 import {resolveOverlayOpen, useOverlayExitHold} from "../../utils/use-overlay-exit-hold";
 import {CloseButton} from "../close-button";
 import {DangerIcon, InfoIcon, SuccessIcon, WarningIcon} from "../icons";
+import {
+  SheetPresentationBackdrop,
+  SheetPresentationContainer,
+  SheetPresentationDialog,
+} from "../sheet/sheet-presentation";
+import {
+  useOverlayPresentation,
+  useRegisterSheetCloseTrigger,
+} from "../sheet/use-overlay-presentation";
 
 type AlertDialogPlacement = "auto" | "top" | "center" | "bottom";
 
@@ -36,6 +46,8 @@ type AlertDialogStatus = "default" | "accent" | "success" | "warning" | "danger"
 type AlertDialogContext = {
   slots?: ReturnType<typeof alertDialogVariants>;
   placement?: AlertDialogPlacement;
+  /** "sheet" on small screens (bottom sheet), "dialog" otherwise. */
+  presentation?: OverlayPresentation;
 };
 
 const AlertDialogContext = createContext<AlertDialogContext>({});
@@ -43,12 +55,21 @@ const AlertDialogContext = createContext<AlertDialogContext>({});
 /* -------------------------------------------------------------------------------------------------
  * AlertDialog Root
  * -----------------------------------------------------------------------------------------------*/
-interface AlertDialogRootProps extends ComponentPropsWithRef<typeof AlertDialogTriggerPrimitive> {}
+interface AlertDialogRootProps extends ComponentPropsWithRef<typeof AlertDialogTriggerPrimitive> {
+  /**
+   * How the alert dialog presents on small screens (below 640px). `"sheet"` slides it up from the
+   * bottom edge; it can only be swiped away when the backdrop is dismissable (off by default for
+   * alert dialogs). `"dialog"` keeps the centred dialog everywhere.
+   * @default "sheet"
+   */
+  mobilePresentation?: MobilePresentation;
+}
 
-const AlertDialogRoot = ({children, ...props}: AlertDialogRootProps) => {
+const AlertDialogRoot = ({children, mobilePresentation, ...props}: AlertDialogRootProps) => {
+  const presentation = useOverlayPresentation(mobilePresentation);
   const alertDialogContext = useMemo<AlertDialogContext>(
-    () => ({slots: alertDialogVariants(), placement: undefined}),
-    [],
+    () => ({slots: alertDialogVariants(), placement: undefined, presentation}),
+    [presentation],
   );
 
   return (
@@ -105,7 +126,48 @@ interface AlertDialogBackdropProps extends ComponentPropsWithRef<typeof ModalOve
   isKeyboardDismissDisabled?: boolean;
 }
 
-const AlertDialogBackdrop = ({
+const AlertDialogBackdrop = (props: AlertDialogBackdropProps) => {
+  const context = use(AlertDialogContext);
+  // A Backdrop controlled without an <AlertDialog> root has no presentation from the root, so it
+  // decides itself: bottom sheet on small screens, dialog otherwise.
+  const standalonePresentation = useOverlayPresentation();
+  const presentation = context.presentation ?? standalonePresentation;
+  const sheetContext = useMemo<AlertDialogContext>(
+    () => ({...context, presentation: "sheet", slots: context.slots ?? alertDialogVariants()}),
+    [context],
+  );
+
+  if (presentation !== "sheet") return <AlertDialogDialogBackdrop {...props} />;
+
+  const {
+    children,
+    className,
+    defaultOpen,
+    isDismissable = false,
+    isOpen,
+    onOpenChange,
+    variant,
+  } = props;
+
+  return (
+    <AlertDialogContext value={sheetContext}>
+      <SheetPresentationBackdrop
+        className={typeof className === "string" ? className : undefined}
+        defaultOpen={defaultOpen}
+        isDismissable={isDismissable}
+        isOpen={isOpen}
+        variant={variant ?? undefined}
+        onOpenChange={onOpenChange}
+      >
+        {typeof children === "function"
+          ? children({isEntering: false, isExiting: false} as Parameters<typeof children>[0])
+          : children}
+      </SheetPresentationBackdrop>
+    </AlertDialogContext>
+  );
+};
+
+const AlertDialogDialogBackdrop = ({
   children,
   className,
   defaultOpen,
@@ -174,7 +236,23 @@ interface AlertDialogContainerProps extends Omit<
   size?: AlertDialogVariants["size"];
 }
 
-const AlertDialogContainer = ({
+const AlertDialogContainer = (props: AlertDialogContainerProps) => {
+  const {presentation} = use(AlertDialogContext);
+
+  if (presentation !== "sheet") return <AlertDialogDialogContainer {...props} />;
+
+  const {children, className} = props;
+
+  return (
+    <SheetPresentationContainer className={typeof className === "string" ? className : undefined}>
+      {typeof children === "function"
+        ? children({isEntering: false, isExiting: false} as Parameters<typeof children>[0])
+        : children}
+    </SheetPresentationContainer>
+  );
+};
+
+const AlertDialogDialogContainer = ({
   children,
   className,
   placement = "auto",
@@ -214,7 +292,20 @@ AlertDialogContainer.displayName = "HeroUI.AlertDialog.Container";
 interface AlertDialogDialogProps extends DialogPrimitiveProps {}
 
 const AlertDialogDialog = ({children, className, ...props}: AlertDialogDialogProps) => {
-  const {placement, slots} = use(AlertDialogContext);
+  const {placement, presentation, slots} = use(AlertDialogContext);
+
+  if (presentation === "sheet") {
+    return (
+      <SheetPresentationDialog
+        role="alertdialog"
+        {...(props as object)}
+        className={className}
+        data-slot="alert-dialog-dialog"
+      >
+        {children}
+      </SheetPresentationDialog>
+    );
+  }
 
   return (
     <DialogPrimitive
@@ -373,6 +464,9 @@ interface AlertDialogCloseTriggerProps extends ButtonPrimitiveProps {}
 
 const AlertDialogCloseTrigger = ({className, ...rest}: AlertDialogCloseTriggerProps) => {
   const {slots} = use(AlertDialogContext);
+
+  // On mobile (sheet presentation) an alert dialog with an X can also be swiped away.
+  useRegisterSheetCloseTrigger();
 
   return (
     <CloseButton
