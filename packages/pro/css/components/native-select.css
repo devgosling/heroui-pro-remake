@@ -1,0 +1,146 @@
+/* Native Select - the native <select> element with HeroUI field styling, label and validation */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (label + trigger + description / field error)
+ * ------------------------------------------------------------------------------------------------ */
+.native-select {
+  @apply inline-flex flex-col gap-1;
+
+  /* The field error replaces the description while invalid */
+  &[data-invalid="true"],
+  &[aria-invalid="true"] {
+    [data-slot="description"] {
+      @apply hidden;
+    }
+  }
+
+  [data-slot="label"] {
+    @apply w-fit;
+  }
+
+  [data-slot="description"] {
+    @apply px-1;
+  }
+}
+
+/* Variant property definitions */
+.native-select--primary {
+  /* No styles as this is the default variant (Pro renders no class for it) */
+}
+
+/* Full width modifiers */
+.native-select--full-width,
+.native-select__trigger--full-width {
+  @apply w-full;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (positioning wrapper for the select and the indicator)
+ * ------------------------------------------------------------------------------------------------ */
+.native-select__trigger {
+  @apply relative inline-flex items-center;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Select (the native element carries the field look)
+ * ------------------------------------------------------------------------------------------------ */
+.native-select__select {
+  @apply relative inline-flex min-h-9 w-full appearance-none rounded-field border bg-field px-3 py-2 text-sm text-field-foreground shadow-field outline-none no-highlight;
+
+  /**
+   * Transitions
+   * CRITICAL: motion-reduce must be AFTER transition for correct override specificity
+   */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    border-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  /* Cursor */
+  cursor: var(--cursor-interactive);
+
+  border-width: var(--border-width-field);
+  border-color: var(--color-field-border);
+
+  /* Room for the absolutely positioned indicator: offset + icon + gap to the text */
+  padding-inline-end: calc(
+    var(--native-select-indicator-offset, calc(var(--spacing) * 2)) +
+      var(--native-select-indicator-size, calc(var(--spacing) * 4)) + calc(var(--spacing) * 2)
+  );
+
+  /* Hover state (native element, so :hover is matched as well as the data attribute) */
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-field-hover;
+      border-color: var(--color-field-border-hover);
+    }
+  }
+
+  /* Focus visible state */
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+    border-color: var(--color-field-border-focus);
+    background-color: var(--color-field-focus);
+  }
+
+  /* Focus state (pointer focus: no ring) */
+  &:focus {
+    border-color: var(--color-field-border-focus);
+    background-color: var(--color-field-focus);
+  }
+
+  /* Invalid state */
+  .native-select[data-invalid="true"] &,
+  .native-select[aria-invalid="true"] & {
+    @apply status-invalid-field;
+    background-color: var(--color-field-focus);
+  }
+
+  /* Disabled state */
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  /* Placeholder: the empty-value option is selected */
+  &:has(option[value=""]:checked) {
+    @apply text-field-placeholder;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (chevron inside the trigger)
+ * ------------------------------------------------------------------------------------------------ */
+.native-select__indicator {
+  @apply pointer-events-none absolute inset-y-0 my-auto flex shrink-0 items-center justify-center text-field-placeholder;
+  inset-inline-end: var(--native-select-indicator-offset, calc(var(--spacing) * 2));
+
+  & svg {
+    width: var(--native-select-indicator-size, calc(var(--spacing) * 4));
+    height: var(--native-select-indicator-size, calc(var(--spacing) * 4));
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Secondary variant (default fill, no shadow)
+ * ------------------------------------------------------------------------------------------------ */
+.native-select--secondary .native-select__select {
+  @apply bg-default shadow-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"],
+  &:focus {
+    @apply bg-default;
+  }
+}

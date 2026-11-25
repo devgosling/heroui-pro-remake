@@ -1,0 +1,64 @@
+/* Area Chart - HeroUI theming for the Recharts internals (also used by the KPI.Chart sparkline)
+ *
+ * The chart itself is Recharts: series colours come from the props (usually the accent-derived
+ * `--chart-1..5` palette declared with the chart tooltip, or `--color-success` / `--color-danger`).
+ * Everything Recharts draws on its own (axes, grid, cursor, active dot, focus ring) is re-themed
+ * here with HeroUI tokens, so light/dark mode and theme changes apply without extra props.
+ * Recharts writes its defaults as presentation attributes (`stroke="#666"`, `fill="#666"`, ...);
+ * CSS properties win over those, `!important` is only needed where Recharts sets inline values.
+ */
+
+.area-chart {
+  @apply w-full;
+
+  /* ----------------------------------------------------------------------------------------------
+   * Axes: 10px muted tick labels, no axis or tick lines
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-cartesian-axis-tick-value {
+    @apply fill-muted! text-[10px];
+  }
+
+  & .recharts-cartesian-axis-line,
+  & .recharts-cartesian-axis-tick-line {
+    @apply stroke-none!;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Grid: hairline muted rules
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-cartesian-grid line {
+    @apply stroke-muted;
+    stroke-opacity: 0.15;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Hover / keyboard inspection: dashed cursor, surface-outlined active dot, tooltip on top
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-tooltip-cursor {
+    @apply stroke-muted stroke-1;
+    stroke-dasharray: 4 4;
+  }
+
+  & .recharts-tooltip-wrapper {
+    @apply z-10 motion-reduce:transition-none!;
+  }
+
+  & .recharts-active-dot circle {
+    @apply stroke-surface stroke-2;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Focus: Recharts makes the surface focusable (arrow keys move the tooltip); only show a ring
+   * for keyboard focus
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    @apply outline-2 outline-focus outline-solid;
+    outline-offset: var(--ring-offset-width);
+  }
+}

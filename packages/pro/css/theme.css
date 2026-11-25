@@ -1,0 +1,15 @@
+/* ------------------------------------------------------------------------------------------------
+ * HeroUI Pro (remake) - theme tokens shared by several components
+ * Imported into @layer theme (like the OSS theme variables), so app overrides written in their own
+ * @layer theme or unlayered on :root win as expected.
+ * ------------------------------------------------------------------------------------------------ */
+
+:root {
+  /* Chart palette: five shades derived from the accent (chart-3 is the accent itself). Used by every
+     chart and by the chart tooltip indicators; follows accent and dark-mode changes automatically. */
+  --chart-1: oklch(from var(--accent) calc(l - 0.24) c h);
+  --chart-2: oklch(from var(--accent) calc(l - 0.12) c h);
+  --chart-3: var(--accent);
+  --chart-4: oklch(from var(--accent) calc(l + 0.12) c h);
+  --chart-5: oklch(from var(--accent) calc(l + 0.24) c h);
+}

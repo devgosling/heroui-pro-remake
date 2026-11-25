@@ -1,0 +1,330 @@
+/* Rich Text Editor - Tiptap editor surface with toolbar, contextual menus and footer */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor {
+  @apply relative w-full;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shell (editor surface)
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__shell {
+  @apply relative flex min-h-0 w-full flex-col overflow-hidden border-solid;
+  border-radius: calc(var(--radius) * 2);
+  border-width: var(--border-width-field, 1px);
+  border-color: var(--field-border, var(--border));
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    border-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+}
+
+/* Primary: field fill for page backgrounds */
+.rich-text-editor__shell--primary {
+  @apply bg-field;
+  border-color: var(--field-border, var(--border));
+}
+
+/* Secondary: default fill without shadow for Surface, Modal, Sheet and Drawer */
+.rich-text-editor__shell--secondary {
+  @apply bg-default shadow-none;
+  border-color: var(--field-border, var(--border));
+}
+
+@media (hover: hover) {
+  .rich-text-editor:not([data-disabled="true"]) .rich-text-editor__shell:hover {
+    border-color: var(--field-border-hover);
+  }
+}
+
+/* Focus follows the editable area */
+.rich-text-editor:has(.rich-text-editor__prosemirror:focus) .rich-text-editor__shell--primary {
+  background-color: var(--field-focus, var(--field-background, var(--default)));
+  border-color: var(--field-border-focus, var(--field-border, var(--border)));
+}
+
+.rich-text-editor:has(.rich-text-editor__prosemirror:focus) .rich-text-editor__shell--secondary {
+  @apply bg-default;
+  border-color: var(--field-border-focus, var(--field-border, var(--border)));
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Toolbar (OSS Toolbar)
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__toolbar.toolbar {
+  @apply flex min-h-12 w-full flex-wrap items-center gap-1 p-2;
+}
+
+.rich-text-editor__toolbar-group {
+  @apply flex items-center gap-1;
+}
+
+.rich-text-editor__toolbar-separator.separator {
+  @apply mx-1 h-6 w-px shrink-0 self-center bg-separator;
+}
+
+.rich-text-editor__toolbar-button {
+  @apply shrink-0;
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+.rich-text-editor__toolbar-button[data-active="true"],
+.rich-text-editor__toolbar-button[data-selected="true"] {
+  @apply bg-accent-soft text-accent;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (Tiptap EditorContent + ProseMirror)
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__content {
+  @apply min-h-0 flex-1 overflow-y-auto;
+}
+
+/* Reserves the editor height before Tiptap mounts on the client */
+.rich-text-editor__loading {
+  @apply min-h-45;
+}
+
+.rich-text-editor__prosemirror {
+  @apply min-h-45 px-4 py-3 text-sm leading-6 text-foreground outline-none;
+}
+
+.rich-text-editor__prosemirror > * + * {
+  @apply mt-3;
+}
+
+.rich-text-editor__prosemirror h1,
+.rich-text-editor__prosemirror h2,
+.rich-text-editor__prosemirror h3 {
+  @apply font-semibold tracking-normal text-foreground;
+}
+
+.rich-text-editor__prosemirror h1 {
+  @apply text-2xl leading-8;
+}
+
+.rich-text-editor__prosemirror h2 {
+  @apply text-xl leading-7;
+}
+
+.rich-text-editor__prosemirror h3 {
+  @apply text-lg leading-7;
+}
+
+.rich-text-editor__prosemirror p {
+  @apply min-h-6;
+}
+
+.rich-text-editor__prosemirror ul,
+.rich-text-editor__prosemirror ol {
+  @apply ps-6;
+}
+
+.rich-text-editor__prosemirror ul {
+  @apply list-disc;
+}
+
+.rich-text-editor__prosemirror ol {
+  @apply list-decimal;
+}
+
+.rich-text-editor__prosemirror li + li {
+  @apply mt-1;
+}
+
+.rich-text-editor__prosemirror blockquote {
+  @apply border-s-2 border-border ps-4 text-muted;
+}
+
+.rich-text-editor__prosemirror code {
+  @apply bg-default-hover px-1.5 py-0.5 font-mono text-foreground;
+  border-radius: calc(var(--radius) * 0.75);
+  font-size: 0.9em;
+}
+
+.rich-text-editor__prosemirror pre {
+  @apply overflow-x-auto bg-default-hover p-3 font-mono text-sm text-foreground;
+  border-radius: calc(var(--radius) * 1.5);
+}
+
+.rich-text-editor__prosemirror pre code {
+  @apply bg-transparent p-0 text-inherit;
+}
+
+.rich-text-editor__prosemirror a {
+  @apply text-link underline underline-offset-2;
+}
+
+/* Placeholder (Tiptap Placeholder extension) */
+.rich-text-editor__prosemirror p.is-editor-empty:first-child::before,
+.rich-text-editor__prosemirror .is-empty::before {
+  @apply pointer-events-none float-left h-0 text-muted;
+  content: attr(data-placeholder);
+}
+
+/* Selected atom nodes (e.g. a horizontal rule) */
+.rich-text-editor .ProseMirror-selectednode {
+  @apply rounded outline-2 outline-offset-2 outline-accent;
+}
+
+/* Trigger text of an active suggestion (e.g. "/head") */
+.rich-text-editor__prosemirror .rich-text-editor__suggestion-decoration {
+  @apply bg-accent-soft text-accent;
+  border-radius: calc(var(--radius) * 0.5);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Footer
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__footer {
+  @apply flex min-h-10 items-center justify-between gap-3 px-3 py-2 text-xs text-muted;
+}
+
+.rich-text-editor__character-count {
+  @apply text-muted tabular-nums;
+}
+
+.rich-text-editor__character-count[data-over-limit="true"] {
+  @apply text-danger;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * BubbleMenu / FloatingMenu (Tiptap menus wrapping an OSS Toolbar)
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__bubble-menu,
+.rich-text-editor__floating-menu {
+  @apply bg-overlay p-1 shadow-overlay;
+  border-radius: calc(var(--radius) * 3);
+}
+
+.rich-text-editor__bubble-menu-toolbar.toolbar,
+.rich-text-editor__floating-menu-toolbar.toolbar {
+  @apply flex w-fit items-center gap-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * SuggestionMenu (OSS ListBox, focus stays in the editor)
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__suggestion-menu {
+  @apply flex w-80 flex-col overflow-hidden bg-overlay p-1 text-sm shadow-overlay outline-none;
+  border-radius: min(32px, var(--radius-3xl));
+}
+
+.rich-text-editor__suggestion-menu-list.list-box {
+  @apply flex min-h-0 flex-col gap-1 overflow-y-auto p-0 outline-none;
+}
+
+.rich-text-editor__suggestion-menu-item.list-box-item {
+  @apply relative flex min-h-12 w-full items-center gap-3 px-2 py-2 text-start text-foreground outline-none no-highlight;
+  border-radius: calc(var(--radius) * 3);
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 250ms var(--ease-out-quart),
+    background-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  &:focus-visible,
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    transform: scale(0.98);
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &[data-highlighted="true"] {
+    @apply bg-default;
+  }
+}
+
+.rich-text-editor__suggestion-menu-icon {
+  @apply flex size-9 shrink-0 items-center justify-center rounded-full bg-default text-muted;
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+.rich-text-editor__suggestion-menu-item[data-highlighted="true"]
+  .rich-text-editor__suggestion-menu-icon {
+  @apply bg-overlay text-foreground shadow-sm;
+}
+
+.rich-text-editor__suggestion-menu-item-content {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.rich-text-editor__suggestion-menu-title {
+  @apply truncate text-sm leading-5 font-medium text-foreground;
+}
+
+.rich-text-editor__suggestion-menu-description {
+  @apply block truncate text-xs leading-4 text-muted;
+}
+
+.rich-text-editor__suggestion-menu-empty {
+  @apply px-3 py-2 text-sm text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * LinkPopover (OSS Popover + Input + Buttons)
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor__link-popover.popover {
+  @apply w-80 bg-overlay shadow-overlay outline-none;
+  border-radius: calc(var(--radius) * 2);
+}
+
+.rich-text-editor__link-popover-content.popover__dialog {
+  @apply flex flex-col gap-3 p-3;
+}
+
+.rich-text-editor__link-popover-trigger {
+  @apply inline-flex;
+}
+
+.rich-text-editor__link-input {
+  @apply w-full;
+}
+
+.rich-text-editor__link-popover-actions {
+  @apply flex items-center justify-end gap-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * States
+ * ------------------------------------------------------------------------------------------------ */
+.rich-text-editor[data-disabled="true"] {
+  @apply opacity-60;
+}
+
+.rich-text-editor[data-disabled="true"] .rich-text-editor__shell {
+  cursor: var(--cursor-disabled);
+}
+
+.rich-text-editor:not([data-disabled="true"]) .rich-text-editor__shell {
+  @apply cursor-text;
+}
+
+.rich-text-editor:not([data-disabled="true"]) .rich-text-editor__toolbar,
+.rich-text-editor:not([data-disabled="true"]) .rich-text-editor__footer {
+  @apply cursor-default;
+}

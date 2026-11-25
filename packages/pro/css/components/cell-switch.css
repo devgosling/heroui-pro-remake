@@ -1,0 +1,108 @@
+/* Cell Switch - a settings row (label + switch) built on the OSS Switch (.switch / .switch__content).
+ *
+ * Every Cell* component (cell-switch, cell-select, cell-slider, cell-color-picker) is its own BEM
+ * block; Pro has no shared `.cell` base class. They share the same "field row" recipe though:
+ * h-9 / px-3 / gap-3 / rounded-field / bg-field / shadow-field, field hover + focus tokens, and a
+ * `--secondary` variant on bg-default without shadow. Rules are nested under the block so they beat
+ * the OSS `.switch__*` rules (same layer) regardless of import order.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (OSS Switch field)
+ * ------------------------------------------------------------------------------------------------ */
+.cell-switch {
+  @apply gap-0 outline-none no-highlight;
+
+  /* ----------------------------------------------------------------------------------------------
+   * Trigger (OSS Switch.Content - the clickable <label> row)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-switch__trigger {
+    @apply flex h-9 w-full items-center gap-3 rounded-field border bg-field px-3 text-field-foreground shadow-field;
+    border-width: var(--border-width-field);
+    border-color: var(--color-field-border);
+    /* Pro pins the trailing inset to 0.75rem (it does not scale with --spacing like the leading one) */
+    padding-inline-end: 0.75rem;
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition:
+      background-color 150ms var(--ease-smooth),
+      border-color 150ms var(--ease-smooth),
+      box-shadow 150ms var(--ease-out);
+    @apply motion-reduce:transition-none;
+
+    @media (hover: hover) {
+      &[data-hovered="true"] {
+        @apply bg-field-hover;
+        border-color: var(--color-field-border-hover);
+      }
+    }
+
+    &[data-focus-visible="true"] {
+      @apply status-focused;
+      border-color: var(--color-field-border-focus);
+      background-color: var(--color-field-focus);
+    }
+
+    &[data-disabled="true"] {
+      @apply status-disabled;
+    }
+  }
+
+  &[data-disabled="true"] .cell-switch__trigger {
+    @apply status-disabled;
+  }
+
+  .cell-switch__trigger--default {
+    /* No styles as this is the default variant */
+  }
+
+  .cell-switch__trigger--secondary {
+    @apply bg-default shadow-none;
+
+    @media (hover: hover) {
+      &[data-hovered="true"] {
+        @apply bg-default-hover;
+      }
+    }
+
+    &[data-focus-visible="true"] {
+      @apply bg-default;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Label
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-switch__label {
+    @apply min-w-0 flex-1 truncate text-start text-sm font-medium text-foreground;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Control (OSS Switch.Control)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-switch__control {
+    @apply shrink-0;
+  }
+}
+
+.cell-switch--secondary {
+  /* Variant marker on the root; the trigger and control carry the styles */
+}
+
+/* Secondary: the unselected track sits on bg-default, so it uses a translucent muted track that
+ * stays put on hover (instead of the OSS hover tint) and deepens while pressed. */
+.cell-switch:not([data-selected="true"]) {
+  .cell-switch__control--secondary {
+    @apply bg-muted/20;
+  }
+
+  @media (hover: hover) {
+    .cell-switch__trigger[data-hovered="true"] .cell-switch__control--secondary {
+      @apply bg-muted/20;
+    }
+  }
+
+  .cell-switch__trigger[data-pressed="true"] .cell-switch__control--secondary {
+    @apply bg-muted/30;
+  }
+}

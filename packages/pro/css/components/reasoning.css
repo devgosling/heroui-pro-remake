@@ -1,0 +1,131 @@
+/* Reasoning - collapsible block with the model's thinking, built on the OSS Disclosure.
+ *
+ * Every part also carries the matching Disclosure class (.disclosure, .disclosure__trigger, ...),
+ * so the panel height / opacity transition, the chevron rotation and the focus ring come from the
+ * Disclosure styles. This file only adds the reasoning look: an inline trigger whose padding is
+ * pulled back so its text lines up with the content, a muted body, the loader exit and the label
+ * cross-fade.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (fills its container, no background)
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning {
+  /* Loader exit, label fade and trigger colours */
+  --reasoning-duration: 150ms;
+  --reasoning-ease: var(--ease-out-quint);
+  /* Trigger padding, pulled back so the text lines up with the content */
+  --reasoning-trigger-inset: calc(var(--spacing) * 2);
+  /* Gap between the loader, label and chevron */
+  --reasoning-trigger-gap: calc(var(--spacing) * 2);
+
+  @apply flex w-full flex-col text-sm;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Heading (around the trigger)
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__heading {
+  @apply flex min-w-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__trigger {
+  @apply inline-flex min-h-8 min-w-0 items-center text-sm font-medium text-muted;
+  gap: var(--reasoning-trigger-gap);
+  max-width: calc(100% + var(--reasoning-trigger-inset));
+  margin-inline-start: calc(var(--reasoning-trigger-inset) * -1);
+  padding-inline: var(--reasoning-trigger-inset);
+  border-radius: calc(var(--radius) * 1.25);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color var(--reasoning-duration) var(--reasoning-ease),
+    color var(--reasoning-duration) var(--reasoning-ease);
+  @apply motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default/60 text-foreground;
+    }
+  }
+
+  &[data-pressed="true"] {
+    @apply bg-default/60 text-foreground;
+  }
+
+  /* The focus ring itself comes from .disclosure__trigger (status-focused) */
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply text-foreground;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Loader (shown while streaming, then shrinks and fades out)
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__loader {
+  @apply inline-flex size-(--loader-size) shrink-0 items-center justify-center overflow-clip;
+  transition-property: opacity, width, margin-inline-end;
+  transition-duration: var(--reasoning-duration);
+  transition-timing-function: var(--reasoning-ease);
+  @apply motion-reduce:transition-none;
+
+  /* Collapse the loader and the gap after it, so the label slides into place */
+  &[data-exiting] {
+    @apply w-0 opacity-0;
+    margin-inline-end: calc(var(--reasoning-trigger-gap) * -1);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__label {
+  @apply min-w-0 truncate;
+  transition: opacity var(--reasoning-duration) var(--reasoning-ease);
+  @apply motion-reduce:transition-none;
+
+  /* A label mounted for a new status fades in */
+  &[data-swapped] {
+    @apply starting:opacity-0;
+  }
+}
+
+/* Emphasized duration ("Thought for 9s") */
+.reasoning__duration {
+  @apply text-foreground tabular-nums;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (chevron; rotation comes from .disclosure__indicator)
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__indicator {
+  @apply ms-0 size-3.5;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (collapsible panel; height / opacity transition comes from .disclosure__content)
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__content > .disclosure__body {
+  @apply p-0 pt-2;
+
+  /* Nothing to show yet: no gap under the trigger */
+  &:has(> * > .reasoning__body:empty) {
+    @apply p-0;
+  }
+}
+
+.reasoning__body {
+  @apply text-sm wrap-break-word text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Text (thinking text that keeps its line breaks)
+ * ------------------------------------------------------------------------------------------------ */
+.reasoning__text {
+  @apply text-sm wrap-break-word whitespace-pre-wrap text-muted;
+}

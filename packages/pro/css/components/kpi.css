@@ -1,0 +1,107 @@
+/* KPI - metric card (layered on the OSS Card) */
+
+.kpi {
+  @apply relative flex flex-col rounded-2xl p-4;
+}
+
+.kpi__header {
+  @apply mb-1 flex items-center gap-2;
+}
+
+.kpi__content {
+  @apply grid flex-1 grid-cols-[1fr_auto] grid-rows-[auto] items-center gap-x-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon (status tinted)
+ * ------------------------------------------------------------------------------------------------ */
+.kpi__icon {
+  @apply flex size-8 shrink-0 items-center justify-center rounded-lg;
+
+  & svg {
+    @apply size-4;
+  }
+
+  &[data-status="success"] {
+    @apply bg-success/10 text-success;
+  }
+
+  &[data-status="warning"] {
+    @apply bg-warning/10 text-warning;
+  }
+
+  &[data-status="danger"] {
+    @apply bg-danger/10 text-danger;
+  }
+}
+
+.kpi__actions {
+  @apply absolute end-2.5 top-2.5;
+}
+
+.kpi__title {
+  @apply text-sm font-medium text-muted;
+}
+
+.kpi__value {
+  @apply text-2xl font-semibold tracking-tight text-foreground;
+}
+
+.kpi__trend {
+  @apply shrink-0;
+}
+
+.kpi__progress {
+  @apply col-span-full mt-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Chart (sparkline with faded left/right edges)
+ * ------------------------------------------------------------------------------------------------ */
+.kpi__chart {
+  --kpi-chart-fade: 10%;
+  --kpi-chart-mask: linear-gradient(
+    to right,
+    transparent 0%,
+    black var(--kpi-chart-fade),
+    black calc(100% - var(--kpi-chart-fade)),
+    transparent 100%
+  );
+
+  @apply overflow-hidden;
+  mask-image: var(--kpi-chart-mask);
+
+  /* With a tooltip the card must not clip it: move the fade onto the SVG surface instead */
+  &[data-has-tooltip] {
+    @apply overflow-visible;
+    mask-image: none;
+
+    & .recharts-surface {
+      mask-image: var(--kpi-chart-mask);
+    }
+  }
+}
+
+/* A chart that is a direct child bleeds to the card edges and sits flush with the bottom */
+.kpi > .kpi__chart {
+  @apply -mx-4 mt-2 -mb-4 rounded-b-2xl;
+}
+
+.kpi > .kpi__chart:has(+ .kpi__separator, + .kpi__footer) {
+  @apply mb-0 rounded-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Separator / footer
+ * ------------------------------------------------------------------------------------------------ */
+.kpi__separator {
+  @apply -mx-4 w-[calc(100%+--spacing(8))];
+}
+
+.kpi__footer {
+  @apply -mb-1;
+}
+
+.kpi__separator + .kpi__footer {
+  @apply mt-0;
+}

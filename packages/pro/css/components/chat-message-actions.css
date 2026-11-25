@@ -1,0 +1,126 @@
+/* Chat Message Actions - row of icon-only ghost buttons under a chat message (OSS Button + Tooltip) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * The root always carries `.chat-message__actions` too. Inside a Chat Message the row rests at half
+ * opacity and becomes fully visible while the message is hovered or an action has focus.
+ * Chat Message may declare the same `.chat-message__*` rules; they are identical on purpose.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message-actions {
+  @apply flex items-start;
+}
+
+.chat-message__actions {
+  @apply flex items-start opacity-50;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-opacity motion-reduce:transition-none;
+
+  &:focus-within {
+    @apply opacity-100;
+  }
+}
+
+@media (hover: hover) {
+  .chat-message--assistant:hover .chat-message__actions,
+  .chat-message--user:hover .chat-message__actions {
+    @apply opacity-100;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Action (OSS `.button.button--ghost.button--icon-only.button--sm` + this class)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__action {
+  @apply text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon (preset or custom)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message-actions__icon {
+  @apply size-4;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Copy preset: copy <-> copied icon swap
+ * The incoming icon blurs and scales in while the outgoing one, taken out of the flow, plays the
+ * reverse. The easing is a critically damped spring, 1 - (1 + wt) * e^(-wt) with w = 30.8/s,
+ * sampled every ~10ms of the 300ms run into `linear()` (30 evenly spaced stops).
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message-actions__copy-icon-motion {
+  @apply flex size-4 items-center justify-center;
+
+  --chat-message-actions-swap-ease: linear(
+    0,
+    0.041,
+    0.134,
+    0.248,
+    0.364,
+    0.473,
+    0.57,
+    0.653,
+    0.723,
+    0.78,
+    0.827,
+    0.865,
+    0.895,
+    0.918,
+    0.937,
+    0.951,
+    0.963,
+    0.971,
+    0.978,
+    0.983,
+    0.987,
+    0.99,
+    0.993,
+    0.995,
+    0.996,
+    0.997,
+    0.998,
+    0.998,
+    0.999,
+    1
+  );
+
+  /* Reduced motion: swap instantly, the outgoing icon disappears at once */
+  &[data-entering="true"] {
+    animation: chat-message-actions-icon-in 300ms var(--chat-message-actions-swap-ease) both;
+    @apply motion-reduce:animate-none;
+  }
+
+  &[data-exiting="true"] {
+    @apply pointer-events-none absolute;
+    animation: chat-message-actions-icon-out 300ms var(--chat-message-actions-swap-ease) both;
+    @apply motion-reduce:hidden;
+  }
+}
+
+@keyframes chat-message-actions-icon-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: scale(0.25);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes chat-message-actions-icon-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: scale(0.25);
+  }
+}

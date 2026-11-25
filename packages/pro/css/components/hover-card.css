@@ -1,0 +1,75 @@
+/* Hover Card - popover card that previews content while its trigger is hovered or focused */
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger
+ * ------------------------------------------------------------------------------------------------ */
+.hover-card__trigger {
+  @apply inline-flex;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (floating panel, positioned by React Aria)
+ * ------------------------------------------------------------------------------------------------ */
+.hover-card__content {
+  @apply max-w-sm rounded-2xl bg-overlay p-4 shadow-overlay outline-none;
+
+  /* Fade + zoom (+ a 1-step slide away from the trigger) on enter, fade + zoom on exit.
+     React Aria skips both while swapping between cards during the shared warm-up window. */
+  &[data-entering="true"] {
+    @apply animate-in duration-150 ease-out fade-in zoom-in-[0.97];
+  }
+
+  &[data-exiting="true"] {
+    @apply animate-out duration-100 ease-out fade-out zoom-out-[0.97];
+  }
+
+  &[data-placement="bottom"][data-entering="true"] {
+    @apply slide-in-from-top-1;
+  }
+
+  &[data-placement="top"][data-entering="true"] {
+    @apply slide-in-from-bottom-1;
+  }
+
+  &[data-placement="left"][data-entering="true"] {
+    @apply slide-in-from-right-1;
+  }
+
+  &[data-placement="right"][data-entering="true"] {
+    @apply slide-in-from-left-1;
+  }
+
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    @apply will-change-[opacity,transform];
+  }
+
+  /* CRITICAL: motion-reduce must be AFTER the animations for correct override specificity */
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    @apply motion-reduce:animate-none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Arrow (points down for `top`; rotated for the other placements)
+ * ------------------------------------------------------------------------------------------------ */
+.hover-card__arrow {
+  @apply block;
+
+  & svg {
+    fill: var(--overlay);
+  }
+
+  &[data-placement="bottom"] svg {
+    rotate: 180deg;
+  }
+
+  &[data-placement="left"] svg {
+    rotate: -90deg;
+  }
+
+  &[data-placement="right"] svg {
+    rotate: 90deg;
+  }
+}

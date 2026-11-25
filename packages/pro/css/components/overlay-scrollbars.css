@@ -1,0 +1,110 @@
+/* Overlay Scrollbars - thin, theme-aware scrollbars that never take layout space.
+ *
+ * Imported WITHOUT a cascade layer on purpose: these rules must beat the `scrollbar` utilities that
+ * component styles apply inside @layer utilities. They only take effect while the overlay engine is
+ * running (it sets html[data-overlay-scrollbars]).
+ */
+
+:root {
+  --overlay-scrollbars-thumb: color-mix(in oklab, var(--foreground) 20%, transparent);
+  --overlay-scrollbars-thumb-hover: color-mix(in oklab, var(--foreground) 38%, transparent);
+  --overlay-scrollbars-size: 4px;
+  --overlay-scrollbars-size-hover: 7px;
+  /* Breathing room between the thumb and the container edge */
+  --overlay-scrollbars-gap: 3px;
+}
+
+/* Hide every native scrollbar (keeps scrolling) unless a subtree opts back into OS scrollbars.
+ * [data-overlay-scrollbars-probe] is set for one synchronous measurement by the engine to read the
+ * author's own scrollbar-width (components that hide their scrollbar get no overlay thumb). */
+html[data-overlay-scrollbars]:not([data-overlay-scrollbars-probe]),
+html[data-overlay-scrollbars]
+  *:not([data-scrollbar="default"], [data-scrollbar="default"] *, [data-overlay-scrollbars-probe]) {
+  scrollbar-width: none;
+}
+
+html[data-overlay-scrollbars]:not([data-overlay-scrollbars-probe])::-webkit-scrollbar,
+html[data-overlay-scrollbars]
+  *:not(
+    [data-scrollbar="default"],
+    [data-scrollbar="default"] *,
+    [data-overlay-scrollbars-probe]
+  )::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Fixed layer that carries the thumbs above all content */
+.overlay-scrollbars {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  contain: strict;
+}
+
+.overlay-scrollbars__thumb {
+  position: fixed;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    background-color: var(--overlay-scrollbars-thumb);
+    transition:
+      width 120ms ease,
+      height 120ms ease,
+      background-color 120ms ease;
+  }
+
+  &[data-orientation="vertical"]::before {
+    top: 0;
+    bottom: 0;
+    right: var(--overlay-scrollbars-gap);
+    width: var(--overlay-scrollbars-size);
+  }
+
+  &[data-orientation="vertical"][data-rtl]::before {
+    right: auto;
+    left: var(--overlay-scrollbars-gap);
+  }
+
+  &[data-orientation="horizontal"]::before {
+    left: 0;
+    right: 0;
+    bottom: var(--overlay-scrollbars-gap);
+    height: var(--overlay-scrollbars-size);
+  }
+
+  &[data-visible] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &[data-hovered],
+  &[data-dragging] {
+    &::before {
+      background-color: var(--overlay-scrollbars-thumb-hover);
+    }
+
+    &[data-orientation="vertical"]::before {
+      width: var(--overlay-scrollbars-size-hover);
+    }
+
+    &[data-orientation="horizontal"]::before {
+      height: var(--overlay-scrollbars-size-hover);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &::before {
+      transition: none;
+    }
+  }
+}

@@ -1,0 +1,86 @@
+/* Checkbox Button Group - multi-selection group of card-style checkboxes.
+ *
+ * Built on the OSS CheckboxGroup (`.checkbox-group`) and Checkbox (`.checkbox`, `.checkbox__content`,
+ * `.checkbox__control`) blocks: these rules only add the card layout on top of them, so they must load
+ * after @heroui/styles. The Radio Button Group uses its own parallel `.radio-button-group` block; no
+ * class is shared between the two. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (CheckboxGroup)
+ * ------------------------------------------------------------------------------------------------ */
+.checkbox-button-group {
+  @apply flex gap-3;
+
+  --checkbox-button-group-item-radius: var(--radius-2xl);
+}
+
+.checkbox-button-group--grid {
+  @apply grid;
+}
+
+/* The Checkbox field wrapper takes no box; the card (`Checkbox.Content`) is the flex/grid item */
+.checkbox-button-group > [data-slot="checkbox-button-group-item"] {
+  @apply contents;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (the clickable card, rendered on Checkbox.Content)
+ * ------------------------------------------------------------------------------------------------ */
+.checkbox-button-group__item {
+  @apply relative flex flex-col items-stretch gap-4 border border-border bg-surface px-5 py-4 ring-transparent outline-none no-highlight;
+  border-radius: var(--checkbox-button-group-item-radius);
+  cursor: var(--cursor-interactive);
+
+  /* Selected: 2px inset accent ring replaces the border */
+  &[data-selected="true"] {
+    @apply border-transparent ring-2 ring-accent ring-inset;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (top-end corner): the OSS checkbox control, or a custom icon shown while selected
+ * ------------------------------------------------------------------------------------------------ */
+.checkbox-button-group__indicator {
+  @apply absolute end-4 top-3;
+
+  &[data-custom="true"] {
+    @apply text-accent opacity-0;
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition: opacity 150ms ease-out;
+    @apply motion-reduce:transition-none;
+
+    & svg {
+      @apply size-5;
+    }
+  }
+}
+
+[data-selected="true"] > .checkbox-button-group__indicator[data-custom="true"] {
+  @apply opacity-100;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item content / leading icon
+ * ------------------------------------------------------------------------------------------------ */
+.checkbox-button-group__item-content {
+  @apply flex min-w-0 flex-col;
+}
+
+.checkbox-button-group__item-icon {
+  @apply shrink-0;
+
+  & svg {
+    @apply size-6;
+  }
+}

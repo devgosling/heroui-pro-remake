@@ -1,0 +1,111 @@
+/* Chat Message - user bubble and assistant row layouts for AI chat */
+
+/* ------------------------------------------------------------------------------------------------
+ * User turn
+ * A full-width column; the bubble shrinks to its text and sits at the end edge.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message--user {
+  @apply flex w-full flex-col items-end;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Assistant turn (default variant: avatar + body row)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message--assistant {
+  @apply flex w-full flex-row items-start gap-3 py-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Assistant turn - card variant
+ * Rendered by the OSS Card (`.card.card--default` gives the surface and its shadow); the turn
+ * stacks its parts and uses a tighter radius and roomier padding than a plain card.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message--card {
+  @apply flex-col items-stretch gap-3 px-5 pt-4 pb-5;
+  border-radius: calc(var(--radius) * 2);
+
+  & .chat-message__content {
+    @apply leading-5.5;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Avatar
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__avatar {
+  @apply shrink-0 self-start;
+}
+
+/* Same footprint as the small avatar, for grouped messages (`show={false}`) */
+.chat-message__avatar-spacer {
+  @apply size-8 shrink-0 self-start;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Body (assistant content column)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__body {
+  @apply flex min-w-0 flex-1 flex-col gap-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Bubble (user message)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__bubble {
+  @apply bg-default px-4 py-2 text-foreground;
+  border-radius: calc(var(--radius) * 2);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (message text)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__content {
+  @apply text-sm leading-relaxed text-foreground;
+}
+
+.chat-message--assistant .chat-message__content {
+  @apply w-full max-w-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Media (images, charts, attachments)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__media {
+  @apply flex flex-col gap-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Actions row and action button
+ * `ChatMessage.Actions` is the Chat Message Actions component, whose root carries both
+ * `.chat-message__actions` and `.chat-message-actions`. chat-message-actions.css declares the same
+ * rules (identical on purpose) so that component also works on its own.
+ * The row rests at half opacity and comes into full view while the turn is hovered or one of its
+ * actions has focus.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-message__actions {
+  @apply flex items-start opacity-50;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-opacity motion-reduce:transition-none;
+
+  &:focus-within {
+    @apply opacity-100;
+  }
+}
+
+@media (hover: hover) {
+  .chat-message--assistant:hover .chat-message__actions,
+  .chat-message--user:hover .chat-message__actions {
+    @apply opacity-100;
+  }
+}
+
+.chat-message--assistant[data-hovered="true"] .chat-message__actions,
+.chat-message--user[data-hovered="true"] .chat-message__actions {
+  @apply opacity-100;
+}
+
+/* OSS `.button.button--ghost.button--icon-only.button--sm` + this class */
+.chat-message__action {
+  @apply text-muted;
+}

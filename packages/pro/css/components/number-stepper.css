@@ -1,0 +1,130 @@
+/* Number Stepper - pill with minus / animated value / plus, built on RAC NumberField */
+
+.number-stepper {
+  @apply inline-flex shrink-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Group (pill track)
+ * ------------------------------------------------------------------------------------------------ */
+.number-stepper__group {
+  @apply inline-flex items-center gap-0 rounded-full border-0 bg-default p-0.5 shadow-none;
+
+  /* Keyboard focus lands on the visually hidden input; show it on the pill */
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+}
+
+.number-stepper__group--sm,
+.number-stepper__group--md {
+  /* No styles as this is the default size */
+}
+
+.number-stepper__group--lg {
+  @apply gap-0.5;
+}
+
+.number-stepper__input {
+  @apply sr-only;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Increment / decrement buttons (mobile-first touch targets, smaller from md up)
+ * ------------------------------------------------------------------------------------------------ */
+.number-stepper__decrement-button,
+.number-stepper__increment-button {
+  @apply relative flex size-9 shrink-0 items-center justify-center rounded-full border-0 bg-surface shadow-surface outline-none no-highlight md:size-8;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 100ms var(--ease-out),
+    box-shadow 100ms var(--ease-out),
+    transform 250ms var(--ease-smooth);
+  @apply transform-gpu motion-reduce:transition-none;
+
+  & svg {
+    @apply size-4 shrink-0 text-muted;
+    transition: color 150ms;
+    @apply motion-reduce:transition-none;
+  }
+
+  @media (hover: hover) {
+    &:hover svg,
+    &[data-hovered="true"] svg {
+      @apply text-foreground;
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.number-stepper__decrement-button--sm,
+.number-stepper__increment-button--sm {
+  @apply size-8 md:size-7;
+
+  & svg {
+    @apply size-3.5;
+  }
+}
+
+.number-stepper__decrement-button--md,
+.number-stepper__increment-button--md {
+  /* No styles as this is the default size */
+}
+
+.number-stepper__decrement-button--lg,
+.number-stepper__increment-button--lg {
+  @apply size-10 md:size-9;
+
+  & svg {
+    @apply size-5 md:size-4;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    transform: scale(0.96);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Value (Number Flow element or custom span)
+ * ------------------------------------------------------------------------------------------------ */
+/* Inline padding keeps wide values (e.g. "1,100", "-25") clear of the buttons */
+.number-stepper__value {
+  --number-stepper-resize-duration: 500ms;
+
+  @apply box-border flex h-9 min-w-7 items-center justify-center px-2 text-sm font-semibold text-foreground tabular-nums md:h-8 md:min-w-6;
+
+  /* The width is mirrored from the number (see useSmoothWidth) and eased, so the pill grows and
+     shrinks smoothly; new digits are revealed instead of overlapping the buttons. */
+  overflow-x: clip;
+  transition: width var(--number-stepper-resize-duration) var(--ease-out-fluid);
+  @apply motion-reduce:transition-none;
+}
+
+.number-stepper__value--sm {
+  @apply h-8 min-w-6 px-1.5 text-xs md:h-7 md:min-w-5;
+}
+
+.number-stepper__value--md {
+  /* No styles as this is the default size */
+}
+
+.number-stepper__value--lg {
+  @apply h-10 min-w-8 px-2.5 text-base md:h-9 md:min-w-7;
+}

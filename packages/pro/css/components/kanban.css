@@ -1,0 +1,254 @@
+/* Kanban - drag-and-drop board (columns of RAC GridList cards inside OSS ScrollShadows) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (horizontal ScrollShadow): one grid column per board column, snap scrolling
+ * ------------------------------------------------------------------------------------------------ */
+.kanban {
+  --kanban-column-min-width: 280px;
+  --kanban-column-gap: 16px;
+  --kanban-column-height: 480px;
+  /* Focus rings sit flush inside the scroll container so they are never clipped */
+  --ring-offset-width: 0px;
+
+  @apply grid snap-x snap-mandatory grid-flow-col overflow-x-auto;
+  grid-auto-columns: minmax(var(--kanban-column-min-width), 1fr);
+  gap: var(--kanban-column-gap);
+}
+
+.kanban--sm {
+  --kanban-column-min-width: 240px;
+  --kanban-column-gap: 12px;
+}
+
+.kanban--md {
+  /* No styles as this is the default size */
+}
+
+.kanban--lg {
+  --kanban-column-min-width: 320px;
+  --kanban-column-gap: 20px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Column
+ * ------------------------------------------------------------------------------------------------ */
+.kanban__column {
+  @apply flex snap-center flex-col gap-2;
+  min-width: var(--kanban-column-min-width);
+}
+
+.kanban__column-body {
+  @apply flex min-h-[100px] flex-1 flex-col bg-default/40;
+  border-radius: calc(var(--radius-2xl) + var(--radius-sm));
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Column header
+ * ------------------------------------------------------------------------------------------------ */
+.kanban__column-header {
+  @apply flex items-center gap-2 px-1 py-1.5;
+}
+
+.kanban__column-actions {
+  @apply ms-auto flex shrink-0 items-center gap-0.5 opacity-0;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: opacity 150ms ease;
+  @apply motion-reduce:transition-none;
+
+  /* Stay visible while a menu opened from the header is open or a button has focus */
+  &:focus-within,
+  &:has([aria-expanded="true"]),
+  &:has([data-open]) {
+    @apply opacity-100;
+  }
+}
+
+@media (hover: hover) {
+  .kanban__column-header:hover .kanban__column-actions {
+    @apply opacity-100;
+  }
+}
+
+.kanban__column-indicator {
+  @apply shrink-0;
+
+  /* Status dot */
+  &:empty {
+    @apply size-2.5 rounded-full bg-default;
+  }
+
+  /* Icon container */
+  &:not(:empty) {
+    @apply flex items-center justify-center text-muted;
+
+    & svg {
+      @apply size-4;
+    }
+  }
+}
+
+.kanban__column-title {
+  @apply m-0 text-sm font-semibold text-foreground;
+}
+
+.kanban__column-count {
+  @apply text-xs font-medium text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Optional vertical ScrollShadow around the card list
+ * ------------------------------------------------------------------------------------------------ */
+.kanban__scroll-shadow {
+  @apply mb-3 flex flex-1 flex-col;
+  border-radius: calc(var(--radius) * 1.5);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Card list (RAC GridList)
+ * ------------------------------------------------------------------------------------------------ */
+.kanban__card-list {
+  @apply flex min-h-full flex-1 flex-col gap-2 p-2 pb-4 outline-none;
+
+  &[data-focus-visible] {
+    @apply status-focused;
+  }
+
+  &[data-empty] {
+    @apply items-center justify-center;
+  }
+
+  /* RAC's default line indicator (used when no custom renderDropIndicator is passed) */
+  & .react-aria-DropIndicator {
+    @apply outline-none;
+  }
+
+  & .react-aria-DropIndicator[data-drop-target] {
+    @apply rounded-[1px] outline-1 outline-accent/40;
+    outline-style: solid;
+  }
+}
+
+.kanban__card-list--sm,
+.kanban__card-list--md,
+.kanban__card-list--lg {
+  /* Size hooks for custom styling; the list itself does not change with the size */
+}
+
+/* Placeholder rendered by Kanban.DropIndicator (height follows the dragged card) */
+.kanban__drop-indicator {
+  @apply outline-none;
+
+  &[data-drop-target] {
+    @apply shrink-0 border border-separator;
+    border-radius: calc(var(--radius) * 1.5);
+    height: var(--kanban-drop-height, 2.5rem);
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition: height 150ms ease-out;
+    @apply motion-reduce:transition-none;
+  }
+}
+
+.kanban__empty {
+  @apply flex items-center justify-center py-8 text-center text-sm text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Card (RAC GridListItem row) and its content box
+ * ------------------------------------------------------------------------------------------------ */
+.kanban__card {
+  @apply relative outline-none select-none no-highlight;
+  border-radius: calc(var(--radius) * 1.5);
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: opacity 200ms ease;
+  @apply motion-reduce:transition-none;
+
+  /* Pointer focus never shows a ring */
+  &[data-focused="true"]:not([data-focus-visible="true"]) {
+    @apply ring-0;
+  }
+
+  /* Keyboard focus: the 2px ring is drawn INSIDE the card (on the content box, below). An outside
+     ring gets clipped by vertical column scrollers and covered by sticky column headers sitting
+     flush above the first card. Intentional deviation from Pro's outside ring - keep it. */
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply ring-0;
+  }
+
+  &:focus-visible:not([data-focused]) .kanban__card-content,
+  &[data-focus-visible="true"] .kanban__card-content {
+    outline: 2px solid var(--separator);
+    outline-offset: -2px;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &[data-dragging] {
+    @apply opacity-50;
+  }
+}
+
+.kanban__card--sm,
+.kanban__card--md,
+.kanban__card--lg {
+  /* Size hooks for custom styling; spacing lives on the content box */
+}
+
+.kanban__card-content {
+  @apply flex flex-col gap-2 overflow-hidden bg-overlay p-3 text-sm;
+  border-radius: calc(var(--radius) * 1.5);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: box-shadow 150ms ease;
+  @apply motion-reduce:transition-none;
+}
+
+/* The original targets the content box as a direct child of the row, but RAC renders a
+   `display: contents` gridcell in between, so these two states never paint there. The selectors
+   are kept verbatim to render identically; see specs/kanban.md. */
+@media (hover: hover) {
+  .kanban__card:hover > .kanban__card-content,
+  .kanban__card[data-hovered="true"] > .kanban__card-content {
+    @apply shadow-sm;
+  }
+}
+
+.kanban__card[data-selected="true"] > .kanban__card-content {
+  @apply bg-accent-soft;
+}
+
+.kanban__card-content--sm {
+  @apply gap-1.5 p-2 text-xs;
+}
+
+.kanban__card-content--md {
+  /* No styles as this is the default size */
+}
+
+.kanban__card-content--lg {
+  @apply gap-3 p-4 text-base;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Drag handle (RAC Button slot="drag"): screen-reader only until the card is keyboard focused
+ * ------------------------------------------------------------------------------------------------ */
+.kanban__drag-handle {
+  @apply sr-only flex shrink-0 items-center justify-center border-none bg-transparent text-base leading-none text-muted outline-none no-highlight;
+
+  &:focus,
+  &:focus-visible,
+  &[data-focus-visible="true"] {
+    @apply not-sr-only status-focused;
+  }
+}
+
+.kanban__card[data-focus-visible="true"] .kanban__drag-handle {
+  @apply not-sr-only;
+}

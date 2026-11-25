@@ -1,0 +1,635 @@
+/* Sidebar - responsive navigation panel with icon / offcanvas collapse, tree menus and a mobile sheet */
+
+/* ------------------------------------------------------------------------------------------------
+ * Provider (sidebar + main layout)
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__provider {
+  @apply flex min-h-svh w-full;
+}
+
+.sidebar__provider:has(.sidebar__offcanvas-wrapper) {
+  @apply overflow-x-clip;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Panel
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar {
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 48px;
+  --sidebar-duration: 200ms;
+  --sidebar-ease: ease;
+  --sidebar-edge-outline: #00000014;
+
+  @apply sticky top-0 flex h-svh shrink-0 flex-col border-border bg-background;
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width-collapsed);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    width var(--sidebar-duration) var(--sidebar-ease),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+}
+
+.dark .sidebar,
+[data-theme="dark"] .sidebar {
+  --sidebar-edge-outline: #ffffff1a;
+}
+
+/* Collapsed to the icon rail */
+.sidebar[data-state="collapsed"]:not([data-collapsible="offcanvas"]) {
+  @apply overflow-x-clip;
+  width: var(--sidebar-width-collapsed);
+
+  & .sidebar__header,
+  & .sidebar__footer {
+    @apply px-1.5;
+  }
+
+  & .sidebar__header {
+    @apply items-center;
+  }
+
+  & .sidebar__header > * {
+    @apply w-auto justify-center gap-0 p-0;
+  }
+
+  & .sidebar__header [data-sidebar="label"] {
+    @apply hidden;
+  }
+
+  & .sidebar__content {
+    @apply px-1.5;
+  }
+}
+
+/* Labels and chips fade / shrink while the icon rail animates */
+.sidebar[data-collapsible="icon"] [data-sidebar="label"],
+.sidebar[data-collapsible="icon"] [data-slot="chip"] {
+  @apply visible max-w-full overflow-hidden whitespace-nowrap;
+  transition:
+    opacity var(--sidebar-duration) var(--sidebar-ease),
+    max-width var(--sidebar-duration) var(--sidebar-ease),
+    margin var(--sidebar-duration) var(--sidebar-ease),
+    visibility 0s linear;
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] [data-sidebar="label"],
+.sidebar[data-collapsible="icon"][data-state="collapsed"] [data-slot="chip"] {
+  @apply pointer-events-none invisible m-0 max-w-0 opacity-0;
+  transition-delay: 0s, 0s, 0s, var(--sidebar-duration);
+}
+
+.sidebar[data-collapsible="icon"] [data-slot="list-box-item"] {
+  @apply w-full;
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] [data-slot="list-box-item"] {
+  @apply justify-center gap-0 p-2.5;
+}
+
+/* Offcanvas: a spacer collapses to 0 while the panel slides out */
+.sidebar__offcanvas-wrapper {
+  --sidebar-width: 240px;
+  --sidebar-duration: 200ms;
+  --sidebar-ease: ease;
+
+  @apply relative shrink-0;
+  width: var(--sidebar-width);
+  transition: width var(--sidebar-duration) var(--sidebar-ease);
+  @apply motion-reduce:transition-none;
+
+  &[data-side="right"] {
+    @apply order-1;
+  }
+
+  &:has(.sidebar--floating) {
+    width: calc(var(--sidebar-width) + var(--spacing) * 4);
+  }
+
+  &[data-state="collapsed"] {
+    @apply w-0;
+  }
+}
+
+.sidebar[data-collapsible="offcanvas"] {
+  @apply z-20;
+  transition:
+    translate var(--sidebar-duration) var(--sidebar-ease),
+    visibility var(--sidebar-duration);
+  @apply motion-reduce:transition-none;
+
+  &[data-side="right"] {
+    @apply right-0 left-auto;
+  }
+}
+
+.sidebar[data-state="collapsed"][data-collapsible="offcanvas"] {
+  @apply invisible;
+  width: var(--sidebar-width);
+  translate: -100% 0;
+
+  &[data-side="right"] {
+    translate: 100% 0;
+  }
+}
+
+/* Below Tailwind's md breakpoint the desktop panel is replaced by Sidebar.Mobile */
+@media (width < 48rem) {
+  .sidebar,
+  .sidebar__offcanvas-wrapper {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Variants
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar--default {
+  box-shadow: inset -1px 0 0 var(--sidebar-edge-outline);
+
+  &.sidebar--right {
+    box-shadow: inset 1px 0 0 var(--sidebar-edge-outline);
+  }
+
+  @media (hover: hover) {
+    &:has(.sidebar__rail:hover) {
+      box-shadow: inset -1px 0 0 var(--color-default-hover);
+    }
+
+    &.sidebar--right:has(.sidebar__rail:hover) {
+      box-shadow: inset 1px 0 0 var(--color-default-hover);
+    }
+  }
+
+  &:has(.sidebar__rail:focus-visible) {
+    box-shadow: inset -1px 0 0 var(--color-default-hover);
+  }
+
+  &.sidebar--right:has(.sidebar__rail:focus-visible) {
+    box-shadow: inset 1px 0 0 var(--color-default-hover);
+  }
+}
+
+.sidebar--floating {
+  @apply m-2 h-[calc(100svh-1rem)] border bg-surface shadow-lg;
+  border-radius: calc(var(--radius) * 2);
+}
+
+.sidebar--inset {
+  @apply border-none bg-transparent shadow-none;
+}
+
+.sidebar--left {
+  /* No styles as this is the default side */
+}
+
+.sidebar--right {
+  @apply order-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header / Content / Footer
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__header {
+  @apply flex flex-col gap-2 px-4 pt-4 pb-2;
+}
+
+.sidebar__content {
+  @apply flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3;
+}
+
+.sidebar[data-state="collapsed"] .sidebar__content {
+  @apply gap-0.5;
+}
+
+.sidebar__footer {
+  @apply flex flex-col gap-1 px-3 pt-2 pb-4;
+}
+
+.sidebar__separator {
+  @apply my-2 w-auto;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Group
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__group {
+  @apply flex flex-col gap-1;
+}
+
+.sidebar__group + .sidebar__group {
+  @apply mt-2;
+}
+
+.sidebar__group-label {
+  @apply overflow-hidden px-2 py-1.5 text-xs font-medium tracking-normal text-ellipsis whitespace-nowrap text-muted select-none;
+  transition:
+    opacity var(--sidebar-duration) var(--sidebar-ease),
+    width var(--sidebar-duration) var(--sidebar-ease);
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar[data-state="collapsed"] .sidebar__group-label {
+  @apply hidden;
+}
+
+.sidebar[data-state="collapsed"] .sidebar__group + .sidebar__group {
+  @apply mt-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Menu (React Aria Tree)
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__menu {
+  --sidebar-menu-indent: calc(var(--spacing) * 4);
+  --sidebar-menu-guide-color: currentColor;
+  --sidebar-menu-row-gap: calc(var(--spacing) * 0.5);
+
+  @apply flex flex-col gap-0.5 forced-color-adjust-none outline-none;
+
+  &[data-focus-visible] {
+    @apply status-focused;
+  }
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .sidebar__menu {
+    --sidebar-menu-guide-color: color-mix(in srgb, currentColor 10%, transparent);
+  }
+}
+
+.sidebar__menu-section {
+  @apply flex flex-col gap-0.5;
+
+  &:not(:first-child) {
+    @apply mt-3;
+  }
+}
+
+.sidebar[data-state="collapsed"] .sidebar__menu-section:not(:first-child) {
+  @apply mt-0;
+}
+
+.sidebar__menu-header {
+  @apply px-2 py-1.5 text-xs font-medium tracking-wider text-muted uppercase select-none;
+}
+
+.sidebar[data-state="collapsed"] .sidebar__menu-header {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Menu item (tree row)
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__menu-item {
+  --sidebar-menu-item-offset: 0px;
+  --sidebar-menu-guide-count: 0;
+
+  @apply relative flex w-full items-center justify-start text-foreground outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.sidebar__menu-item[aria-level="2"] {
+  --sidebar-menu-item-offset: var(--sidebar-menu-indent);
+  --sidebar-menu-guide-count: 1;
+}
+
+.sidebar__menu-item[aria-level="3"] {
+  --sidebar-menu-item-offset: calc(var(--sidebar-menu-indent) * 2);
+  --sidebar-menu-guide-count: 2;
+}
+
+.sidebar__menu-item[aria-level="4"] {
+  --sidebar-menu-item-offset: calc(var(--sidebar-menu-indent) * 3);
+  --sidebar-menu-guide-count: 3;
+}
+
+.sidebar__menu-item[aria-level="5"] {
+  --sidebar-menu-item-offset: calc(var(--sidebar-menu-indent) * 4);
+  --sidebar-menu-guide-count: 4;
+}
+
+/* Guide lines: one 1px line per nesting level, centred under the parent's icon column */
+.sidebar__menu:is([data-guide-lines="always"], [data-guide-lines="hover"])
+  .sidebar__menu-item::before {
+  content: "";
+  @apply pointer-events-none absolute opacity-100;
+  top: calc(var(--sidebar-menu-row-gap) * -0.5);
+  bottom: calc(var(--sidebar-menu-row-gap) * -0.5);
+  left: calc(var(--sidebar-menu-indent) / 2);
+  width: calc(var(--sidebar-menu-guide-count) * var(--sidebar-menu-indent));
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--sidebar-menu-guide-color) 0 1px,
+    transparent 1px var(--sidebar-menu-indent)
+  );
+}
+
+.sidebar__menu[data-guide-lines="hover"] .sidebar__menu-item::before {
+  @apply opacity-0;
+  transition: opacity 150ms;
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar__menu[data-guide-lines="hover"]:hover .sidebar__menu-item::before {
+  @apply opacity-100;
+}
+
+.sidebar__menu-item-content {
+  @apply flex min-h-9 min-w-0 items-center gap-3 overflow-hidden py-1.5;
+  padding-inline: 0.5rem;
+  border-radius: calc(var(--radius) * 2);
+  width: calc(100% - var(--sidebar-menu-item-offset));
+  margin-inline-start: var(--sidebar-menu-item-offset);
+}
+
+@media (hover: hover) {
+  .sidebar__menu-item:hover .sidebar__menu-item-content,
+  .sidebar__menu-item[data-hovered="true"] .sidebar__menu-item-content {
+    @apply bg-default;
+  }
+}
+
+.sidebar__menu-item:focus-visible:not([data-focused]) .sidebar__menu-item-content,
+.sidebar__menu-item[data-focus-visible="true"] .sidebar__menu-item-content {
+  @apply status-focused;
+}
+
+/* Current page, and an item whose actions are hovered / pressed / open */
+.sidebar__menu-item[data-current="true"] .sidebar__menu-item-content,
+.sidebar__menu-item:is(
+    :has(.sidebar__menu-actions:hover),
+    :has(.sidebar__menu-action:active),
+    :has(.sidebar__menu-action[data-pressed="true"]),
+    :has(.sidebar__menu-actions [aria-expanded="true"])
+  )
+  .sidebar__menu-item-content {
+  @apply bg-default;
+}
+
+.sidebar__menu-item[data-current="true"] .sidebar__menu-label {
+  @apply font-medium;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item parts
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__menu-trigger {
+  @apply flex size-5 shrink-0 items-center justify-center outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+}
+
+.sidebar__menu-item:not([data-has-child-items]) .sidebar__menu-trigger {
+  @apply hidden;
+}
+
+.sidebar__menu-indicator {
+  @apply size-3.5 shrink-0 text-muted rtl:rotate-180;
+  cursor: inherit;
+  rotate: 0deg;
+  transition: rotate 150ms;
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar__menu-item[data-expanded] .sidebar__menu-indicator {
+  rotate: 90deg;
+}
+
+.sidebar__menu-icon {
+  @apply flex size-5 shrink-0 items-center justify-center text-muted;
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+.sidebar__menu-item[data-current="true"] .sidebar__menu-icon,
+.sidebar__menu-item[data-current="true"] .sidebar__menu-chip {
+  @apply text-foreground;
+}
+
+.sidebar__menu-label {
+  @apply pointer-events-none flex min-w-0 flex-1 items-center gap-2 text-sm text-foreground select-none;
+}
+
+.sidebar__menu-label-text {
+  @apply min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.sidebar__menu-chip {
+  @apply pointer-events-none flex shrink-0 items-center justify-center text-xs text-muted tabular-nums select-none;
+}
+
+/* Actions: revealed on hover, for the current item, while focused or while their menu is open */
+.sidebar__menu-actions {
+  @apply hidden shrink-0 items-center gap-1;
+  margin-inline-start: auto;
+}
+
+.sidebar__menu-item:is(
+    :hover,
+    [data-current="true"],
+    [data-hovered="true"],
+    :has(.sidebar__menu-action:focus-visible),
+    :has(.sidebar__menu-action[data-focus-visible="true"]),
+    :has(.sidebar__menu-actions [aria-expanded="true"])
+  )
+  .sidebar__menu-actions,
+.sidebar__mobile .sidebar__menu-actions {
+  @apply flex;
+}
+
+.sidebar__menu-action {
+  --button-bg: transparent;
+  --button-bg-hover: var(--color-default-hover);
+  --button-bg-pressed: var(--color-default-hover);
+  --button-fg: var(--color-default-foreground);
+
+  @apply relative isolate flex shrink-0 transform-gpu items-center justify-center p-1 outline-none no-highlight;
+  border-radius: var(--radius);
+  background-color: var(--button-bg);
+  color: var(--button-fg);
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 250ms var(--ease-smooth),
+    background-color 100ms var(--ease-out),
+    box-shadow 100ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      background-color: var(--button-bg-hover);
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    background-color: var(--button-bg-pressed);
+    transform: scale(0.98);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  & svg {
+    @apply pointer-events-none size-4 shrink-0 self-center;
+  }
+}
+
+.sidebar__menu-actions [aria-expanded="true"] .sidebar__menu-action {
+  background-color: var(--button-bg-hover);
+}
+
+/* Icon rail: only the icon stays visible */
+.sidebar[data-collapsible="icon"] .sidebar__menu-item {
+  @apply w-full;
+}
+
+.sidebar[data-collapsible="icon"][data-state="collapsed"] {
+  & .sidebar__menu-item-content {
+    @apply justify-center px-0;
+  }
+
+  & .sidebar__menu-trigger,
+  & .sidebar__menu-actions,
+  & .sidebar__menu-label,
+  & .sidebar__menu-chip,
+  & .sidebar__menu-action {
+    @apply hidden;
+  }
+
+  & .sidebar__menu-item::before {
+    content: none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Rail
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__rail {
+  @apply absolute inset-y-0 z-10 w-4 appearance-none border-0 bg-transparent p-0 outline-none no-highlight;
+}
+
+.sidebar--left .sidebar__rail {
+  right: -2px;
+}
+
+.sidebar--right .sidebar__rail {
+  left: -2px;
+}
+
+.sidebar--left[data-state="collapsed"] .sidebar__rail,
+.sidebar--right[data-state="expanded"] .sidebar__rail {
+  cursor: e-resize;
+}
+
+.sidebar--left[data-state="expanded"] .sidebar__rail,
+.sidebar--right[data-state="collapsed"] .sidebar__rail {
+  cursor: w-resize;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Main
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__main {
+  @apply relative flex min-h-svh min-w-0 flex-1 flex-col;
+}
+
+/* Inset: the main area becomes a card next to a transparent sidebar */
+.sidebar__provider:has(.sidebar--inset) .sidebar__main {
+  @apply m-2 ms-0 min-h-[calc(100svh-1rem)] border bg-surface shadow-surface;
+  border-radius: calc(var(--radius) * 2);
+  transition: margin var(--sidebar-duration, 200ms) var(--sidebar-ease, ease);
+  @apply motion-reduce:transition-none;
+}
+
+.sidebar__provider[data-state="collapsed"]:has(.sidebar--inset) .sidebar__main {
+  @apply ms-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Mobile sheet
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__mobile {
+  @apply flex h-full min-h-0 flex-col;
+
+  & > .sidebar__header {
+    @apply pt-4;
+  }
+
+  & > .sidebar__content {
+    @apply min-h-0 flex-1;
+  }
+
+  & > .sidebar__footer {
+    @apply pb-4;
+  }
+}
+
+.sidebar__mobile-sheet[data-placement="left"],
+.sidebar__mobile-sheet[data-placement="right"] {
+  @apply w-[80vw] max-w-[500px] rounded-none;
+
+  &::after {
+    @apply rounded-none;
+  }
+
+  & .sidebar__mobile-dialog {
+    @apply w-full max-w-none overflow-hidden;
+  }
+}
+
+.sidebar__mobile-dialog {
+  @apply rounded-none;
+}
+
+.sidebar__mobile-overlay-container {
+  @apply contents;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Pages (sliding panels)
+ * ------------------------------------------------------------------------------------------------ */
+.sidebar__pages {
+  @apply relative flex w-full flex-col overflow-clip;
+}
+
+.sidebar__page {
+  @apply start-0 top-0 flex w-full flex-col gap-1 will-change-transform;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 300ms var(--ease-out-quint),
+    opacity 300ms var(--ease-out-quint);
+  @apply motion-reduce:transition-none;
+
+  &[data-active="true"] {
+    @apply relative;
+  }
+
+  &[data-active="false"] {
+    @apply pointer-events-none absolute;
+  }
+}

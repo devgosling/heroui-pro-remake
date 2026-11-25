@@ -1,0 +1,162 @@
+/* Prompt Suggestion - suggested prompts and starter actions for AI chat empty states */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion {
+  @apply flex w-full flex-col gap-8;
+}
+
+.prompt-suggestion--pill {
+  /* No styles as this is the default variant */
+}
+
+.prompt-suggestion--card {
+  /* Hook only - the card look lives on the items */
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion__header {
+  @apply flex flex-col gap-2;
+}
+
+.prompt-suggestion__title {
+  @apply text-2xl font-semibold tracking-tight text-foreground;
+}
+
+.prompt-suggestion__description {
+  @apply max-w-[640px] text-sm text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Group
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion__group {
+  @apply flex flex-col gap-3;
+}
+
+.prompt-suggestion__group-header {
+  @apply flex flex-col gap-1;
+}
+
+.prompt-suggestion__group-label {
+  @apply text-lg font-semibold text-foreground;
+}
+
+.prompt-suggestion__group-description {
+  @apply text-sm text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Items (responsive grid)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion__items {
+  @apply grid auto-rows-auto grid-cols-1;
+}
+
+.prompt-suggestion__items--pill {
+  @apply w-full gap-2 sm:grid-cols-2;
+}
+
+.prompt-suggestion__items--card {
+  @apply gap-3 sm:grid-cols-2 lg:grid-cols-3;
+
+  & > * {
+    @apply h-full;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (shared by both variants - pressable like Button)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion__item {
+  @apply w-full text-start outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 250ms var(--ease-smooth),
+    background-color 100ms var(--ease-out),
+    box-shadow 100ms var(--ease-out);
+  @apply transform-gpu motion-reduce:transition-none;
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply will-change-transform;
+    transform: scale(0.97);
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* Pill - bordered row with the prompt text and a hover arrow */
+.prompt-suggestion__item--pill {
+  @apply flex h-auto min-h-0 items-start justify-between gap-3 rounded-2xl border border-border bg-transparent px-4 py-3 text-sm leading-snug whitespace-normal text-foreground;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default/40;
+    }
+  }
+}
+
+/* Card - layered on the OSS `.card.card--default` surface */
+.prompt-suggestion__item--card {
+  @apply h-full rounded-2xl;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-surface-secondary;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Pill parts
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion__item-label {
+  @apply flex min-w-0 items-center text-pretty;
+}
+
+.prompt-suggestion__item-end-icon {
+  @apply mt-0.5 size-4 shrink-0 text-muted opacity-0 transition-opacity rtl:-scale-x-100;
+  @apply motion-reduce:transition-none;
+}
+
+@media (hover: hover) {
+  .prompt-suggestion__item--pill:hover .prompt-suggestion__item-end-icon,
+  .prompt-suggestion__item--pill[data-hovered="true"] .prompt-suggestion__item-end-icon {
+    @apply opacity-100;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Card parts (header / title use the OSS `card__header` / `card__title`)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-suggestion__item-description {
+  @apply text-sm;
+}
+
+.prompt-suggestion__item-footer {
+  @apply mt-auto flex items-center justify-between pt-0;
+}
+
+.prompt-suggestion__item-tags {
+  @apply flex flex-wrap gap-1.5;
+}
+
+.prompt-suggestion__item-meta {
+  @apply text-xs text-muted;
+}

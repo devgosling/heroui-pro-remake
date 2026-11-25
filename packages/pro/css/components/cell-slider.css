@@ -1,0 +1,185 @@
+/* Cell Slider - a settings row whose whole surface is the OSS Slider track (.slider / .slider__*).
+ *
+ * The track is a field-styled cell (same row recipe as Cell Switch: h-9 / px-3 / rounded-field /
+ * bg-field / shadow-field, field hover + focus tokens, `--secondary` on bg-default without shadow).
+ * The fill is a flat tint from the start edge to the value, the thumb is a transparent full-height
+ * hit area whose ::after draws a thin pill that only shows on hover, focus and drag, and the label
+ * and output float on top of the track at the start / end.
+ *
+ * Every rule is nested under the block so it beats the OSS `.slider .slider__*` rules (same layer,
+ * imported earlier); the orientation-specific overrides sit under `[data-orientation]` to beat
+ * `.slider[data-orientation="horizontal"] .slider__*`.
+ */
+
+.cell-slider {
+  --cell-slider-thumb-width: 2px;
+  --cell-slider-thumb-height: 16px;
+
+  @apply block gap-0 outline-none no-highlight;
+  grid-template: none;
+
+  /* ----------------------------------------------------------------------------------------------
+   * Track (OSS Slider.Track - the visible cell row)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-slider__track {
+    @apply relative flex h-9 w-full items-center overflow-hidden rounded-field border bg-field px-3 text-field-foreground shadow-field outline-none no-highlight;
+    border-width: var(--border-width-field);
+    border-color: var(--color-field-border);
+    /* Pro pins the trailing (physical right) inset to 0.75rem; it does not scale with --spacing */
+    padding-right: 0.75rem;
+    cursor: var(--cursor-interactive);
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition:
+      background-color 150ms var(--ease-smooth),
+      border-color 150ms var(--ease-smooth),
+      box-shadow 150ms var(--ease-out);
+    @apply motion-reduce:transition-none;
+
+    @media (hover: hover) {
+      &[data-hovered="true"] {
+        @apply bg-field-hover;
+        border-color: var(--color-field-border-hover);
+      }
+    }
+
+    &[data-focus-visible="true"] {
+      @apply status-focused;
+      border-color: var(--color-field-border-focus);
+      background-color: var(--color-field-focus);
+    }
+  }
+
+  .cell-slider__track--default {
+    /* No styles as this is the default variant */
+  }
+
+  .cell-slider__track--secondary {
+    @apply bg-default shadow-none;
+
+    @media (hover: hover) {
+      &[data-hovered="true"] {
+        @apply bg-surface-tertiary;
+      }
+    }
+
+    &[data-focus-visible="true"] {
+      @apply bg-default;
+    }
+
+    .cell-slider__fill {
+      @apply bg-muted/20;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Fill (OSS Slider.Fill - flat tint from the start edge to the value)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-slider__fill {
+    @apply pointer-events-none absolute inset-y-0 left-0 rounded-none bg-default;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Thumb (OSS Slider.Thumb - transparent hit area; the ::after is the visible pill)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-slider__thumb {
+    @apply absolute top-0 z-2 flex h-full translate-y-1/2 items-center justify-center rounded-none border-none bg-transparent outline-none;
+    width: calc(var(--cell-slider-thumb-width) * 2);
+    box-shadow: none;
+    cursor: var(--cursor-interactive);
+
+    &::after {
+      @apply block rounded-md bg-foreground opacity-0;
+      content: "";
+      width: var(--cell-slider-thumb-width);
+      height: var(--cell-slider-thumb-height);
+      box-shadow: none;
+
+      transition:
+        opacity 150ms var(--ease-smooth),
+        transform 120ms var(--ease-smooth);
+    }
+
+    /* motion-reduce cannot be applied inside ::after (it would build `::after:is(...)`, an invalid
+     * selector); on the thumb it also covers its ::before / ::after. Kept after the transitions. */
+    @apply motion-reduce:transition-none;
+
+    &[data-focus-visible="true"] {
+      box-shadow: none;
+      outline: none;
+
+      &::after {
+        @apply opacity-70 status-focused;
+        transform: scaleY(1.2);
+      }
+    }
+
+    &[data-dragging="true"] {
+      cursor: var(--cursor-interactive);
+
+      &::after {
+        @apply opacity-70;
+        transform: scaleY(1.5);
+      }
+    }
+  }
+
+  /* Hovering the row previews the pill (not while it is being dragged) */
+  @media (hover: hover) {
+    .cell-slider__track[data-hovered="true"]
+      .cell-slider__thumb:not([data-dragging="true"])::after {
+      @apply opacity-40;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Label (leading text, floats at the start of the track)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-slider__label {
+    @apply pointer-events-none absolute start-3 top-1/2 z-1 max-w-[60%] min-w-0 truncate text-start text-sm font-medium text-foreground;
+    transform: translateY(-50%);
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Output (OSS Slider.Output - value display, floats at the end of the track)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-slider__output {
+    @apply pointer-events-none absolute end-3 top-1/2 z-1 text-end text-sm font-normal text-muted tabular-nums;
+    transform: translateY(-50%);
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Disabled - the OSS root already fades to the disabled opacity; the track fades on top of it
+   * ---------------------------------------------------------------------------------------------- */
+  &[data-disabled="true"] .cell-slider__track,
+  &[aria-disabled="true"] .cell-slider__track {
+    @apply status-disabled;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Horizontal (the only orientation) - beats `.slider[data-orientation="horizontal"] .slider__*`
+   * ---------------------------------------------------------------------------------------------- */
+  &[data-orientation="horizontal"] {
+    flex-direction: row;
+
+    .cell-slider__track {
+      @apply h-9 rounded-field border-x-0;
+    }
+
+    .cell-slider__fill,
+    .cell-slider__thumb {
+      @apply h-full;
+    }
+
+    .cell-slider__thumb {
+      @apply top-0;
+      /* Fixed 20px hit area (Pro uses a literal rem value, independent of --spacing) */
+      width: 1.25rem;
+
+      &::after {
+        width: var(--cell-slider-thumb-width);
+        height: var(--cell-slider-thumb-height);
+      }
+    }
+  }
+}

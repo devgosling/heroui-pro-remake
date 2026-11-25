@@ -1,0 +1,76 @@
+/* Item Card - list row with a leading icon, title + description and a trailing action */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.item-card {
+  @apply flex items-center gap-3 px-4 py-3;
+  /* Spelled out so a scoped --radius applies (rounded-2xl resolves once at :root) */
+  border-radius: calc(var(--radius) * 2);
+
+  /* No hover / focus / disabled styles, same as Pro: a host swapped in through `render` (button,
+     link) keeps the browser's own focus outline, and feedback comes from what the consumer adds
+     (e.g. Pressable Feedback layers). */
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Variants
+ * ------------------------------------------------------------------------------------------------ */
+.item-card--default {
+  @apply bg-surface shadow-surface;
+}
+
+.item-card--secondary {
+  @apply bg-surface-secondary;
+}
+
+.item-card--tertiary {
+  @apply bg-surface-tertiary;
+}
+
+.item-card--outline {
+  @apply border border-border bg-transparent;
+}
+
+.item-card--transparent {
+  @apply bg-transparent shadow-none;
+}
+
+/* The default icon tile would vanish on a tinted surface, so it turns into a translucent surface */
+:is(.item-card--secondary, .item-card--tertiary) > [data-slot="item-card-icon"] {
+  @apply bg-surface/50;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon
+ * ------------------------------------------------------------------------------------------------ */
+.item-card__icon {
+  @apply flex size-9 shrink-0 items-center justify-center bg-default text-foreground;
+  border-radius: var(--radius);
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content
+ * ------------------------------------------------------------------------------------------------ */
+.item-card__content {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+
+.item-card__title {
+  @apply w-fit truncate text-sm font-medium text-foreground;
+}
+
+.item-card__description {
+  @apply mt-0.5 w-fit truncate text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Action
+ * ------------------------------------------------------------------------------------------------ */
+.item-card__action {
+  @apply ms-auto shrink-0 ps-2;
+}

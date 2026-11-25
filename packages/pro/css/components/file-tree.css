@@ -1,0 +1,244 @@
+/* File Tree - hierarchical file explorer built on the React Aria Tree (treegrid) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree {
+  /* Indent per nesting level */
+  --file-tree-indent: calc(var(--spacing) * 3);
+  /* Inline offset of the first guide line (item padding + half chevron - half indent) */
+  --file-tree-item-px: 12px;
+  --file-tree-guide-color: color-mix(in srgb, currentColor 10%, transparent);
+  /* Extra guide-line offset when a drag handle precedes the chevron */
+  --file-tree-chevron-offset: 0px;
+
+  @apply flex scrollbar flex-col overflow-auto p-1 outline-none;
+  forced-color-adjust: none;
+
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  /* Empty state (renderEmptyState) */
+  &[data-empty="true"] {
+    @apply flex min-h-[100px] items-center justify-center py-6 text-center text-sm text-muted italic;
+  }
+}
+
+/* Drag handle without selection checkbox: the chevron moves by handle width + gap */
+.file-tree:has(.file-tree__drag-handle):not(:has(.file-tree__checkbox)) {
+  --file-tree-chevron-offset: 22px;
+}
+
+.file-tree--sm {
+  --file-tree-indent: calc(var(--spacing) * 2.5);
+  --file-tree-item-px: 10px;
+}
+
+.file-tree--md {
+  /* No styles as this is the default size */
+}
+
+.file-tree--lg {
+  --file-tree-indent: calc(var(--spacing) * 6);
+  --file-tree-item-px: 8px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (row)
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__item {
+  @apply relative flex items-center rounded-lg px-2 py-1 text-sm text-foreground outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover:not(:has(.file-tree__chevron:hover)),
+    &[data-hovered="true"]:not(:has(.file-tree__chevron:hover)) {
+      @apply bg-default;
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply bg-default-hover;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &[data-selected="true"] {
+    @apply bg-default;
+  }
+
+  /* Adjacent selected rows read as one block */
+  &[data-selected="true"]:has(+ [data-selected="true"]) {
+    @apply rounded-b-none;
+  }
+
+  &[data-selected="true"] + [data-selected="true"] {
+    @apply rounded-t-none;
+  }
+
+  &[data-dragging="true"] {
+    @apply opacity-40;
+  }
+
+  &[data-drop-target="true"] {
+    @apply bg-accent-soft outline-2 -outline-offset-2 outline-accent outline-solid;
+  }
+}
+
+.file-tree__item--sm {
+  @apply px-1.5 py-0.5 text-xs;
+
+  & .file-tree__icon svg {
+    @apply size-3.5;
+  }
+}
+
+.file-tree__item--md {
+  /* No styles as this is the default size */
+}
+
+.file-tree__item--lg {
+  @apply px-2.5 py-1.5 text-base;
+
+  & .file-tree__icon svg {
+    @apply size-5;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item content (indent by level)
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__item-content {
+  @apply flex w-full items-center gap-0.5;
+  padding-inline-start: calc((var(--tree-item-level) - 1) * var(--file-tree-indent));
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Guide lines (one per ancestor level, full row height)
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__guide-line {
+  @apply pointer-events-none absolute inset-y-0 w-px select-none;
+  background-color: var(--file-tree-guide-color);
+}
+
+.file-tree__guide-line--hover {
+  @apply opacity-0;
+  transition: opacity 150ms ease;
+  @apply motion-reduce:transition-none;
+}
+
+.file-tree:hover .file-tree__guide-line--hover {
+  @apply opacity-100;
+}
+
+.file-tree__guide-line--none {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Chevron (expand / collapse button) + indicator
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__chevron {
+  @apply invisible flex size-5 shrink-0 items-center justify-center rounded-md outline-none no-highlight;
+}
+
+.file-tree__item[data-has-child-items="true"] .file-tree__chevron {
+  @apply visible;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover {
+      @apply bg-default-hover;
+    }
+  }
+}
+
+.file-tree__indicator {
+  @apply size-3.5 rotate-0 text-muted rtl:rotate-180;
+  transition: rotate 150ms ease;
+  @apply motion-reduce:transition-none;
+}
+
+.file-tree__item[data-expanded="true"] .file-tree__indicator {
+  @apply rotate-90;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon + label
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__icon {
+  @apply flex shrink-0 items-center justify-center text-muted;
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+.file-tree__label {
+  @apply flex-1 truncate px-0.5 text-foreground select-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Selection checkbox (selectionBehavior="toggle")
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__checkbox {
+  @apply flex shrink-0 items-center justify-center;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Drag handle
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__drag-handle {
+  @apply flex size-5 shrink-0 cursor-grab items-center justify-center text-muted opacity-0 outline-none no-highlight;
+  transition: opacity 150ms ease;
+  @apply motion-reduce:transition-none;
+
+  &:active {
+    @apply cursor-grabbing;
+  }
+
+  & svg {
+    @apply size-3;
+  }
+}
+
+@media (hover: hover) {
+  .file-tree__item:hover .file-tree__drag-handle,
+  .file-tree__item[data-hovered="true"] .file-tree__drag-handle {
+    @apply opacity-40;
+  }
+
+  .file-tree__item .file-tree__drag-handle:hover {
+    @apply opacity-70;
+  }
+}
+
+/* Drop indicator between rows (React Aria DropIndicator) */
+.file-tree .react-aria-DropIndicator {
+  @apply outline-none;
+
+  &[data-drop-target="true"] {
+    @apply outline-1 outline-accent outline-solid;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Sections
+ * ------------------------------------------------------------------------------------------------ */
+.file-tree__section:not(:first-child) {
+  @apply mt-3;
+}
+
+.file-tree__section-header {
+  @apply px-3 py-1.5 text-xs font-medium text-muted select-none;
+}

@@ -1,0 +1,90 @@
+/* Context Menu - right-click / long-press menu anchored at the pointer.
+   Items, sections, indicators and headers are the open-source HeroUI menu parts (.menu-item,
+   .menu-section, .header, .separator); this file only styles the context-menu specific parts. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (right-click target area)
+ * ------------------------------------------------------------------------------------------------ */
+.context-menu__trigger {
+  @apply relative inline-block;
+  /* No iOS callout / link preview on long press, so the long press can open the menu */
+  -webkit-touch-callout: none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Popover (floating panel at the pointer)
+ * ------------------------------------------------------------------------------------------------ */
+.context-menu__popover {
+  @apply scroll-py-1 scrollbar overflow-y-auto overscroll-contain rounded-3xl bg-overlay p-0 text-sm outline-none md:min-w-55;
+  max-width: 48svw;
+  box-shadow: var(--shadow-overlay);
+  /* Grow from the pointer position React Aria reports */
+  transform-origin: var(--trigger-anchor-point, center);
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply outline-none;
+  }
+
+  /* Entering: fade + zoom from 90% with a placement-aware 0.25rem slide */
+  &[data-entering="true"] {
+    animation: heroui-overlay-enter-90 150ms ease;
+    /* A reposition while the menu opens eases with the same timing */
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+
+    &[data-placement="top"] {
+      animation-name: heroui-overlay-enter-90-y;
+    }
+
+    &[data-placement="bottom"] {
+      animation-name: heroui-overlay-enter-90-ny;
+    }
+
+    &[data-placement="left"] {
+      animation-name: heroui-overlay-enter-90-x;
+    }
+
+    &[data-placement="right"] {
+      animation-name: heroui-overlay-enter-90-nx;
+    }
+  }
+
+  /* Exiting: fade + zoom to 95%. Repeated with [data-placement] so it outranks the entering names. */
+  &[data-exiting="true"],
+  &[data-exiting="true"][data-placement] {
+    animation: heroui-overlay-exit 100ms ease;
+    transition-duration: 100ms;
+    transition-timing-function: ease;
+  }
+
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    will-change: opacity, transform;
+    @apply motion-reduce:animate-none;
+  }
+
+  /* Menu inside the popover */
+  [data-slot="context-menu-menu"] {
+    @apply p-1.5 outline-none;
+  }
+
+  /* Inset dividers (94% wide, centred) */
+  [data-slot="context-menu-separator"] {
+    @apply ml-[3%] w-[94%];
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Menu (item list)
+ * ------------------------------------------------------------------------------------------------ */
+.context-menu__menu {
+  @apply relative flex w-full flex-col gap-0.5 overflow-clip p-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Separator
+ * ------------------------------------------------------------------------------------------------ */
+.context-menu__separator {
+  @apply my-1 h-px w-full bg-separator;
+}

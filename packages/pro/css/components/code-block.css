@@ -1,0 +1,135 @@
+/* Code Block - syntax-highlighted code surface (shiki dual themes) with an optional header row and
+ * an icon-only copy button (OSS Button: ghost, sm, icon-only). */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.code-block {
+  @apply my-2 flex w-full flex-col overflow-clip rounded-2xl bg-surface-secondary text-surface-secondary-foreground;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header (language label + actions)
+ * ------------------------------------------------------------------------------------------------ */
+.code-block__header {
+  @apply flex items-center justify-between gap-2 px-3 pt-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Code (horizontal scroll region around shiki's <pre>)
+ * ------------------------------------------------------------------------------------------------ */
+.code-block__code {
+  @apply w-full scrollbar overflow-x-auto text-[13px] leading-relaxed;
+
+  & pre {
+    @apply m-0 px-3 py-2;
+    /* Shiki writes the theme background inline; the block surface provides it instead. */
+    background: none !important;
+  }
+
+  & code {
+    @apply font-mono;
+  }
+
+  & .line {
+    padding-inline: 0 !important;
+  }
+
+  /* Dual-theme tokens (`defaultColor: false`): every token carries --shiki-light / --shiki-dark */
+  & .shiki,
+  & .shiki span {
+    color: var(--shiki-light, var(--color-surface-secondary-foreground));
+  }
+}
+
+/* Dark mode follows the same selectors that switch the theme tokens (.dark / data-theme="dark"),
+ * plus named dark themes (data-theme="<name>-dark" and Pro's glass/mouve/brutalism dark theme
+ * classes). Not the `dark:` variant: its prefers-color-scheme fallback also matches token <span>s
+ * nested in a light `.shiki` <pre>. */
+:is(.dark, .glass-dark, .mouve-dark, .brutalism-dark, [data-theme="dark"], [data-theme$="-dark"])
+  .code-block__code
+  :is(.shiki, .shiki span) {
+  color: var(--shiki-dark, var(--color-surface-secondary-foreground));
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Copy button (layered on the OSS `.button.button--ghost.button--sm.button--icon-only`)
+ * ------------------------------------------------------------------------------------------------ */
+.code-block__copy-button {
+  @apply shrink-0 text-muted outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  &.button--icon-only.button--sm {
+    @apply size-6;
+
+    & svg {
+      @apply m-0 size-3.5;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply text-foreground;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* Copy <-> check icon swap: the entering icon grows in from a blurred dot while the exiting one is
+ * popped out of the layout (absolute) and shrinks away. Both use a critically damped spring
+ * (300ms, no bounce) expressed as a linear() easing. */
+.code-block__copy-button-icon-motion {
+  --code-block-icon-spring: linear(
+    0,
+    0.04 3.5%,
+    0.134 7%,
+    0.248 10.5%,
+    0.364 14%,
+    0.473 17.5%,
+    0.569 21%,
+    0.652 24%,
+    0.722 27.5%,
+    0.78 31%,
+    0.864 38%,
+    0.918 45%,
+    0.951 52%,
+    0.971 59%,
+    0.983 66%,
+    0.993 76%,
+    0.998 90%,
+    1
+  );
+
+  @apply flex size-3.5 items-center justify-center;
+  transition:
+    opacity 300ms var(--code-block-icon-spring),
+    filter 300ms var(--code-block-icon-spring),
+    scale 300ms var(--code-block-icon-spring);
+  @apply motion-reduce:transition-none;
+
+  /* Only icons swapped in after a copy animate in; the initial icon renders at rest */
+  &[data-entering="true"] {
+    @starting-style {
+      opacity: 0;
+      filter: blur(4px);
+      scale: 0.25;
+    }
+  }
+
+  &[data-exiting="true"] {
+    @apply pointer-events-none absolute;
+    opacity: 0;
+    filter: blur(4px);
+    scale: 0.25;
+  }
+}

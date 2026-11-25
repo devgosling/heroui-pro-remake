@@ -1,0 +1,5 @@
+/* Number Value - locale-aware formatted number (typography comes from the consumer) */
+
+.number-value {
+  @apply tabular-nums;
+}

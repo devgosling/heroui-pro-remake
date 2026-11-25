@@ -1,0 +1,106 @@
+/* Empty State - centered placeholder with media, title, description and actions */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------
+ * `@heroui/styles` already ships `.empty-state { p-2 text-sm text-muted }` for the single-part OSS
+ * EmptyState (list box / autocomplete placeholders). Pro shares that block and only adds the
+ * centered column here; padding and gap live on the size modifiers (the component always renders
+ * one), so OSS empty states keep their compact padding.
+ * ------------------------------------------------------------------------------------------------ */
+.empty-state {
+  @apply flex flex-col items-center text-center;
+}
+
+.empty-state--sm {
+  @apply gap-3 px-4 py-6;
+}
+
+/* Default size: carries the md spacing because the bare block must keep the OSS `p-2` */
+.empty-state--md {
+  @apply gap-4 px-6 py-8;
+}
+
+.empty-state--lg {
+  @apply gap-5 px-8 py-12;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header (media + title + description)
+ * ------------------------------------------------------------------------------------------------ */
+.empty-state__header {
+  @apply flex flex-col items-center gap-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Media
+ * ------------------------------------------------------------------------------------------------ */
+.empty-state__media {
+  @apply flex shrink-0 items-center justify-center text-muted;
+
+  &[data-variant="icon"] {
+    @apply rounded-full bg-default text-foreground;
+  }
+}
+
+/* Icon circle + glyph scale with the root size (a nested Spinner keeps its own svg size) */
+.empty-state--sm .empty-state__media[data-variant="icon"] {
+  @apply size-10;
+
+  & svg:not([data-slot="spinner"] svg) {
+    @apply size-4;
+  }
+}
+
+.empty-state--md .empty-state__media[data-variant="icon"] {
+  @apply size-12;
+
+  & svg:not([data-slot="spinner"] svg) {
+    @apply size-5;
+  }
+}
+
+.empty-state--lg .empty-state__media[data-variant="icon"] {
+  @apply size-14;
+
+  & svg:not([data-slot="spinner"] svg) {
+    @apply size-6;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Title
+ * ------------------------------------------------------------------------------------------------ */
+.empty-state__title {
+  @apply font-semibold text-foreground;
+}
+
+.empty-state--sm .empty-state__title {
+  @apply text-sm;
+}
+
+.empty-state--md .empty-state__title {
+  @apply text-base;
+}
+
+.empty-state--lg .empty-state__title {
+  @apply text-lg;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Description
+ * ------------------------------------------------------------------------------------------------ */
+.empty-state__description {
+  @apply text-sm text-muted;
+}
+
+.empty-state--sm .empty-state__description {
+  @apply text-xs;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (actions)
+ * ------------------------------------------------------------------------------------------------ */
+.empty-state__content {
+  @apply flex flex-col items-center gap-2;
+}

@@ -1,0 +1,72 @@
+/* Inline Select - a ghost Select trigger that sits inside running text (wraps the OSS Select) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.inline-select {
+  --inline-select-value-max-width: 12rem;
+  --inline-select-indicator-size: 0.75rem;
+
+  @apply shrink-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger
+ * Scoped under the root so these ghost styles outrank the OSS `.select__trigger` field styles
+ * (field background, border, shadow, min-height and the `:has(.select__indicator)` end padding).
+ * ------------------------------------------------------------------------------------------------ */
+.inline-select .inline-select__trigger {
+  @apply min-h-0 items-center gap-2 rounded-[calc(var(--radius)*0.75)] border-0 bg-transparent px-1 py-0.5 text-sm text-muted shadow-none outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* Overrides the room the OSS trigger reserves for its absolutely positioned indicator */
+  padding-inline-end: calc(var(--spacing) * 1);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-colors duration-100 motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply border-transparent bg-transparent text-foreground;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply border-transparent bg-transparent status-focused outline-none;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Value (selected item text, truncated)
+ * ------------------------------------------------------------------------------------------------ */
+.inline-select .inline-select__value {
+  @apply max-w-(--inline-select-value-max-width) truncate;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (flows after the value instead of sitting absolutely at the field's end)
+ * ------------------------------------------------------------------------------------------------ */
+.inline-select .inline-select__indicator {
+  @apply static my-0 size-(--inline-select-indicator-size) text-muted;
+
+  /* The expand chevrons point both ways, so the icon does not flip while open */
+  &[data-open="true"] {
+    @apply rotate-0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Popover
+ * The popover is portalled out of the root, so this only applies when it renders inside it;
+ * otherwise the OSS `--trigger-width` minimum applies.
+ * ------------------------------------------------------------------------------------------------ */
+.inline-select .inline-select__popover {
+  @apply min-w-48;
+}

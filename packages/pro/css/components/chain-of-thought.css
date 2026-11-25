@@ -1,0 +1,213 @@
+/* Chain Of Thought - ordered list of agent steps with status marks (usually inside Reasoning).
+ *
+ * Every step has a narrow lane (`__step-indicator`) holding the status mark and a connector line
+ * (`::after`) down to the next step, followed by a text column (`__step-body`). The mark stacks one
+ * glyph per status in a single grid cell; only the glyph that matches `data-status` is opaque, so a
+ * status change crossfades between marks. The `__step-mark` / `__step-glyph*` / `__step-check` /
+ * `__step-cross` classes are internal (use the `indicator` prop to change the mark).
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.chain-of-thought {
+  /* Mark lane width and active disc size */
+  --chain-of-thought-mark-size: calc(var(--spacing) * 5);
+  /* Gap between the active disc and the ring inside it */
+  --chain-of-thought-active-ring-inset: var(--spacing);
+  /* Solid line below a settled step / dashed line below an active or pending step */
+  --chain-of-thought-line: color-mix(in oklab, var(--color-muted) 26%, transparent);
+  --chain-of-thought-line-pending: color-mix(in oklab, var(--color-muted) 45%, transparent);
+  /* Mark crossfade, line colour and title colour changes */
+  --chain-of-thought-duration: 150ms;
+  --chain-of-thought-ease: var(--ease-out-quint);
+
+  @apply m-0 flex w-full list-none flex-col p-0 text-sm;
+
+  /* A list without (visible) steps takes no space */
+  &:empty {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Step
+ * ------------------------------------------------------------------------------------------------ */
+.chain-of-thought__step {
+  @apply flex gap-3;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (lane: mark + connector line)
+ * ------------------------------------------------------------------------------------------------ */
+.chain-of-thought__step-indicator {
+  @apply flex shrink-0 flex-col items-center;
+  width: var(--chain-of-thought-mark-size);
+
+  &::after {
+    @apply w-0 grow content-[''];
+    border-inline-start: 1px solid var(--chain-of-thought-line);
+    transition: border-color var(--chain-of-thought-duration) var(--chain-of-thought-ease);
+    @apply motion-reduce:transition-none;
+  }
+
+  /* Work still to come: dashed, a little stronger */
+  &[data-status="active"]::after,
+  &[data-status="pending"]::after {
+    border-inline-start-style: dashed;
+    border-inline-start-color: var(--chain-of-thought-line-pending);
+  }
+}
+
+.chain-of-thought__step:last-child > .chain-of-thought__step-indicator::after {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Body (text column)
+ * ------------------------------------------------------------------------------------------------ */
+.chain-of-thought__step-body {
+  @apply flex min-w-0 flex-1 flex-col gap-1 pb-4;
+
+  /* Extra content after the text (a source list, a code block...) sits a little further away */
+  &
+    > :not(.chain-of-thought__step-status)
+    + :not(.chain-of-thought__step-title, .chain-of-thought__step-description) {
+    @apply mt-1;
+  }
+}
+
+.chain-of-thought__step:last-child > .chain-of-thought__step-body {
+  @apply pb-0;
+}
+
+/* Visually hidden status text read before the title */
+.chain-of-thought__step-status {
+  @apply sr-only;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Title / Description
+ * ------------------------------------------------------------------------------------------------ */
+.chain-of-thought__step-title {
+  @apply text-sm font-normal wrap-break-word text-foreground/86;
+  transition: color var(--chain-of-thought-duration) var(--chain-of-thought-ease);
+  @apply motion-reduce:transition-none;
+}
+
+.chain-of-thought__step[data-status="active"]
+  > .chain-of-thought__step-body
+  > .chain-of-thought__step-title {
+  @apply font-medium text-foreground;
+}
+
+.chain-of-thought__step[data-status="error"]
+  > .chain-of-thought__step-body
+  > .chain-of-thought__step-title {
+  @apply text-foreground;
+}
+
+.chain-of-thought__step[data-status="pending"]
+  > .chain-of-thought__step-body
+  > .chain-of-thought__step-title {
+  @apply text-muted/80;
+}
+
+.chain-of-thought__step[data-status="interrupted"]
+  > .chain-of-thought__step-body
+  > .chain-of-thought__step-title {
+  @apply text-muted;
+}
+
+.chain-of-thought__step-description {
+  @apply text-xs wrap-break-word text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Mark (internal: one glyph per status, stacked and crossfaded)
+ * ------------------------------------------------------------------------------------------------ */
+.chain-of-thought__step-mark {
+  @apply grid shrink-0 place-items-center;
+  width: var(--chain-of-thought-mark-size);
+  height: var(--chain-of-thought-mark-size);
+}
+
+.chain-of-thought__step-glyph {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition: opacity var(--chain-of-thought-duration) var(--chain-of-thought-ease);
+  @apply motion-reduce:transition-none;
+}
+
+.chain-of-thought__step-indicator:not([data-status]) .chain-of-thought__step-glyph--none,
+.chain-of-thought__step-indicator[data-status="complete"] .chain-of-thought__step-glyph--complete,
+.chain-of-thought__step-indicator[data-status="active"] .chain-of-thought__step-glyph--active,
+.chain-of-thought__step-indicator[data-status="error"] .chain-of-thought__step-glyph--error,
+.chain-of-thought__step-indicator[data-status="interrupted"]
+  .chain-of-thought__step-glyph--interrupted,
+.chain-of-thought__step-indicator[data-status="pending"] .chain-of-thought__step-glyph--pending {
+  opacity: 1;
+}
+
+/* No status: a small neutral dot */
+.chain-of-thought__step-glyph--none {
+  @apply size-1.5 rounded-full bg-muted;
+}
+
+/* Settled marks share a faint foreground disc */
+.chain-of-thought__step-glyph--complete,
+.chain-of-thought__step-glyph--error,
+.chain-of-thought__step-glyph--interrupted {
+  @apply grid size-4.5 place-items-center rounded-full bg-foreground/7;
+}
+
+.chain-of-thought__step-glyph--complete {
+  @apply text-muted;
+
+  /* A custom `indicator` node (icon) */
+  & > * {
+    @apply size-3;
+  }
+}
+
+.chain-of-thought__step-glyph--complete > .chain-of-thought__step-check,
+.chain-of-thought__step-cross {
+  @apply size-2.5;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Active: accent soft disc with the Loader ring inset inside it */
+.chain-of-thought__step-glyph--active {
+  @apply grid place-items-center rounded-full bg-accent-soft;
+  width: var(--chain-of-thought-mark-size);
+  height: var(--chain-of-thought-mark-size);
+
+  & > .loader {
+    --loader-size: calc(
+      var(--chain-of-thought-mark-size) - var(--chain-of-thought-active-ring-inset) * 2
+    );
+  }
+}
+
+.chain-of-thought__step-glyph--error {
+  @apply text-danger;
+}
+
+/* Interrupted: a muted "stop" square on a muted disc */
+.chain-of-thought__step-glyph--interrupted {
+  @apply bg-muted/12;
+
+  &::before {
+    @apply size-1.5 bg-muted content-[''];
+    border-radius: calc(var(--radius) * 0.25);
+  }
+}
+
+/* Pending: dashed outline circle */
+.chain-of-thought__step-glyph--pending {
+  @apply size-4.5 text-muted;
+  stroke-width: 1.25px;
+  stroke-dasharray: 1;
+}

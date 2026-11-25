@@ -1,0 +1,130 @@
+/* Rating - star rating input built on a horizontal RAC RadioGroup (one Radio per star) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (radiogroup)
+ * ------------------------------------------------------------------------------------------------ */
+.rating {
+  --rating-active-color: var(--color-warning);
+  --rating-inactive-color: var(--color-surface-tertiary);
+
+  /* Pro uses fixed pixel gaps (4/5/8px) that do not scale with --spacing */
+  @apply flex items-center gap-[5px] outline-none;
+
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  /* Read-only ratings are display-only: no pointer, no focusable inputs, no ring */
+  &[data-readonly="true"] {
+    @apply pointer-events-none;
+
+    & input {
+      @apply hidden;
+    }
+
+    &:focus-visible,
+    &[data-focus-visible="true"] {
+      @apply shadow-none outline-none;
+    }
+  }
+}
+
+.rating--sm {
+  @apply gap-[4px];
+}
+
+.rating--md {
+  /* No styles as this is the default size */
+}
+
+.rating--lg {
+  @apply gap-[8px];
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (label wrapping the visually hidden radio input)
+ * ------------------------------------------------------------------------------------------------ */
+.rating__item {
+  @apply relative flex items-center justify-center outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: transform 150ms;
+  @apply motion-reduce:transition-none;
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply rounded-sm status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &:active:not([data-readonly="true"]),
+  &[data-pressed="true"]:not([data-readonly="true"]) {
+    transform: scale(0.8);
+  }
+
+  &[data-readonly="true"] {
+    @apply pointer-events-none cursor-default;
+
+    &:focus-visible:not([data-focused]),
+    &[data-focus-visible="true"] {
+      @apply shadow-none outline-none;
+    }
+  }
+}
+
+.rating__item--sm {
+  & .rating__icon,
+  & .rating__icon-partial svg {
+    @apply size-4;
+  }
+}
+
+.rating__item--md {
+  /* No styles as this is the default size */
+}
+
+.rating__item--lg {
+  & .rating__icon,
+  & .rating__icon-partial svg {
+    @apply size-7;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon (inactive / active colour) and partial overlay (read-only fractional fill)
+ * ------------------------------------------------------------------------------------------------ */
+.rating__icon {
+  @apply relative flex size-5 items-center justify-center;
+  color: var(--rating-inactive-color);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: color 100ms ease-out;
+  @apply motion-reduce:transition-none;
+
+  & svg {
+    @apply size-full;
+  }
+}
+
+.rating__item[data-active="true"] .rating__icon {
+  color: var(--rating-active-color);
+}
+
+.rating__icon-partial {
+  @apply absolute inset-y-0 left-0 flex items-center overflow-hidden;
+  width: var(--rating-partial);
+  color: var(--rating-active-color);
+
+  & svg {
+    @apply size-5 shrink-0;
+  }
+}

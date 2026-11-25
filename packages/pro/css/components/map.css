@@ -1,0 +1,348 @@
+/* Map - MapLibre surface with HeroUI markers, popups, tooltips and controls */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (MapLibre container + positioning root)
+ * ------------------------------------------------------------------------------------------------ */
+.map {
+  --map-control-size: calc(var(--spacing) * 8);
+  --map-control-offset: calc(var(--spacing) * 2);
+  /* Keeps bottom controls clear of the attribution pill */
+  --map-control-attribution-clearance: calc(var(--spacing) * 12);
+  --map-popup-max-width: 248px;
+  --map-marker-color: var(--accent);
+  --map-marker-ring-color: var(--surface);
+  --map-route-color: #4285f4;
+  --map-route-opacity: 0.8;
+  --map-route-width: 3;
+
+  @apply relative size-full overflow-hidden bg-default;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * MapLibre base styles (scoped, so the app does not need to import maplibre-gl.css)
+ * ------------------------------------------------------------------------------------------------ */
+.map.maplibregl-map {
+  font:
+    12px/20px "Helvetica Neue",
+    Arial,
+    Helvetica,
+    sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map .maplibregl-canvas {
+  @apply absolute top-0 left-0 outline-none;
+
+  &:focus {
+    @apply outline-none;
+  }
+}
+
+.map .maplibregl-canvas-container.maplibregl-interactive {
+  @apply cursor-grab select-none;
+
+  &:active {
+    @apply cursor-grabbing;
+  }
+
+  &.maplibregl-track-pointer {
+    @apply cursor-pointer;
+  }
+}
+
+.map .maplibregl-canvas-container.maplibregl-touch-zoom-rotate,
+.map .maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas {
+  touch-action: pan-x pan-y;
+}
+
+.map .maplibregl-canvas-container.maplibregl-touch-drag-pan,
+.map .maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas {
+  touch-action: pinch-zoom;
+}
+
+.map .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,
+.map
+  .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan
+  .maplibregl-canvas {
+  touch-action: none;
+}
+
+.map .maplibregl-marker {
+  @apply absolute top-0 left-0 will-change-transform;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: opacity 200ms;
+  @apply motion-reduce:transition-none;
+}
+
+.map .maplibregl-popup {
+  @apply pointer-events-none absolute top-0 left-0 flex will-change-transform;
+}
+
+.map .maplibregl-popup-anchor-top,
+.map .maplibregl-popup-anchor-top-left,
+.map .maplibregl-popup-anchor-top-right {
+  @apply flex-col;
+}
+
+.map .maplibregl-popup-anchor-bottom,
+.map .maplibregl-popup-anchor-bottom-left,
+.map .maplibregl-popup-anchor-bottom-right {
+  @apply flex-col-reverse;
+}
+
+.map .maplibregl-popup-anchor-left {
+  @apply flex-row;
+}
+
+.map .maplibregl-popup-anchor-right {
+  @apply flex-row-reverse;
+}
+
+/* The HeroUI surface lives inside `.maplibregl-popup-content`, so MapLibre's chrome is reset */
+.map .maplibregl-popup-content {
+  @apply pointer-events-auto relative rounded-none bg-transparent p-0 shadow-none;
+}
+
+.map .maplibregl-popup-tip {
+  @apply hidden;
+}
+
+/* MapLibre control corners (attribution) */
+.map .maplibregl-ctrl-top-left,
+.map .maplibregl-ctrl-top-right,
+.map .maplibregl-ctrl-bottom-left,
+.map .maplibregl-ctrl-bottom-right {
+  @apply pointer-events-none absolute z-10;
+}
+
+.map .maplibregl-ctrl-top-left {
+  @apply top-0 left-0;
+}
+
+.map .maplibregl-ctrl-top-right {
+  @apply top-0 right-0;
+}
+
+.map .maplibregl-ctrl-bottom-left {
+  @apply bottom-0 left-0;
+}
+
+.map .maplibregl-ctrl-bottom-right {
+  @apply right-0 bottom-0;
+}
+
+.map .maplibregl-ctrl {
+  @apply pointer-events-auto clear-both;
+  transform: translate(0);
+}
+
+.map .maplibregl-ctrl-top-left .maplibregl-ctrl {
+  @apply float-left mt-2.5 ml-2.5;
+}
+
+.map .maplibregl-ctrl-top-right .maplibregl-ctrl {
+  @apply float-right mt-2.5 mr-2.5;
+}
+
+.map .maplibregl-ctrl-bottom-left .maplibregl-ctrl {
+  @apply float-left mb-2.5 ml-2.5;
+}
+
+.map .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+  @apply float-right mr-2.5 mb-2.5;
+}
+
+/* Attribution: stays light on every theme so tile provider credits remain legible (square, as Pro renders it) */
+.map .maplibregl-ctrl-attrib {
+  @apply m-0 rounded-none bg-white/82 px-2 py-0 leading-5;
+  color: oklch(20% 0 0);
+
+  &.maplibregl-compact {
+    @apply relative box-content min-h-5;
+    padding: 2px 28px 2px 8px;
+  }
+
+  & summary.maplibregl-ctrl-attrib-button {
+    @apply list-none appearance-none;
+
+    &::-webkit-details-marker {
+      @apply hidden;
+    }
+  }
+
+  & a {
+    @apply text-inherit no-underline;
+
+    @media (hover: hover) {
+      &:hover {
+        @apply underline;
+      }
+    }
+  }
+}
+
+.map .maplibregl-ctrl-attrib-button {
+  @apply absolute top-0 right-0 flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0;
+  color: oklch(8% 0 0);
+
+  &::before {
+    @apply flex size-5 items-center justify-center rounded-full text-sm font-bold text-white;
+    content: "i";
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    background-color: oklch(8% 0 0);
+  }
+
+  &:focus-visible {
+    @apply status-focused;
+  }
+}
+
+.map .maplibregl-ctrl-attrib-inner {
+  @apply inline-flex items-center gap-1;
+}
+
+.map .maplibregl-attrib-empty {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Loader (veil until the map and its style are ready)
+ * ------------------------------------------------------------------------------------------------ */
+.map__loader {
+  @apply absolute inset-0 z-10 flex items-center justify-center bg-overlay/50 backdrop-blur-xs;
+}
+
+.map__loader-spinner {
+  @apply text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Markers
+ * ------------------------------------------------------------------------------------------------ */
+.map__marker {
+  @apply flex items-center justify-center;
+
+  /* Markers with a popup are focusable buttons */
+  &:focus-visible {
+    @apply rounded-full status-focused;
+  }
+}
+
+.map__marker-content {
+  @apply relative flex cursor-pointer items-center justify-center;
+}
+
+.map__default-marker {
+  @apply relative block size-4 rounded-full border-2;
+  border-color: var(--map-marker-ring-color);
+  background-color: var(--map-marker-color);
+  box-shadow: var(--overlay-shadow);
+}
+
+.map__marker-label {
+  @apply pointer-events-none absolute left-1/2 -translate-x-1/2 text-[10px] font-medium whitespace-nowrap text-foreground;
+}
+
+.map__marker-label--top {
+  @apply bottom-full mb-1;
+}
+
+.map__marker-label--bottom {
+  @apply top-full mt-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Popup + tooltip
+ * ------------------------------------------------------------------------------------------------ */
+.map__popup-content {
+  @apply relative max-w-(--map-popup-max-width) min-w-0 bg-overlay p-4 text-sm wrap-anywhere text-foreground;
+  border-radius: min(32px, var(--radius-3xl));
+  box-shadow: var(--overlay-shadow);
+
+  & > * {
+    @apply max-w-full min-w-0;
+  }
+
+  /* Room for the close button */
+  &[data-close-button="true"] {
+    @apply pr-10;
+  }
+}
+
+.map__popup-close-button {
+  @apply absolute top-2 right-2 z-10 size-5;
+
+  & [data-slot="close-button-icon"] {
+    @apply size-3;
+  }
+}
+
+.map__tooltip {
+  @apply pointer-events-none max-w-(--map-popup-max-width) bg-foreground px-2 py-1 text-xs text-background;
+  border-radius: calc(var(--radius) * 0.75);
+  box-shadow: var(--overlay-shadow);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Controls
+ * ------------------------------------------------------------------------------------------------ */
+.map__controls {
+  @apply absolute z-10 flex flex-col gap-1.5;
+}
+
+.map__controls--top-left {
+  @apply top-(--map-control-offset) left-(--map-control-offset);
+}
+
+.map__controls--top-right {
+  @apply top-(--map-control-offset) right-(--map-control-offset);
+}
+
+.map__controls--bottom-left {
+  @apply bottom-[calc(var(--map-control-offset)+var(--map-control-attribution-clearance))] left-(--map-control-offset);
+}
+
+.map__controls--bottom-right {
+  @apply right-(--map-control-offset) bottom-[calc(var(--map-control-offset)+var(--map-control-attribution-clearance))];
+}
+
+.map__control-button {
+  @apply text-foreground;
+
+  /* Beats the OSS `.button--sm` / `.button--icon-only` sizing */
+  &.button {
+    @apply size-(--map-control-size) min-w-(--map-control-size) p-0;
+  }
+}
+
+.map__control-icon {
+  @apply size-4;
+}
+
+.map__control-spinner {
+  @apply size-4 text-current;
+}
+
+.map__compass-icon {
+  @apply size-5 transform-3d;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-transform duration-200 motion-reduce:transition-none;
+
+  & [data-needle="north-right"] {
+    @apply fill-red-500;
+  }
+
+  & [data-needle="north-left"] {
+    @apply fill-red-400;
+  }
+
+  & [data-needle="south-right"] {
+    @apply fill-muted/70;
+  }
+
+  & [data-needle="south-left"] {
+    @apply fill-muted/38;
+  }
+}

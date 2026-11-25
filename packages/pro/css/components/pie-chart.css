@@ -1,0 +1,53 @@
+/* Pie Chart - Recharts PieChart themed with HeroUI tokens
+ * Slice colours come from the shared --chart-1..5 palette (declared in chart-tooltip.css). */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.pie-chart {
+  @apply w-full;
+
+  /* Sector strokes converge messily at the centre: use `paddingAngle` on the Pie for gaps instead */
+  & .recharts-pie-sector path {
+    stroke: none;
+  }
+
+  /* Outside labels and their connector lines */
+  & .recharts-pie-label-text {
+    @apply fill-muted! text-[11px];
+  }
+
+  & .recharts-pie-label-line {
+    @apply stroke-muted;
+    stroke-opacity: 0.3;
+  }
+
+  /* Centre label of a donut (`PieChart.Label`). Important: recent Recharts 3 releases write their
+     legacy default grey as an inline `fill` style on label text, which a plain rule cannot beat. */
+  & .recharts-label {
+    @apply fill-foreground!;
+  }
+
+  /* Tooltip: no cursor for pies; float above HTML centre content. Recharts writes the slide
+     transition inline (`transition: transform 400ms`) and only drops it for the OS reduced-motion
+     setting, so `!important` lets the HeroUI `data-reduce-motion` switch stop it as well. */
+  & .recharts-tooltip-cursor {
+    @apply hidden;
+  }
+
+  & .recharts-tooltip-wrapper {
+    @apply z-10 motion-reduce:transition-none!;
+  }
+
+  /* Keyboard focus (Recharts accessibility layer). SVG children cannot draw box-shadow rings, so
+     the ring is an outline in the focus colour with the theme ring offset. */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    @apply outline-2 outline-offset-(--ring-offset-width) outline-focus outline-solid;
+  }
+}

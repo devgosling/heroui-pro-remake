@@ -1,0 +1,81 @@
+/* Text Shimmer - animated highlight sweep for short streaming / thinking / loading labels.
+ *
+ * Two stacked copies of the same text:
+ *   - `__text` is the readable layer, drawn at 45% of the inherited text colour.
+ *   - `__highlight` is an inert copy on top. Its glyphs are invisible (transparent fill) but act as
+ *     a mask for a `currentColor` gradient band (`::after`) that only animates `translate`, so the
+ *     sweep is composited on the GPU and never repaints per frame.
+ * Both copies inherit `display`, `align-items` and `gap` from the root, so a consumer can turn the
+ * root into a flex row (icon + label) and the highlight keeps lining up with the text.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.text-shimmer {
+  /* Width of the highlight falloff on each side of the band centre */
+  --spread: 4ch;
+
+  @apply relative inline-block w-fit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Text (readable layer)
+ * ------------------------------------------------------------------------------------------------ */
+.text-shimmer__text {
+  display: inherit;
+  align-items: inherit;
+  gap: inherit;
+  color: oklch(from currentColor l c h / calc(alpha * 0.45));
+
+  /* Without motion the label is shown at full strength */
+  @apply motion-reduce:text-current;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Highlight (inert, aria-hidden copy that masks the moving band to the glyphs)
+ * ------------------------------------------------------------------------------------------------ */
+.text-shimmer__highlight {
+  @apply pointer-events-none absolute inset-0 overflow-clip contain-strict;
+  display: inherit;
+  align-items: inherit;
+  gap: inherit;
+  -webkit-text-fill-color: transparent;
+
+  /* Chromium / WebKit: a solid mask clipped to the element's own glyphs */
+  @supports (-webkit-mask-clip: text) {
+    -webkit-mask-image: linear-gradient(#fff, #fff);
+    mask-image: linear-gradient(#fff, #fff);
+    -webkit-mask-clip: text;
+  }
+
+  /* Firefox: the readable text element (referenced by id via `--_firefox-mask`) is the mask */
+  @supports (mask-image: -moz-element(#text)) {
+    mask-image: var(--_firefox-mask);
+  }
+
+  /* The moving band: transparent -> currentColor -> transparent, centred in a full-width layer */
+  &::after {
+    @apply pointer-events-none absolute inset-0 will-change-transform content-[''];
+    background: linear-gradient(
+      90deg,
+      transparent calc(50% - var(--spread)),
+      currentColor 50%,
+      transparent calc(50% + var(--spread))
+    );
+    animation: text-shimmer 2.5s infinite;
+  }
+
+  /* Reduced motion: drop the animated layer entirely */
+  @apply motion-reduce:hidden;
+}
+
+@keyframes text-shimmer {
+  0% {
+    translate: -100%;
+  }
+
+  100% {
+    translate: 100%;
+  }
+}

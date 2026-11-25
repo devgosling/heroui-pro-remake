@@ -1,0 +1,114 @@
+/* Cell Select - a settings row (label + trailing value + chevrons) built on the OSS Select
+ * (.select / .select__trigger / .select__value / .select__indicator / .select__popover).
+ *
+ * Like every Cell* component it is its own BEM block (Pro has no shared `.cell` base class) and
+ * repeats the Cell "field row" recipe from Cell Switch: h-9 / px-3 / gap-3 / rounded-field /
+ * bg-field / shadow-field, field hover + focus tokens, and a `--secondary` trigger on bg-default
+ * without shadow. Rules are nested under the block (specificity 0,2,0) and this file is imported
+ * after the OSS styles, so they win over the OSS `.select__*` field styles in the same layer.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (OSS Select)
+ * ------------------------------------------------------------------------------------------------ */
+.cell-select {
+  --cell-select-indicator-size: 0.75rem;
+
+  /* ----------------------------------------------------------------------------------------------
+   * Trigger (OSS Select.Trigger - the visible cell row)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-select__trigger {
+    @apply flex h-9 items-center gap-3 rounded-field border bg-field px-3 text-field-foreground shadow-field outline-none no-highlight;
+    cursor: var(--cursor-interactive);
+    border-width: var(--border-width-field);
+    border-color: var(--color-field-border);
+
+    /* The indicator flows inline, so drop the end padding the OSS trigger reserves for it.
+     * Pro pins this trailing inset to 0.75rem (it does not scale with --spacing like the leading one). */
+    padding-inline-end: 0.75rem;
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition:
+      background-color 150ms var(--ease-smooth),
+      border-color 150ms var(--ease-smooth),
+      box-shadow 150ms var(--ease-out);
+    @apply motion-reduce:transition-none;
+
+    @media (hover: hover) {
+      &:hover,
+      &[data-hovered="true"] {
+        @apply bg-field-hover;
+        border-color: var(--color-field-border-hover);
+      }
+    }
+
+    &:focus-visible:not([data-focused]),
+    &[data-focus-visible="true"] {
+      @apply status-focused;
+      border-color: var(--color-field-border-focus);
+      background-color: var(--color-field-focus);
+    }
+
+    &:disabled,
+    &[aria-disabled="true"] {
+      @apply status-disabled;
+    }
+  }
+
+  .cell-select__trigger--default {
+    /* No styles as this is the default variant */
+  }
+
+  .cell-select__trigger--secondary {
+    @apply bg-default shadow-none;
+
+    @media (hover: hover) {
+      &:hover,
+      &[data-hovered="true"] {
+        @apply bg-default-hover;
+      }
+    }
+
+    &:focus-visible:not([data-focused]),
+    &[data-focus-visible="true"] {
+      @apply bg-default;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Label (leading text)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-select__label {
+    @apply min-w-0 flex-1 truncate text-start text-sm font-medium text-foreground;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Value (OSS Select.Value)
+   * Keeps the OSS `flex: 1 1 0%` growth, so label and value split the free space evenly; the value
+   * never shrinks below that share and truncates inside it.
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-select__value {
+    @apply ms-auto shrink-0 truncate text-end text-sm text-muted;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Indicator (flows after the value instead of sitting absolutely at the field's end)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-select__indicator {
+    @apply static my-0 size-(--cell-select-indicator-size) shrink-0 text-muted;
+
+    /* The expand chevrons point both ways, so the icon does not flip while open */
+    &[data-open="true"] {
+      @apply rotate-0;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Popover
+   * The popover is portalled out of the root, so this only applies when it renders inside it;
+   * otherwise the OSS `.select__popover` already applies the same trigger-width minimum.
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-select__popover {
+    @apply min-w-(--trigger-width);
+  }
+}

@@ -1,0 +1,236 @@
+/* Command - command palette (RAC ModalOverlay > Modal > Dialog > Autocomplete > SearchField + Menu) */
+
+/* Container enter: fade + zoom from 95% + slide down from -0.5rem.
+   The exit reuses the OSS `heroui-overlay-exit` keyframes (fade + zoom to 95%) and the backdrop
+   reuses `heroui-overlay-fade-in` / `heroui-overlay-fade-out` (all from @heroui/styles). */
+@keyframes command-container-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, calc(var(--spacing) * -2), 0) scale(0.95);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Backdrop (RAC ModalOverlay)
+ * ------------------------------------------------------------------------------------------------ */
+.command__backdrop {
+  @apply fixed inset-0 z-(--z-index-overlay) flex h-(--visual-viewport-height) w-full items-start justify-center;
+
+  &[data-entering="true"] {
+    animation: heroui-overlay-fade-in 150ms var(--ease-out);
+  }
+
+  &[data-exiting="true"] {
+    animation: heroui-overlay-fade-out 100ms var(--ease-out);
+  }
+
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    @apply will-change-[opacity];
+  }
+
+  /* CRITICAL: motion-reduce must be AFTER the animations for correct override specificity */
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    @apply motion-reduce:animate-none;
+  }
+}
+
+.command__backdrop--transparent {
+  @apply bg-transparent;
+}
+
+.command__backdrop--opaque {
+  /* Default variant. `--backdrop` is black/50 (light) and black/60 (dark). */
+  @apply bg-backdrop;
+}
+
+.command__backdrop--blur {
+  @apply bg-backdrop backdrop-blur-md;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Container (RAC Modal) - places the dialog 15vh from the top
+ * ------------------------------------------------------------------------------------------------ */
+.command__container {
+  @apply pointer-events-none flex h-(--visual-viewport-height) w-full items-start justify-center px-4 pt-[15vh];
+
+  &[data-entering="true"] {
+    animation: command-container-enter 200ms var(--ease-out-quad);
+  }
+
+  &[data-exiting="true"] {
+    animation: heroui-overlay-exit 100ms var(--ease-out-quad);
+  }
+
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    @apply will-change-[opacity,transform];
+  }
+
+  /* CRITICAL: motion-reduce must be AFTER the animations for correct override specificity */
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    @apply motion-reduce:animate-none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Dialog (RAC Dialog) - the palette box
+ * ------------------------------------------------------------------------------------------------ */
+.command__dialog {
+  @apply pointer-events-auto relative flex flex-col overflow-hidden rounded-2xl bg-overlay shadow-overlay outline-none;
+  interpolate-size: allow-keywords;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: height 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  @apply motion-reduce:transition-none;
+}
+
+.command__dialog--sm {
+  @apply max-h-[min(80vh,300px)] w-full max-w-sm;
+}
+
+.command__dialog--md {
+  /* Default size */
+  @apply max-h-[min(80vh,356px)] w-full max-w-lg;
+}
+
+.command__dialog--lg {
+  @apply max-h-[min(80vh,440px)] w-full max-w-xl;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header / Footer
+ * ------------------------------------------------------------------------------------------------ */
+.command__header {
+  @apply flex w-full items-center gap-2 p-2 pb-0 text-sm;
+}
+
+.command__footer {
+  @apply flex w-full items-center gap-2 border-t border-border/50 bg-default/50 px-3 py-1 text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * InputGroup (RAC SearchField)
+ * ------------------------------------------------------------------------------------------------ */
+.command__input-group {
+  @apply flex w-full items-center gap-2 border-b border-border/70;
+
+  /* The input (RAC Input) carries no BEM class; it is styled through its data-slot. */
+  [data-slot="command-input-group-input"] {
+    @apply min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-foreground outline-none;
+
+    &::placeholder {
+      @apply text-muted;
+    }
+
+    /* Hide the browser's own search decorations */
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      appearance: none;
+    }
+  }
+
+  &:has([data-slot="command-input-group-prefix"]) [data-slot="command-input-group-input"] {
+    @apply ps-0;
+  }
+
+  &:has([data-slot="command-input-group-suffix"]) [data-slot="command-input-group-input"] {
+    @apply pe-0;
+  }
+
+  /* Keep the clear button's space but hide it while the field is empty */
+  &[data-empty="true"] [data-slot="command-input-group-clear-button"] {
+    @apply pointer-events-none opacity-0;
+  }
+}
+
+.command__input-group-prefix {
+  @apply flex shrink-0 items-center ps-4 text-muted;
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+.command__input-group-suffix {
+  @apply flex shrink-0 items-center pe-4 text-muted;
+
+  & svg {
+    @apply size-4;
+  }
+}
+
+/* Layered on the OSS CloseButton */
+.command__input-group-clear-button {
+  @apply me-3 size-5 shrink-0;
+
+  [data-slot="close-button-icon"] {
+    @apply size-3;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * List (RAC Menu)
+ * ------------------------------------------------------------------------------------------------ */
+.command__list {
+  @apply flex-1 scrollbar overflow-y-auto overscroll-contain p-1.5 outline-none;
+}
+
+.command__empty {
+  @apply flex h-full items-center justify-center py-6 text-center text-sm text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (RAC MenuItem)
+ * ------------------------------------------------------------------------------------------------ */
+.command__item {
+  @apply relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground outline-none select-none;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  /* Virtual focus (keyboard navigation from the search input) */
+  &[data-focused="true"] {
+    @apply bg-default;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply bg-default-hover;
+  }
+
+  &[data-disabled="true"] {
+    @apply cursor-default opacity-50;
+  }
+
+  & svg {
+    @apply size-4 shrink-0 text-muted;
+  }
+
+  /* Keyboard shortcut hints sit at the inline end */
+  & kbd {
+    @apply ms-auto text-xs text-muted;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Group (RAC MenuSection) / Separator
+ * ------------------------------------------------------------------------------------------------ */
+.command__group + .command__group {
+  @apply mt-1;
+}
+
+.command__group-heading {
+  @apply px-3 py-1.5 text-xs font-medium text-muted select-none;
+}
+
+.command__separator {
+  @apply mx-3 my-1 h-px bg-separator;
+}

@@ -1,0 +1,91 @@
+/* Emoji Reaction Button - pill toggle showing an emoji and a reaction count (RAC ToggleButton) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (md defaults)
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-reaction-button {
+  @apply inline-flex items-center gap-1.5 rounded-full border border-transparent bg-default px-1.5 py-1 text-sm outline-none select-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 200ms var(--ease-smooth),
+    background-color 100ms var(--ease-out),
+    border-color 100ms var(--ease-out),
+    box-shadow 100ms var(--ease-out);
+  @apply transform-gpu motion-reduce:transition-none;
+
+  &[data-selected="true"] {
+    @apply border-accent/30 bg-accent/10;
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+
+    &[data-selected="true"]:hover,
+    &[data-selected="true"][data-hovered="true"] {
+      @apply bg-accent/15;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    transform: scale(0.95);
+  }
+
+  /* Read-only keeps its state and look, but takes no pointer input and never scales */
+  &[data-readonly="true"] {
+    @apply pointer-events-none cursor-default;
+
+    &:active,
+    &[data-pressed="true"] {
+      transform: none;
+    }
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Sizes (sm keeps the md padding and only shrinks the type)
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-reaction-button--sm {
+  @apply text-xs;
+}
+
+.emoji-reaction-button--md {
+  /* No styles as this is the default size */
+}
+
+.emoji-reaction-button--lg {
+  @apply px-2.5 py-1.5 text-base;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Emoji
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-reaction-button__emoji {
+  @apply leading-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Count
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-reaction-button__count {
+  @apply leading-none font-medium text-muted tabular-nums;
+
+  [data-selected="true"] > & {
+    @apply text-accent;
+  }
+}

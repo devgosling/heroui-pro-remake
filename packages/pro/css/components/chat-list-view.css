@@ -1,0 +1,54 @@
+/* Chat List View - conversation rows (sidebar history, thread pickers).
+ * Rows reuse the List View base classes (`list-view`, `list-view--secondary`, `list-view__item`,
+ * `list-view__item-content`, `list-view__title`, `list-view__description`, `list-view__item-action`)
+ * from list-view.css; the rules below only add what a chat thread row needs, and repeat the text
+ * styles so the `chat-list-view__*` classes also work on their own. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.chat-list-view {
+  @apply w-full;
+}
+
+.chat-list-view--comfortable {
+  /* No styles as this is the default density */
+}
+
+/* Dense sidebars: one line per thread (icon + title) */
+.chat-list-view--compact {
+  & .chat-list-view__preview,
+  & .chat-list-view__meta {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Leading icon / avatar
+ * ------------------------------------------------------------------------------------------------ */
+.chat-list-view__icon {
+  @apply size-4 shrink-0 text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Text column (title + preview)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-list-view__text {
+  @apply flex min-w-0 flex-col;
+}
+
+.chat-list-view__title {
+  @apply truncate text-sm font-medium text-foreground;
+}
+
+.chat-list-view__preview {
+  @apply truncate text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trailing metadata (date, unread count)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-list-view__meta {
+  /* 11px is a literal in Pro too; the line height follows the row's text-sm ratio */
+  @apply ms-auto shrink-0 text-[11px] text-muted;
+}

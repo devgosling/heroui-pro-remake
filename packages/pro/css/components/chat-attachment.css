@@ -1,0 +1,166 @@
+/* Chat Attachment - file previews for chat messages and prompt composers.
+ * `data-variant="media"`: square image / video thumbnail, name revealed on hover.
+ * `data-variant="file"`: horizontal card with a file-type icon, name and size. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment {
+  @apply relative shrink-0 rounded-xl border border-border bg-transparent;
+}
+
+.chat-attachment[data-variant="media"] {
+  @apply size-16 overflow-hidden;
+}
+
+.chat-attachment[data-variant="file"] {
+  @apply flex h-16 max-w-64 items-center gap-2.5 px-3;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Preview
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment__preview {
+  @apply flex items-center justify-center overflow-hidden;
+}
+
+.chat-attachment[data-variant="media"] .chat-attachment__preview {
+  @apply size-full;
+}
+
+.chat-attachment[data-variant="file"] .chat-attachment__preview {
+  @apply size-auto shrink-0 text-muted;
+}
+
+.chat-attachment__preview-image,
+.chat-attachment__preview-video {
+  @apply size-full object-cover;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment__icon {
+  @apply inline-flex items-center justify-center;
+
+  & svg {
+    @apply size-5;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Info (name + size)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment[data-variant="file"] > .chat-attachment__info,
+.chat-attachment[data-variant="file"] > .chat-attachment__name {
+  @apply min-w-0 flex-1;
+}
+
+.chat-attachment[data-variant="file"] .chat-attachment__info {
+  @apply flex flex-col justify-center gap-0.5;
+}
+
+/* Media: bottom gradient overlay, revealed on hover / keyboard focus */
+.chat-attachment[data-variant="media"] > .chat-attachment__info,
+.chat-attachment[data-variant="media"] > .chat-attachment__name {
+  @apply pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/75 to-transparent px-1.5 pt-5 pb-1 opacity-0;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-opacity motion-reduce:transition-none;
+}
+
+.chat-attachment[data-variant="media"]:hover > .chat-attachment__info,
+.chat-attachment[data-variant="media"]:hover > .chat-attachment__name,
+.chat-attachment[data-variant="media"]:focus-within > .chat-attachment__info,
+.chat-attachment[data-variant="media"]:focus-within > .chat-attachment__name {
+  @apply opacity-100;
+}
+
+.chat-attachment__name {
+  @apply block min-w-0 truncate text-sm;
+}
+
+.chat-attachment[data-variant="file"] .chat-attachment__name {
+  @apply font-medium text-foreground;
+}
+
+.chat-attachment[data-variant="media"] .chat-attachment__name {
+  /* Literal white on the black gradient, as in Pro */
+  @apply text-xs font-medium text-white;
+}
+
+.chat-attachment__size {
+  @apply block text-xs text-muted tabular-nums;
+}
+
+.chat-attachment[data-variant="media"] .chat-attachment__size {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Remove (OSS CloseButton, `close-button--default`)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment__remove {
+  @apply bg-default text-muted;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-colors motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover text-foreground;
+    }
+  }
+}
+
+.chat-attachment[data-variant="media"] .chat-attachment__remove {
+  @apply absolute end-1.5 top-1.5 opacity-70 shadow-overlay backdrop-blur-sm;
+  @apply transition-opacity motion-reduce:transition-none;
+}
+
+.chat-attachment[data-variant="file"] .chat-attachment__remove {
+  @apply shrink-0 bg-transparent;
+}
+
+.chat-attachment[data-variant="media"] [data-slot="chat-attachment-remove"] {
+  @apply size-3;
+
+  & svg {
+    @apply size-2;
+  }
+}
+
+.chat-attachment[data-variant="file"] [data-slot="chat-attachment-remove"] {
+  @apply size-5;
+
+  & svg {
+    @apply size-3;
+  }
+}
+
+/* Pointer devices: the media remove button only shows on hover / keyboard focus */
+@media (hover: hover) {
+  .chat-attachment[data-variant="media"] .chat-attachment__remove {
+    @apply opacity-0;
+  }
+
+  .chat-attachment[data-variant="media"]:hover .chat-attachment__remove,
+  .chat-attachment[data-variant="media"]:focus-within .chat-attachment__remove {
+    @apply opacity-100;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Group
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment-group {
+  @apply flex flex-wrap items-start gap-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Input (hidden native file input; opened programmatically by ChatAttachmentInput.Trigger)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-attachment-input__file-input {
+  @apply hidden;
+}

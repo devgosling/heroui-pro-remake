@@ -1,0 +1,87 @@
+/* Radio Button Group - single-selection group of card-style radios.
+ *
+ * Built on the OSS RadioGroup (`.radio-group`) and Radio (`.radio`, `.radio__content`, `.radio__control`)
+ * blocks: these rules only add the card layout on top of them, so they must load after @heroui/styles.
+ * Pro ships this as its own block, parallel to `.checkbox-button-group`; no class is shared between the
+ * two components. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (RadioGroup)
+ * ------------------------------------------------------------------------------------------------ */
+.radio-button-group {
+  @apply flex gap-3;
+
+  --radio-button-group-item-radius: var(--radius-2xl);
+}
+
+.radio-button-group--grid {
+  @apply grid;
+}
+
+/* The Radio field wrapper takes no box; the card (`Radio.Content`) is the flex/grid item */
+.radio-button-group > [data-slot="radio-button-group-item"] {
+  @apply contents;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (the clickable card, rendered on Radio.Content)
+ * ------------------------------------------------------------------------------------------------ */
+.radio-button-group__item {
+  @apply relative flex flex-col items-stretch gap-4 border border-border bg-surface px-5 py-4 outline-none no-highlight;
+  border-radius: var(--radio-button-group-item-radius);
+  cursor: var(--cursor-interactive);
+
+  /* Selected: 2px inset accent ring replaces the border */
+  &[data-selected="true"] {
+    @apply border-transparent ring-2 ring-accent ring-inset;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (top-end corner): the OSS radio control, or a custom icon shown while selected
+ * ------------------------------------------------------------------------------------------------ */
+.radio-button-group__indicator {
+  @apply absolute end-4 top-3;
+
+  &[data-custom="true"] {
+    @apply text-accent opacity-0;
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition: opacity 150ms ease-out;
+    @apply motion-reduce:transition-none;
+
+    & svg {
+      @apply size-5;
+    }
+  }
+}
+
+[data-selected="true"] > .radio-button-group__indicator[data-custom="true"] {
+  @apply opacity-100;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item content / leading icon
+ * ------------------------------------------------------------------------------------------------ */
+.radio-button-group__item-content {
+  @apply flex min-w-0 flex-col;
+}
+
+.radio-button-group__item-icon {
+  @apply shrink-0;
+
+  & svg {
+    @apply size-6;
+  }
+}

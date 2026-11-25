@@ -1,0 +1,95 @@
+/* Action Bar - floating toolbar for contextual (bulk) actions, pinned to the viewport bottom */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (positioning layer + enter/exit transition)
+ * ------------------------------------------------------------------------------------------------ */
+.action-bar {
+  @apply pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center;
+
+  /*
+   * Critically damped spring (no bounce) that settles in 300ms:
+   * x(t) = 1 - (1 + wt) * e^(-wt), w ~= 30.8 rad/s, sampled at 24 steps.
+   */
+  --action-bar-spring: linear(
+    0,
+    0.0575 4.17%,
+    0.1803 8.33%,
+    0.3208 12.5%,
+    0.4551 16.67%,
+    0.5729 20.83%,
+    0.6711 25%,
+    0.7501 29.17%,
+    0.8122 33.33%,
+    0.8601 37.5%,
+    0.8966 41.67%,
+    0.924 45.83%,
+    0.9445 50%,
+    0.9596 54.17%,
+    0.9708 58.33%,
+    0.9789 62.5%,
+    0.9848 66.67%,
+    0.9891 70.83%,
+    0.9922 75%,
+    0.9944 79.17%,
+    0.996 83.33%,
+    0.9972 87.5%,
+    0.998 91.67%,
+    0.9986 95.83%,
+    1
+  );
+
+  opacity: 1;
+  translate: none;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    opacity 300ms var(--action-bar-spring),
+    translate 300ms var(--action-bar-spring);
+  @apply motion-reduce:transition-none;
+
+  /* Enter: fade in while rising 8px */
+  @starting-style {
+    opacity: 0;
+    translate: 0 calc(var(--spacing) * 2);
+  }
+
+  /* Exit: fade out while sinking 8px; the element unmounts once the transition ends */
+  &[data-exiting="true"] {
+    opacity: 0;
+    translate: 0 calc(var(--spacing) * 2);
+  }
+
+  /* Outranks `.toolbar--attached` (rounded-3xl) so the pill follows the theme radius */
+  & [data-slot="toolbar"] {
+    border-radius: calc(var(--radius) * 3);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Wrapper (the OSS Toolbar - visible pill surface)
+ * ------------------------------------------------------------------------------------------------ */
+.action-bar__wrapper {
+  @apply pointer-events-auto px-3 py-1.5 shadow-overlay max-sm:px-2 max-sm:py-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Sections
+ * ------------------------------------------------------------------------------------------------ */
+.action-bar__prefix {
+  @apply flex items-center gap-2.5 max-sm:gap-1.5;
+}
+
+.action-bar__content {
+  @apply flex items-center gap-1;
+}
+
+.action-bar__suffix {
+  @apply flex items-center;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label (collapses to screen-reader-only text below the sm breakpoint)
+ * ------------------------------------------------------------------------------------------------ */
+.action-bar__label {
+  @apply text-sm font-medium max-sm:sr-only;
+}

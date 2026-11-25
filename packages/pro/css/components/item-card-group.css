@@ -1,0 +1,91 @@
+/* Item Card Group - item cards on one shared surface (list) or as a grid of separate cards */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.item-card-group {
+  /* Spelled out so a scoped --radius applies (rounded-2xl resolves once at :root) */
+  border-radius: calc(var(--radius) * 2);
+}
+
+/* Cards drop their own chrome and blend into the group surface */
+.item-card-group > [data-slot="item-card"] {
+  @apply rounded-none border-0 bg-transparent shadow-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Variants (declared before the layouts: the grid layout resets the surface)
+ * ------------------------------------------------------------------------------------------------ */
+.item-card-group--default {
+  @apply bg-surface shadow-surface;
+}
+
+.item-card-group--secondary {
+  @apply bg-surface-secondary;
+}
+
+.item-card-group--tertiary {
+  @apply bg-surface-tertiary;
+}
+
+/* The default separator / icon tile tones would vanish on a tinted surface */
+:is(.item-card-group--secondary, .item-card-group--tertiary) [data-slot="separator"] {
+  @apply bg-muted/10;
+}
+
+:is(.item-card-group--secondary, .item-card-group--tertiary)
+  > [data-slot="item-card"]
+  > [data-slot="item-card-icon"] {
+  @apply bg-surface/50;
+}
+
+.item-card-group--outline {
+  @apply border border-border bg-transparent shadow-none;
+}
+
+.item-card-group--transparent {
+  @apply rounded-none bg-transparent shadow-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header
+ * ------------------------------------------------------------------------------------------------ */
+.item-card-group__header {
+  @apply px-4 pt-4 pb-2;
+}
+
+.item-card-group__title {
+  @apply text-sm font-semibold text-foreground;
+}
+
+.item-card-group__description {
+  @apply mt-0.5 text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Layouts
+ * ------------------------------------------------------------------------------------------------ */
+.item-card-group--list {
+  @apply flex flex-col;
+}
+
+/* Grid: the group itself is clear, every card gets its own raised surface */
+.item-card-group--grid {
+  --item-card-group-columns: 2;
+
+  @apply grid gap-3 bg-transparent shadow-none;
+  grid-template-columns: repeat(var(--item-card-group-columns), minmax(0, 1fr));
+}
+
+.item-card-group--grid .item-card-group__header {
+  @apply p-0;
+}
+
+.item-card-group--grid > [data-slot="item-card-group-header"] {
+  @apply col-span-full;
+}
+
+.item-card-group--grid > [data-slot="item-card"] {
+  @apply bg-surface shadow-surface;
+  border-radius: calc(var(--radius) * 2);
+}

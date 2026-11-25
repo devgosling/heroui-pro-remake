@@ -1,0 +1,103 @@
+/* ------------------------------------------------------------------------------------------------
+ * HeroUI Pro (remake) - component styles
+ * ------------------------------------------------------------------------------------------------
+ * Usage (order matters):
+ *   @import "tailwindcss";
+ *   @import "@heroui/styles";
+ *   @import "@heroui/pro/css";
+ *
+ * Every component is a BEM block that only consumes HeroUI theme tokens (--accent, --radius,
+ * --surface, --font-sans, ...), so theme, radius and font changes apply exactly like they do for
+ * the open-source components. Shared primitives come first so composed components can override them.
+ * ------------------------------------------------------------------------------------------------ */
+
+/* Shared theme tokens (chart palette, ...) */
+@import "./theme.css" layer(theme);
+
+/* Charts */
+@import "./components/chart-tooltip.css" layer(components);
+@import "./components/area-chart.css" layer(components);
+@import "./components/bar-chart.css" layer(components);
+@import "./components/composed-chart.css" layer(components);
+@import "./components/line-chart.css" layer(components);
+@import "./components/pie-chart.css" layer(components);
+@import "./components/radar-chart.css" layer(components);
+@import "./components/radial-chart.css" layer(components);
+
+/* Feedback */
+@import "./components/pressable-feedback.css" layer(components);
+@import "./components/number-value.css" layer(components);
+@import "./components/trend-chip.css" layer(components);
+@import "./components/emoji-reaction-button.css" layer(components);
+@import "./components/rating.css" layer(components);
+
+/* Layout */
+@import "./components/resizable.css" layer(components);
+
+/* Forms */
+@import "./components/number-stepper.css" layer(components);
+@import "./components/cell-color-picker.css" layer(components);
+@import "./components/cell-select.css" layer(components);
+@import "./components/cell-slider.css" layer(components);
+@import "./components/cell-switch.css" layer(components);
+@import "./components/checkbox-button-group.css" layer(components);
+@import "./components/drop-zone.css" layer(components);
+@import "./components/inline-select.css" layer(components);
+@import "./components/native-select.css" layer(components);
+@import "./components/radio-button-group.css" layer(components);
+@import "./components/rich-text-editor.css" layer(components);
+
+/* Data display */
+@import "./components/kpi.css" layer(components);
+@import "./components/kpi-group.css" layer(components);
+@import "./components/item-card.css" layer(components);
+@import "./components/item-card-group.css" layer(components);
+@import "./components/agenda.css" layer(components);
+@import "./components/action-bar.css" layer(components);
+@import "./components/carousel.css" layer(components);
+@import "./components/data-grid.css" layer(components);
+@import "./components/empty-state.css" layer(components);
+@import "./components/file-tree.css" layer(components);
+@import "./components/floating-toc.css" layer(components);
+@import "./components/holo-card.css" layer(components);
+@import "./components/hover-card.css" layer(components);
+@import "./components/kanban.css" layer(components);
+@import "./components/list-view.css" layer(components);
+@import "./components/map.css" layer(components);
+@import "./components/timeline.css" layer(components);
+@import "./components/widget.css" layer(components);
+
+/* Navigation */
+@import "./components/segment.css" layer(components);
+@import "./components/stepper.css" layer(components);
+@import "./components/context-menu.css" layer(components);
+@import "./components/command.css" layer(components);
+@import "./components/navbar.css" layer(components);
+@import "./components/sidebar.css" layer(components);
+@import "./components/app-layout.css" layer(components);
+
+/* Overlays */
+@import "./components/emoji-picker.css" layer(components);
+
+/* AI */
+@import "./components/text-shimmer.css" layer(components);
+@import "./components/loader.css" layer(components);
+@import "./components/markdown.css" layer(components);
+@import "./components/code-block.css" layer(components);
+@import "./components/chat-loader.css" layer(components);
+@import "./components/chat-message.css" layer(components);
+@import "./components/chat-message-actions.css" layer(components);
+@import "./components/chat-source.css" layer(components);
+@import "./components/chat-attachment.css" layer(components);
+@import "./components/chat-tool.css" layer(components);
+@import "./components/chain-of-thought.css" layer(components);
+@import "./components/reasoning.css" layer(components);
+@import "./components/chat-conversation.css" layer(components);
+@import "./components/chat-list-view.css" layer(components);
+@import "./components/prompt-input.css" layer(components);
+@import "./components/prompt-suggestion.css" layer(components);
+@import "./components/model-selector.css" layer(components);
+@import "./components/approval-card.css" layer(components);
+
+/* Utilities (unlayered on purpose: must win over the scrollbar utilities) */
+@import "./components/overlay-scrollbars.css";

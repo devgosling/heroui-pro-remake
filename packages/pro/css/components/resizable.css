@@ -1,0 +1,238 @@
+/* Resizable - panel groups on react-resizable-panels with line / drag / pill / handle separators */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (panel group) - owns the --resizable-* variables
+ * react-resizable-panels sets flex direction, size and overflow inline; these rules mirror them so
+ * the group also lays out before hydration.
+ * ------------------------------------------------------------------------------------------------ */
+.resizable {
+  --resizable-handle-size: 1px;
+  --resizable-handle-hit-area: 8px;
+  --resizable-handle-color: var(--separator);
+  --resizable-handle-color-hover: var(--separator-secondary);
+  --resizable-handle-color-active: var(--accent-soft);
+  --resizable-indicator-pill-width: 6px;
+  --resizable-indicator-pill-height: 32px;
+  --resizable-indicator-radius: 9999px;
+  --resizable-indicator-drag-long: 20px;
+  --resizable-indicator-drag-short: 13px;
+  --resizable-indicator-drag-icon-size: 10px;
+  --resizable-indicator-drag-radius: calc(var(--radius) * 0.5);
+  --resizable-indicator-drag-bg: var(--default);
+  --resizable-indicator-drag-bg-hover: var(--default-hover);
+  --resizable-indicator-drag-fg: var(--muted);
+  --resizable-indicator-drag-fg-hover: var(--foreground);
+  --resizable-transition-duration: 120ms;
+
+  @apply flex size-full min-h-0 min-w-0;
+}
+
+.resizable--horizontal {
+  @apply flex-row;
+}
+
+.resizable--vertical {
+  @apply flex-col;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Panel (inner content box; the flex item is the library's [data-panel] wrapper)
+ * ------------------------------------------------------------------------------------------------ */
+.resizable__panel {
+  @apply relative min-h-0 min-w-0 overflow-hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Handle (separator) - a thin line with an invisible, wider hit area
+ * ------------------------------------------------------------------------------------------------ */
+.resizable__handle {
+  @apply relative flex flex-none touch-none items-center justify-center outline-none select-none no-highlight;
+  background-color: var(--resizable-handle-color);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: background-color var(--resizable-transition-duration) ease;
+  @apply motion-reduce:transition-none;
+
+  /* Hit area: centred on the line, `--resizable-handle-hit-area` thick */
+  &::before {
+    @apply absolute bg-transparent;
+    content: "";
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-separator="hover"],
+    &[data-hovered="true"] {
+      background-color: var(--resizable-handle-color-hover);
+    }
+  }
+
+  &[data-separator="active"],
+  &:active,
+  &[data-pressed="true"] {
+    background-color: var(--resizable-handle-color-active);
+  }
+
+  /* Keyboard focus, plus pointer focus like HeroUI Pro: the separator is focused on pointer down and
+   * keeps its ring while dragged and afterwards. `data-separator="focus"` is set by
+   * react-resizable-panels whenever the separator has focus and is not being dragged. */
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"],
+  &[data-separator="focus"],
+  &[data-separator="active"]:focus {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"],
+  &[data-disabled] {
+    @apply status-disabled;
+    cursor: default;
+  }
+}
+
+/* Orientation: thickness, resize cursor and hit area */
+.resizable__handle--horizontal {
+  width: var(--resizable-handle-size);
+  cursor: col-resize;
+
+  &::before {
+    @apply inset-y-0;
+    left: calc((var(--resizable-handle-size) - var(--resizable-handle-hit-area)) / 2);
+    right: calc((var(--resizable-handle-size) - var(--resizable-handle-hit-area)) / 2);
+  }
+}
+
+.resizable__handle--vertical {
+  height: var(--resizable-handle-size);
+  cursor: row-resize;
+
+  &::before {
+    @apply inset-x-0;
+    top: calc((var(--resizable-handle-size) - var(--resizable-handle-hit-area)) / 2);
+    bottom: calc((var(--resizable-handle-size) - var(--resizable-handle-hit-area)) / 2);
+  }
+}
+
+/* Variants: map to the separator tokens of the surface the handle sits on */
+.resizable__handle--primary {
+  --resizable-handle-color: var(--separator);
+}
+
+.resizable__handle--secondary {
+  --resizable-handle-color: var(--separator-secondary);
+}
+
+.resizable__handle--tertiary {
+  --resizable-handle-color: var(--separator-tertiary);
+}
+
+/* Types: `line` is the default; `drag` and `pill` only add an indicator */
+.resizable__handle--line,
+.resizable__handle--drag,
+.resizable__handle--pill {
+  /* No styles: the line itself comes from the base class */
+}
+
+/* `handle`: the grip floats between the panels without a visible line, in every state */
+.resizable__handle--handle {
+  @apply bg-transparent;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-separator="hover"],
+    &[data-hovered="true"] {
+      @apply bg-transparent;
+    }
+  }
+
+  &[data-separator="active"],
+  &:active,
+  &[data-pressed="true"] {
+    @apply bg-transparent;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (grip centred on the handle)
+ * ------------------------------------------------------------------------------------------------ */
+.resizable__handle-indicator {
+  @apply pointer-events-none absolute top-1/2 left-1/2 z-1 flex items-center justify-center;
+  transform: translate(-50%, -50%);
+}
+
+/* Pill: a rounded bar along the handle */
+.resizable__handle-indicator--pill {
+  @apply bg-default;
+  width: var(--resizable-indicator-pill-width);
+  height: var(--resizable-indicator-pill-height);
+  border-radius: var(--resizable-indicator-radius);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color var(--resizable-transition-duration) ease,
+    transform var(--resizable-transition-duration) ease;
+  @apply motion-reduce:transition-none;
+}
+
+.resizable__handle--vertical .resizable__handle-indicator--pill {
+  width: var(--resizable-indicator-pill-height);
+  height: var(--resizable-indicator-pill-width);
+}
+
+@media (hover: hover) {
+  .resizable__handle--pill:hover .resizable__handle-indicator--pill,
+  .resizable__handle--pill[data-separator="hover"] .resizable__handle-indicator--pill,
+  .resizable__handle--pill[data-hovered="true"] .resizable__handle-indicator--pill,
+  .resizable__handle--handle:hover .resizable__handle-indicator--pill,
+  .resizable__handle--handle[data-separator="hover"] .resizable__handle-indicator--pill,
+  .resizable__handle--handle[data-hovered="true"] .resizable__handle-indicator--pill {
+    @apply bg-default-hover;
+  }
+}
+
+.resizable__handle--pill[data-separator="active"] .resizable__handle-indicator--pill,
+.resizable__handle--pill:active .resizable__handle-indicator--pill,
+.resizable__handle--handle[data-separator="active"] .resizable__handle-indicator--pill,
+.resizable__handle--handle:active .resizable__handle-indicator--pill {
+  @apply bg-default-hover;
+}
+
+/* Drag: a small chip with six dots */
+.resizable__handle-indicator--drag {
+  @apply inline-flex items-center justify-center;
+  border-radius: var(--resizable-indicator-drag-radius);
+  background-color: var(--resizable-indicator-drag-bg);
+  color: var(--resizable-indicator-drag-fg);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color var(--resizable-transition-duration) ease,
+    color var(--resizable-transition-duration) ease;
+  @apply motion-reduce:transition-none;
+}
+
+.resizable__handle--horizontal .resizable__handle-indicator--drag {
+  width: var(--resizable-indicator-drag-short);
+  height: var(--resizable-indicator-drag-long);
+}
+
+.resizable__handle--vertical .resizable__handle-indicator--drag {
+  width: var(--resizable-indicator-drag-long);
+  height: var(--resizable-indicator-drag-short);
+}
+
+@media (hover: hover) {
+  .resizable__handle--drag:hover .resizable__handle-indicator--drag,
+  .resizable__handle--drag[data-separator="hover"] .resizable__handle-indicator--drag,
+  .resizable__handle--drag[data-hovered="true"] .resizable__handle-indicator--drag {
+    background-color: var(--resizable-indicator-drag-bg-hover);
+    color: var(--resizable-indicator-drag-fg-hover);
+  }
+}
+
+.resizable__handle-indicator-icon {
+  @apply block;
+  width: var(--resizable-indicator-drag-icon-size);
+  height: var(--resizable-indicator-drag-icon-size);
+}

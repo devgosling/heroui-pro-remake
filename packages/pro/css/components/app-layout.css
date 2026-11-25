@@ -1,0 +1,191 @@
+/* App Layout - app shell composing a full-height Sidebar, a sticky Navbar row, the main column and an
+ * optional right-side aside. The root element is the internal Sidebar.Provider ([data-app-layout]),
+ * so sizes and colours come from the Sidebar / Navbar blocks and the HeroUI theme tokens. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Body column (header row, optional toolbar, main, optional footer)
+ * ------------------------------------------------------------------------------------------------ */
+.app-layout__body {
+  @apply flex min-h-0 min-w-0 flex-1 flex-col;
+}
+
+/* Sticky row that owns the navbar's positioning */
+.app-layout__header {
+  @apply sticky top-0 z-40 shrink-0;
+}
+
+/* Second sticky row below the navbar */
+.app-layout__toolbar {
+  --navbar-height: 56px;
+
+  @apply sticky z-39 shrink-0;
+  top: var(--navbar-height);
+}
+
+/* Row pinned to the bottom of the body column */
+.app-layout__footer {
+  @apply shrink-0;
+}
+
+.app-layout__main {
+  @apply min-w-0 flex-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header controls
+ * Literal offsets (not spacing based) pull the icon buttons onto the navbar's padding edge.
+ * ------------------------------------------------------------------------------------------------ */
+.app-layout__menu-toggle {
+  @apply hidden max-md:inline-flex;
+  margin-inline-start: -0.5rem;
+}
+
+[data-app-layout] [data-slot="sidebar-trigger"] {
+  margin-inline-start: -0.5rem;
+}
+
+.app-layout__aside-trigger {
+  margin-inline-end: -0.5rem;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Scroll modes
+ * "page" (default) keeps window scrolling; "content" pins the shell to the viewport and moves
+ * vertical scrolling into the main column.
+ * ------------------------------------------------------------------------------------------------ */
+[data-app-layout][data-scroll-mode="content"] {
+  @apply h-dvh min-h-0 overflow-hidden;
+
+  & .app-layout__main {
+    @apply min-h-0 scrollbar overflow-y-auto overscroll-y-contain;
+
+    &:focus-visible {
+      @apply outline-none;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Aside (right-side panel)
+ * The panel animates its width to 0 while its content keeps its width and slides out.
+ * ------------------------------------------------------------------------------------------------ */
+.app-layout__aside {
+  --app-layout-aside-width: 320px;
+  --app-layout-aside-duration: 200ms;
+
+  @apply sticky top-0 h-dvh shrink-0 overflow-hidden border-s border-border bg-background;
+  width: var(--app-layout-aside-width);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    width var(--app-layout-aside-duration) ease,
+    border-color var(--app-layout-aside-duration) ease;
+  @apply motion-reduce:transition-none;
+
+  & > * {
+    @apply h-full scrollbar overflow-y-auto;
+    width: var(--app-layout-aside-width);
+    transition: translate var(--app-layout-aside-duration) ease;
+    @apply motion-reduce:transition-none;
+  }
+
+  &[data-state="closed"] {
+    @apply w-0 border-s-transparent;
+
+    & > * {
+      @apply translate-x-full rtl:-translate-x-full;
+    }
+  }
+
+  /* Hidden below Tailwind's lg breakpoint (use asideMobile="sheet" for a mobile sheet) */
+  @variant max-lg {
+    @apply hidden;
+  }
+}
+
+@variant max-lg {
+  [data-app-layout]:not([data-aside-mobile="sheet"]) .app-layout__aside-trigger {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Mobile (below md): Sidebar.Mobile and AppLayout.MenuToggle replace the desktop sidebar and trigger
+ * ------------------------------------------------------------------------------------------------ */
+@variant max-md {
+  [data-app-layout] > [data-slot="sidebar"],
+  [data-app-layout] [data-slot="sidebar-trigger"] {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Resizable shell (sidebarResizable / asideResizable)
+ * The layout becomes a viewport-high Resizable group; its handles draw the panel edges.
+ * ------------------------------------------------------------------------------------------------ */
+[data-app-layout][data-resizable] {
+  @apply flex h-dvh min-h-0 flex-row;
+}
+
+.app-layout__resizable {
+  @apply flex h-full min-h-0 min-w-0 flex-1;
+}
+
+.app-layout__sidebar-panel {
+  @apply relative min-h-0 min-w-0 overflow-hidden;
+}
+
+.app-layout__main-panel {
+  @apply relative flex min-h-0 min-w-0 flex-col overflow-hidden;
+}
+
+.app-layout__aside-panel {
+  @apply relative min-h-0 min-w-0 overflow-hidden border-0;
+}
+
+[data-app-layout][data-resizable] {
+  /* The panel owns the sidebar width */
+  & [data-slot="sidebar"],
+  & .sidebar__offcanvas-wrapper {
+    transition: none;
+  }
+
+  /* (a collapsed offcanvas panel keeps its own width while it is hidden off-screen) */
+  & [data-slot="sidebar"]:not([data-state="collapsed"]),
+  & .sidebar__offcanvas-wrapper {
+    @apply w-full;
+  }
+
+  /* The handle replaces the sidebar edge outline */
+  & .sidebar--default,
+  & .sidebar--default.sidebar--right {
+    box-shadow: none;
+  }
+
+  & .app-layout__aside,
+  & .app-layout__aside-panel {
+    @apply border-x-transparent;
+  }
+
+  & .app-layout__aside-panel > aside,
+  & .app-layout__aside-panel > [data-slot="aside"],
+  & .app-layout__aside-panel > div {
+    @apply size-full scrollbar overflow-y-auto;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Mobile aside sheet (asideMobile="sheet", below lg)
+ * ------------------------------------------------------------------------------------------------ */
+.app-layout__mobile-aside-sheet[data-placement="right"] {
+  @apply w-full rounded-none;
+  max-width: min(360px, 88vw);
+
+  & .app-layout__mobile-aside-dialog {
+    @apply h-dvh rounded-none p-0;
+  }
+}
+
+.app-layout__mobile-aside {
+  @apply flex h-full min-h-0 flex-col;
+}

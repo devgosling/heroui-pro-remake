@@ -1,0 +1,119 @@
+/* Segment - single-selection segmented control with a sliding selection thumb */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (track)
+ * ------------------------------------------------------------------------------------------------ */
+.segment {
+  @apply relative inline-flex items-center bg-default p-1;
+  border-radius: calc(var(--radius-2xl) + 0.25rem);
+}
+
+.segment--sm {
+  @apply p-0.5;
+}
+
+.segment--md {
+  /* No styles as this is the default size */
+}
+
+.segment--lg {
+  /* Track keeps the default padding; items grow instead */
+}
+
+/* Declared after the sizes so ghost + sm keeps a zero padding */
+.segment--ghost {
+  @apply bg-transparent p-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item
+ * ------------------------------------------------------------------------------------------------ */
+.segment__item {
+  @apply relative z-1 flex h-8 w-full items-center justify-center gap-1.5 px-4 text-center text-sm font-medium whitespace-nowrap text-muted outline-none no-highlight;
+  border-radius: calc(var(--radius) * 3);
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    color 150ms var(--ease-smooth),
+    background-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out),
+    opacity 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+
+  &[data-selected="true"] {
+    color: var(--segment-foreground);
+  }
+
+  @media (hover: hover) {
+    &:not([data-selected="true"]):not([data-disabled="true"]):hover,
+    &[data-hovered="true"]:not([data-selected="true"]):not([data-disabled="true"]) {
+      opacity: 0.7;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[data-disabled="true"],
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  & svg {
+    @apply size-4 shrink-0;
+  }
+}
+
+.segment__item--sm {
+  @apply h-7 px-2.5 text-xs;
+}
+
+.segment__item--md {
+  /* No styles as this is the default size */
+}
+
+.segment__item--lg {
+  @apply h-10 px-5;
+}
+
+.segment__item--ghost[data-selected="true"] {
+  color: var(--accent-foreground);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (RAC SelectionIndicator - slides between items via a shared-element FLIP)
+ * ------------------------------------------------------------------------------------------------ */
+.segment__indicator {
+  @apply absolute top-0 left-0 -z-1 size-full rounded-3xl bg-segment shadow-surface;
+  transition-property: translate, width, height;
+  transition-duration: 250ms;
+  transition-timing-function: var(--ease-out-fluid);
+  @apply motion-reduce:transition-none;
+}
+
+.segment__indicator--ghost {
+  @apply bg-accent shadow-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Separator (decorative divider at an item's inline-start edge)
+ * ------------------------------------------------------------------------------------------------ */
+.segment__separator {
+  @apply pointer-events-none absolute start-0 top-1/4 h-1/2 w-px rounded-sm bg-muted/25;
+  transition: opacity 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+}
+
+.segment__item:first-child > .segment__separator {
+  @apply hidden;
+}
+
+/* Hide the dividers on both edges of the selected item */
+.segment__item[data-selected="true"] .segment__separator,
+.segment__item[data-selected="true"] + .segment__item .segment__separator {
+  @apply opacity-0;
+}

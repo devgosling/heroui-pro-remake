@@ -1,0 +1,40 @@
+/* Radial Chart - Recharts RadialBarChart themed with HeroUI tokens */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * Wraps the Recharts ResponsiveContainer. Ring colours come from the props passed to each bar or
+ * cell (usually the accent-derived `--chart-1..5` palette declared with the chart tooltip);
+ * everything Recharts draws on its own (background track, cursor, tooltip layer, focus) is themed
+ * here with HeroUI tokens, so theme, accent and dark-mode changes apply automatically.
+ * ------------------------------------------------------------------------------------------------ */
+.radial-chart {
+  @apply w-full;
+
+  /* Radial charts have no meaningful hover cursor */
+  & .recharts-tooltip-cursor {
+    @apply hidden;
+  }
+
+  /* Keep the tooltip above HTML content overlaid on the chart centre */
+  & .recharts-tooltip-wrapper {
+    @apply z-10;
+  }
+
+  /* Track behind each ring (`background` prop): overrides Recharts' `fill="#eee"` attribute */
+  & .recharts-radial-bar-background-sector {
+    @apply fill-separator;
+  }
+
+  /* Keyboard focus (Recharts accessibility layer, arrow keys move the tooltip between rings).
+     SVG children cannot draw box-shadow rings, so the ring is an outline in the focus colour with
+     the theme ring offset, shown on keyboard focus only. */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    @apply outline-2 outline-offset-(--ring-offset-width) outline-focus outline-solid;
+  }
+}

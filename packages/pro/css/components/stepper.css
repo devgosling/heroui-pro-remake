@@ -1,0 +1,298 @@
+/* Stepper - numbered / icon / bullet step progress in horizontal or vertical layouts */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (ol)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper {
+  /* Public customisation API (documented CSS variables) */
+  --stepper-indicator-size: 28px;
+  --stepper-separator-size: 2px;
+  --stepper-vertical-gap: 16px;
+  --stepper-active-color: var(--color-accent);
+  --stepper-complete-color: var(--color-accent);
+  --stepper-complete-fg: var(--color-accent-foreground);
+  --stepper-inactive-border: var(--color-border);
+  --stepper-inactive-fg: var(--color-muted);
+
+  @apply m-0 list-none p-0;
+}
+
+.stepper--horizontal {
+  @apply flex items-start;
+}
+
+.stepper--vertical {
+  @apply flex flex-col;
+}
+
+.stepper--sm {
+  --stepper-indicator-size: 22px;
+  --stepper-vertical-gap: 12px;
+}
+
+.stepper--md {
+  /* No styles as this is the default size */
+}
+
+.stepper--lg {
+  --stepper-indicator-size: 36px;
+  --stepper-vertical-gap: 24px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Step (li)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper__step {
+  @apply relative;
+}
+
+/* Equal-width columns; the separator overflows into the next column */
+.stepper__step--horizontal {
+  @apply relative flex flex-1 flex-col items-center overflow-visible;
+}
+
+.stepper__step--vertical {
+  @apply relative flex flex-col pb-(--stepper-vertical-gap) last:pb-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Step button (button when the stepper is interactive, div otherwise)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper__step-button {
+  @apply flex items-center rounded-lg border-0 bg-transparent p-0 outline-none no-highlight;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transform-gpu transition-colors duration-100 motion-reduce:transition-none;
+
+  &[data-clickable="true"] {
+    cursor: var(--cursor-interactive);
+
+    @media (hover: hover) {
+      &:hover .stepper__indicator,
+      &[data-hovered="true"] .stepper__indicator {
+        @apply opacity-80;
+      }
+    }
+
+    &:active,
+    &[data-pressed="true"] {
+      @apply opacity-80;
+    }
+
+    &:focus-visible:not([data-focused]),
+    &[data-focus-visible="true"] {
+      @apply status-focused;
+    }
+  }
+}
+
+/* Sits above the separator, which overlaps the neighbouring step */
+.stepper__step-button--horizontal {
+  @apply relative z-10 flex-col items-center gap-1.5;
+}
+
+.stepper__step-button--vertical {
+  @apply relative z-10 flex-row items-start gap-2.5;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Indicator (circle badge: number, icon or checkmark)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper__indicator {
+  @apply flex size-(--stepper-indicator-size) shrink-0 items-center justify-center rounded-full border-2 border-solid;
+
+  &[data-status="inactive"] {
+    @apply border-(--stepper-inactive-border) bg-transparent text-(--stepper-inactive-fg);
+  }
+
+  &[data-status="active"] {
+    @apply border-(--stepper-active-color) bg-transparent text-(--stepper-active-color);
+  }
+
+  /* Pops once when the step becomes complete (and on mount) */
+  &[data-status="complete"] {
+    @apply border-(--stepper-complete-color) bg-(--stepper-complete-color) text-(--stepper-complete-fg) shadow-sm;
+    animation: stepper-indicator-complete 300ms ease-out;
+    @apply motion-reduce:animate-none;
+  }
+}
+
+.stepper__indicator--sm {
+  @apply text-[10px] font-semibold;
+}
+
+.stepper__indicator--md {
+  @apply text-xs font-semibold;
+}
+
+.stepper__indicator--lg {
+  @apply text-sm font-semibold;
+}
+
+@keyframes stepper-indicator-complete {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icon (inside the indicator; icons scale with the indicator size)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper__icon {
+  @apply flex items-center justify-center;
+
+  & svg {
+    @apply size-[55%];
+  }
+
+  & [data-slot="stepper-default-checkmark"] {
+    @apply size-[44%];
+  }
+}
+
+/* Default checkmark: the stroke draws in when the indicator turns complete */
+[data-slot="stepper-default-checkmark"] {
+  @apply transform-gpu;
+
+  & polyline {
+    stroke-dasharray: 22;
+    stroke-dashoffset: 0;
+    animation: stepper-checkmark-draw 200ms ease-out 50ms both;
+    @apply motion-reduce:animate-none;
+  }
+}
+
+@keyframes stepper-checkmark-draw {
+  0% {
+    stroke-dashoffset: 22px;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Separator (connector between this step's indicator and the next one)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper__separator {
+  @apply flex;
+}
+
+/* Spans from this indicator's edge to the next indicator's edge (steps are equal-width columns) */
+.stepper__separator--horizontal {
+  @apply absolute;
+  top: calc(var(--stepper-indicator-size) / 2 - var(--stepper-separator-size) / 2);
+  inset-inline-start: calc(50% + var(--stepper-indicator-size) / 2);
+  inset-inline-end: calc(-50% + var(--stepper-indicator-size) / 2);
+}
+
+/* Runs from below the indicator to the bottom of the step (through the vertical gap) */
+.stepper__separator--vertical {
+  @apply absolute top-(--stepper-indicator-size) bottom-0;
+  inset-inline-start: calc(var(--stepper-indicator-size) / 2 - var(--stepper-separator-size) / 2);
+}
+
+.stepper__separator-track {
+  @apply relative overflow-hidden bg-separator;
+}
+
+.stepper__separator-track--horizontal {
+  @apply h-(--stepper-separator-size) w-full;
+}
+
+.stepper__separator-track--vertical {
+  @apply h-full w-(--stepper-separator-size);
+}
+
+.stepper__separator-fill {
+  @apply absolute inset-0 bg-(--stepper-complete-color);
+}
+
+/* Fill grows along the reading direction; progress comes from --stepper-separator-progress (0-1) */
+.stepper__separator-fill--horizontal {
+  transform: scaleX(var(--stepper-separator-progress, 0));
+  transform-origin: left;
+  transition: transform 300ms;
+  @apply motion-reduce:transition-none;
+
+  &:dir(rtl) {
+    transform-origin: right;
+  }
+}
+
+.stepper__separator-fill--vertical {
+  transform: scaleY(var(--stepper-separator-progress, 0));
+  transform-origin: top;
+  transition: transform 300ms;
+  @apply motion-reduce:transition-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (title + description)
+ * ------------------------------------------------------------------------------------------------ */
+.stepper__content {
+  @apply flex flex-col;
+}
+
+.stepper__content--horizontal {
+  @apply items-center text-center;
+}
+
+/* Min height keeps a single-line title centred against the indicator */
+.stepper__content--vertical {
+  @apply min-h-(--stepper-indicator-size) items-start text-start;
+}
+
+.stepper__title {
+  @apply leading-tight font-medium text-foreground;
+  transition: color 300ms;
+  @apply motion-reduce:transition-none;
+}
+
+.stepper__step[data-status="inactive"] .stepper__title {
+  @apply text-muted;
+}
+
+.stepper__title--sm {
+  @apply text-[11px];
+}
+
+.stepper__title--md {
+  @apply text-xs;
+}
+
+.stepper__title--lg {
+  @apply text-sm;
+}
+
+.stepper__description {
+  @apply leading-snug text-muted;
+  transition: color 300ms;
+  @apply motion-reduce:transition-none;
+}
+
+.stepper__step[data-status="inactive"] .stepper__description {
+  @apply opacity-60;
+}
+
+.stepper__description--sm {
+  @apply mt-0.5 text-[10px];
+}
+
+.stepper__description--md {
+  /* Same as lg: description text stays text-xs from md up */
+  @apply mt-0.5 text-xs;
+}
+
+.stepper__description--lg {
+  @apply mt-0.5 text-xs;
+}

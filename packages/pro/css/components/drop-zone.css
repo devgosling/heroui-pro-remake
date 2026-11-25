@@ -1,0 +1,251 @@
+/* Drop Zone - drag-and-drop upload area (RAC DropZone) with a hidden file input and a file list */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.drop-zone {
+  @apply flex flex-col gap-3;
+
+  /* Border style of the area; override (e.g. `solid`) to restyle every area inside */
+  --drop-zone-border-style: dashed;
+}
+
+/* Hidden native file input (opened by DropZone.Trigger) */
+.drop-zone__input {
+  @apply sr-only;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Area (RAC DropZone)
+ * ------------------------------------------------------------------------------------------------ */
+.drop-zone__area {
+  @apply flex flex-col items-center justify-center gap-2 rounded-2xl border border-border-secondary px-6 py-8 text-center forced-color-adjust-none outline-none;
+  border-style: var(--drop-zone-border-style);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms,
+    border-color 150ms;
+  @apply motion-reduce:transition-none;
+
+  &[data-drop-target="true"] {
+    @apply border-accent bg-accent-soft;
+  }
+
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.drop-zone__icon {
+  @apply flex items-center justify-center text-muted;
+
+  & svg {
+    @apply size-8;
+  }
+}
+
+.drop-zone__label {
+  @apply text-sm font-medium text-foreground;
+}
+
+.drop-zone__description {
+  @apply text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (browse button, outlined pill)
+ * ------------------------------------------------------------------------------------------------ */
+.drop-zone__trigger {
+  @apply relative isolate mt-1 inline-flex h-10 items-center justify-center gap-2 rounded-3xl border border-border px-4 text-sm font-medium whitespace-nowrap outline-none select-none no-highlight md:h-9;
+  cursor: var(--cursor-interactive);
+
+  /* Same tokens as the OSS outline button */
+  --button-bg: transparent;
+  --button-bg-hover: color-mix(in srgb, var(--default) 60%, transparent);
+  --button-bg-pressed: var(--default);
+  --button-fg: var(--default-foreground);
+
+  background-color: var(--button-bg);
+  color: var(--button-fg);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 250ms var(--ease-smooth),
+    background-color 100ms var(--ease-out),
+    box-shadow 100ms var(--ease-out);
+  @apply transform-gpu motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      background-color: var(--button-bg-hover);
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    background-color: var(--button-bg-pressed);
+    transform: scale(0.97);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &[data-pending="true"] {
+    @apply pointer-events-none;
+  }
+
+  & svg:not([data-slot="spinner"] svg) {
+    @apply pointer-events-none -mx-0.5 my-0.5 size-5 shrink-0 self-center sm:my-1 sm:size-4;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * File list
+ * ------------------------------------------------------------------------------------------------ */
+.drop-zone__file-list {
+  @apply flex flex-col gap-2;
+}
+
+.drop-zone__file-item {
+  @apply relative flex items-start gap-3 rounded-2xl border border-border p-3;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: border-color 150ms;
+  @apply motion-reduce:transition-none;
+
+  &[data-status="failed"] {
+    @apply border-danger/30;
+  }
+}
+
+/* File sheet with a coloured format badge (fixed 32 x 40 artwork) */
+.drop-zone__file-format-icon {
+  @apply relative h-[40px] w-[32px] shrink-0;
+}
+
+.drop-zone__file-format-icon-badge {
+  @apply absolute bottom-1 left-0 flex h-3.5 max-w-[32px] items-center overflow-hidden rounded-[0.25rem] px-[3px] py-0.5 text-[8px] leading-none font-bold whitespace-nowrap text-white uppercase;
+
+  /* Pro uses fixed palette colours for the format badges */
+  &[data-color="red"] {
+    @apply bg-red-500;
+  }
+
+  &[data-color="green"] {
+    @apply bg-green-500;
+  }
+
+  &[data-color="blue"] {
+    @apply bg-blue-500;
+  }
+
+  &[data-color="orange"] {
+    @apply bg-orange-500;
+  }
+
+  &[data-color="purple"] {
+    @apply bg-purple-500;
+  }
+
+  &[data-color="gray"] {
+    @apply bg-gray-500;
+  }
+}
+
+.drop-zone__file-info {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.drop-zone__file-name {
+  @apply truncate text-sm font-medium text-foreground;
+}
+
+.drop-zone__file-meta {
+  @apply flex items-center gap-1 text-xs text-muted;
+}
+
+/* HeroUI ProgressBar (sm); the fill follows the item status */
+.drop-zone__file-progress {
+  @apply mt-1 w-full;
+}
+
+.drop-zone__file-item[data-status="complete"] .drop-zone__file-progress .progress-bar__fill {
+  --progress-bar-fill: var(--success);
+}
+
+.drop-zone__file-item[data-status="failed"] .drop-zone__file-progress .progress-bar__fill {
+  --progress-bar-fill: var(--danger);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * File triggers
+ * ------------------------------------------------------------------------------------------------ */
+.drop-zone__file-retry-trigger {
+  @apply mt-0.5 bg-transparent p-0 text-xs font-medium text-danger outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply underline;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.drop-zone__file-remove-trigger {
+  @apply flex shrink-0 items-center justify-center rounded-md p-1 text-muted outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: color 150ms;
+  @apply motion-reduce:transition-none;
+
+  & svg {
+    @apply size-4;
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply text-foreground;
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply text-foreground;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}

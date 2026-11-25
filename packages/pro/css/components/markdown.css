@@ -1,0 +1,164 @@
+/* Markdown - typography for rendered AI responses (react-markdown blocks or Streamdown).
+ * Fenced code renders through the CodeBlock component (styled by code-block.css); this file only
+ * adds the language label shown in its header. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.markdown {
+  @apply w-full text-sm leading-relaxed text-foreground;
+
+  /* Paragraphs */
+  & p {
+    @apply mb-3;
+
+    &:last-child {
+      @apply mb-0;
+    }
+  }
+
+  /* Headings (h5 / h6 keep the inherited body style) */
+  & h1,
+  & h2,
+  & h3,
+  & h4 {
+    @apply mt-4 mb-2 font-semibold text-foreground;
+
+    &:first-child {
+      @apply mt-0;
+    }
+  }
+
+  & h1 {
+    @apply text-xl;
+  }
+
+  & h2 {
+    @apply text-lg;
+  }
+
+  & h3 {
+    @apply text-sm;
+  }
+
+  /* Lists */
+  & ul,
+  & ol {
+    @apply mb-3 list-inside space-y-1 ps-2;
+
+    &:last-child {
+      @apply mb-0;
+    }
+  }
+
+  & ul {
+    @apply list-disc;
+
+    & li::marker {
+      @apply text-muted/40;
+    }
+  }
+
+  & ol {
+    @apply list-decimal;
+  }
+
+  & li {
+    @apply leading-relaxed;
+  }
+
+  /* Inline elements */
+  & a {
+    @apply text-link underline underline-offset-2;
+  }
+
+  /* Blocks */
+  & blockquote {
+    @apply my-3 border-s-2 border-border ps-4 text-muted italic;
+  }
+
+  & hr {
+    @apply my-4 border-border;
+  }
+
+  /* Tables (GFM) */
+  & table {
+    @apply mb-3 w-full border-collapse text-sm;
+  }
+
+  & th,
+  & td {
+    @apply border border-border px-3 py-2 text-start;
+  }
+
+  & th {
+    @apply bg-surface-secondary font-medium;
+  }
+
+  /* Streamdown word animation (`animated` prop); same keyframes as `streamdown/styles.css`, so
+   * StreamMarkdown animates without that extra stylesheet. */
+  & [data-sd-animate] {
+    animation: var(--sd-animation, sd-fadeIn) var(--sd-duration, 150ms) var(--sd-easing, ease)
+      var(--sd-delay, 0ms) both;
+    @apply motion-reduce:animate-none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Block (one memoized wrapper per top-level markdown block)
+ * ------------------------------------------------------------------------------------------------ */
+.markdown__block {
+  @apply w-full;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Inline code
+ * ------------------------------------------------------------------------------------------------ */
+.markdown__inline-code {
+  @apply rounded-sm bg-default px-1.5 py-0.5 font-mono text-foreground;
+  font-size: 0.875em;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Code language label (CodeBlock header)
+ * ------------------------------------------------------------------------------------------------ */
+.markdown__code-language {
+  @apply text-xs text-muted uppercase;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Streamdown animation keyframes (names match Streamdown's `animated` presets)
+ * ------------------------------------------------------------------------------------------------ */
+@keyframes sd-fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sd-blurIn {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes sd-slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

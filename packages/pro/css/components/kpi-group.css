@@ -1,0 +1,43 @@
+/* KPI Group - several KPI cards sharing one surface, split by 1px separators */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (shared surface; the cards inside drop their own chrome)
+ * ------------------------------------------------------------------------------------------------ */
+.kpi-group {
+  @apply overflow-hidden bg-surface shadow-surface;
+}
+
+/* Orientation modifiers carry the layout (there is no orientation-free default layout) */
+.kpi-group--horizontal {
+  @apply flex flex-row rounded-2xl;
+}
+
+.kpi-group--vertical {
+  @apply flex flex-col rounded-2xl;
+}
+
+/* Cards are targeted by slot so any `KPI` (OSS Card + .kpi) blends into the group surface */
+.kpi-group--horizontal > [data-slot="kpi"] {
+  @apply flex-1 rounded-none border-0 shadow-none;
+}
+
+.kpi-group--vertical > [data-slot="kpi"] {
+  @apply rounded-none border-0 shadow-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Separator
+ * ------------------------------------------------------------------------------------------------ */
+.kpi-group__separator {
+  @apply shrink-0 bg-separator;
+}
+
+/* Vertical line, inset by the card padding at the top and bottom */
+.kpi-group--horizontal > .kpi-group__separator {
+  @apply my-4 w-px self-stretch;
+}
+
+/* Horizontal line, full card width */
+.kpi-group--vertical > .kpi-group__separator {
+  @apply h-px self-stretch;
+}

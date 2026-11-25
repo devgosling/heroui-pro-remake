@@ -1,0 +1,611 @@
+/* Loader - animated status indicator for general loading and AI work (14 drawings) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.loader {
+  /* Indicator size (md = 20px) and the corner rounding of scan / grid / shuffle (follows --radius) */
+  --loader-size: 1.25rem;
+  --loader-radius: calc(var(--radius) / 8);
+
+  @apply inline-flex items-center gap-2 align-middle;
+}
+
+/* Sizes */
+.loader--sm {
+  --loader-size: 1rem;
+}
+
+.loader--md {
+  /* No styles as this is the default size (Pro renders no modifier class for md) */
+}
+
+.loader--lg {
+  --loader-size: 1.5rem;
+}
+
+/* Colors (same palette as the OSS Spinner). A text colour utility on the root overrides them. */
+.loader--accent {
+  @apply text-accent;
+}
+
+.loader--current {
+  color: inherit;
+}
+
+.loader--success {
+  @apply text-success;
+}
+
+.loader--warning {
+  @apply text-warning;
+}
+
+.loader--danger {
+  @apply text-danger;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Parts
+ * ------------------------------------------------------------------------------------------------ */
+.loader__indicator {
+  @apply shrink-0 overflow-visible;
+  width: var(--loader-size);
+  height: var(--loader-size);
+}
+
+/* The label keeps the muted colour even when the root colour changes */
+.loader__label {
+  @apply text-sm wrap-anywhere text-muted;
+}
+
+/* Hidden "Loading" status text, rendered while there is no visible label */
+.loader__fallback {
+  @apply sr-only;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shared drawing helpers
+ * ------------------------------------------------------------------------------------------------ */
+.loader__track {
+  @apply opacity-20;
+}
+
+/* Scale / flip these parts around their own centre */
+.loader__pulse-dot,
+.loader__dots-dot,
+.loader__wave-bar,
+.loader__sparkle-star,
+.loader__atom-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * ring - the whole SVG spins, one turn every 800ms
+ * ------------------------------------------------------------------------------------------------ */
+.loader__indicator--ring {
+  animation: loader-ring-spin 800ms linear infinite;
+}
+
+@keyframes loader-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * classic - 12 bars, each fades out over 1.2s; the bright bar steps every 100ms
+ * ------------------------------------------------------------------------------------------------ */
+.loader__classic-bar {
+  animation: loader-classic-fade 1.2s linear infinite;
+  animation-delay: calc(var(--_index) * 100ms - 1.2s);
+}
+
+@keyframes loader-classic-fade {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.15;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * dots - three dots, 9px apart, bouncing 120ms after each other
+ * ------------------------------------------------------------------------------------------------ */
+.loader__dots-dot {
+  r: 3px;
+  cx: calc(12px + (var(--_index) - 1) * 9px);
+  animation: loader-dots-bounce 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--_index) * 120ms - 1.2s);
+}
+
+@keyframes loader-dots-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * pulse - one dot breathing every 1.4s
+ * ------------------------------------------------------------------------------------------------ */
+.loader__pulse-dot {
+  animation: loader-pulse-breath 1.4s ease-in-out infinite;
+}
+
+@keyframes loader-pulse-breath {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * scan - a line sweeping through a rounded frame (1.8s up and down)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__indicator--scan .loader__track {
+  rx: calc(var(--loader-radius) * 4);
+}
+
+.loader__scan-line {
+  animation: loader-scan-sweep 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes loader-scan-sweep {
+  0%,
+  100% {
+    transform: translateY(-5.5px);
+  }
+
+  50% {
+    transform: translateY(5.5px);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * grid - 3x3 cells, a diagonal flash every 640ms (120ms per diagonal)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__grid-cell {
+  rx: var(--loader-radius);
+  animation: loader-grid-wave 640ms ease infinite;
+  animation-delay: calc(var(--_index) * 120ms - 640ms);
+}
+
+@keyframes loader-grid-wave {
+  0%,
+  55%,
+  100% {
+    opacity: 0.12;
+  }
+
+  20% {
+    opacity: 0.58;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * shuffle - three tiles walking clockwise around a 2x2 grid, one 180ms move every 1.2s
+ * ------------------------------------------------------------------------------------------------ */
+.loader__shuffle-tile {
+  rx: calc(var(--loader-radius) * 2.5);
+  transform: translate(var(--_rest));
+  animation: loader-shuffle-slide 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: calc(var(--_index) * -1.2s);
+}
+
+@keyframes loader-shuffle-slide {
+  0%,
+  14.1667%,
+  100% {
+    opacity: 0.4;
+    transform: translate(0, 0);
+  }
+
+  19.1667% {
+    opacity: 1;
+    transform: translate(11px, 0);
+  }
+
+  25%,
+  50%,
+  75% {
+    opacity: 0.4;
+  }
+
+  39.1667% {
+    opacity: 0.4;
+    transform: translate(11px, 0);
+  }
+
+  44.1667% {
+    opacity: 1;
+    transform: translate(11px, 11px);
+  }
+
+  64.1667% {
+    opacity: 0.4;
+    transform: translate(11px, 11px);
+  }
+
+  69.1667% {
+    opacity: 1;
+    transform: translate(0, 11px);
+  }
+
+  89.1667% {
+    opacity: 0.4;
+    transform: translate(0, 11px);
+  }
+
+  94.1667% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * wave - five equaliser bars rising 180ms after each other (resting ramp for reduced motion)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__wave-bar {
+  opacity: calc(0.4429 + var(--_index) * 0.1393);
+  transform: scaleY(calc(0.4 + var(--_index) * 0.15));
+  animation: loader-wave-rise 900ms ease-in-out infinite;
+  animation-delay: calc(var(--_index) * 180ms - 900ms);
+}
+
+@keyframes loader-wave-rise {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scaleY(0.3);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * sparkle - five stars popping in and out, 196ms apart
+ * ------------------------------------------------------------------------------------------------ */
+.loader__sparkle-star {
+  animation: loader-sparkle-twinkle 1.4s ease-in-out infinite;
+  animation-delay: calc(var(--_index) * 196ms - 1.4s);
+}
+
+@keyframes loader-sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  40% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+
+  60% {
+    opacity: 0.675;
+    transform: scale(0.8);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * atom - three orbits flattening and reopening (600ms, a third of a cycle apart)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__atom-ring {
+  transform: scaleY(0.5);
+  animation: loader-atom-flip 600ms linear infinite;
+  animation-delay: calc(var(--_index) * -200ms);
+}
+
+@keyframes loader-atom-flip {
+  0%,
+  100% {
+    transform: scale(1);
+    animation-timing-function: cubic-bezier(0.157, 0, 0.418, 0.027);
+  }
+
+  46.172% {
+    transform: scaleY(0.12);
+  }
+
+  53.828% {
+    transform: scaleY(0.12);
+    animation-timing-function: cubic-bezier(0.582, 0.973, 0.843, 1);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * morph - 18 dots: circle -> triangle -> square, holding each shape (3.317s per cycle)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__morph-dots {
+  transform-origin: center;
+  fill-opacity: 0.9;
+  animation: loader-morph-breath 3.317s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+
+.loader__morph-dot {
+  animation: loader-morph-shape 3.317s cubic-bezier(0.335, 0, 0.665, 1) infinite;
+}
+
+@keyframes loader-morph-breath {
+  0%,
+  100% {
+    transform: scale(0.95);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes loader-morph-shape {
+  0%,
+  20.293%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  33.341%,
+  53.627% {
+    transform: translate(var(--_triangle));
+  }
+
+  66.682%,
+  86.968% {
+    transform: translate(var(--_square));
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * helix - dots orbiting a vertical axis (5.712s per turn) while the strands breathe (2.856s)
+ * Per-dot phases are inline animation delays.
+ * ------------------------------------------------------------------------------------------------ */
+.loader__helix-weave,
+.loader__helix-orbit,
+.loader__helix-dot {
+  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  animation-iteration-count: infinite;
+}
+
+.loader__helix-weave {
+  transform-origin: center;
+  animation-name: loader-helix-weave;
+  animation-duration: 2.856s;
+}
+
+.loader__helix-orbit {
+  animation-name: loader-helix-orbit;
+  animation-duration: 5.712s;
+}
+
+/* Starts in front of the axis: lifted, larger and brighter; at the back the opposite */
+.loader__helix-dot {
+  animation-name: loader-helix-depth;
+  animation-duration: 5.712s;
+}
+
+@keyframes loader-helix-weave {
+  0%,
+  100% {
+    transform: scale(0.925);
+  }
+
+  50% {
+    transform: scale(1.075);
+  }
+}
+
+@keyframes loader-helix-orbit {
+  0%,
+  100% {
+    transform: translateX(-1px);
+  }
+
+  50% {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes loader-helix-depth {
+  0%,
+  100% {
+    opacity: var(--_near-opacity);
+    transform: translateY(var(--_lift)) scale(var(--_near-scale));
+  }
+
+  50% {
+    opacity: var(--_far-opacity);
+    transform: translateY(calc(var(--_lift) * -1)) scale(var(--_far-scale));
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * twist - sphere slabs taking a quarter turn one after another (2.769s cycle, 215ms stagger)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__twist-slab,
+.loader__twist-dot {
+  animation-duration: 2.769s;
+  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  animation-iteration-count: infinite;
+  animation-delay: calc(var(--_index) * 215ms);
+}
+
+.loader__twist-slab {
+  animation-name: loader-twist-turn;
+}
+
+/* Dots counter-rotate and stay un-squashed, so they remain round while their slab turns */
+.loader__twist-dot {
+  opacity: var(--_rest-opacity);
+  transform: scale(1, var(--_unsquash));
+  animation-name: loader-twist-depth;
+}
+
+@keyframes loader-twist-turn {
+  0%,
+  44.276%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  5.4528%,
+  38.8232% {
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes loader-twist-depth {
+  0% {
+    opacity: var(--_opacity);
+    transform: rotate(0deg) scale(1) scale(1, var(--_unsquash));
+  }
+
+  5.4528% {
+    opacity: var(--_turned-settle-opacity);
+    transform: rotate(-90deg) scale(var(--_turned-scale)) scale(1, var(--_unsquash));
+  }
+
+  7.7648% {
+    opacity: var(--_turned-rest-opacity);
+  }
+
+  38.8232% {
+    opacity: var(--_turned-rest-opacity);
+    transform: rotate(-90deg) scale(var(--_turned-scale)) scale(1, var(--_unsquash));
+  }
+
+  /* Flash when the slab starts turning back */
+  38.824% {
+    opacity: var(--_turned-opacity);
+  }
+
+  44.276% {
+    opacity: var(--_settle-opacity);
+    transform: rotate(0deg) scale(1) scale(1, var(--_unsquash));
+  }
+
+  46.588% {
+    opacity: var(--_rest-opacity);
+  }
+
+  100% {
+    opacity: var(--_rest-opacity);
+    transform: rotate(0deg) scale(1) scale(1, var(--_unsquash));
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * infinity - a comet tracing a figure eight; x (1.2s), y (600ms) and tangent rotation (1.2s)
+ * are animated separately. 1.5x wider than the other drawings.
+ * ------------------------------------------------------------------------------------------------ */
+.loader__indicator--infinity {
+  width: calc(var(--loader-size) * 1.5);
+}
+
+.loader__infinity-x {
+  animation: loader-infinity-swing 1.2s infinite;
+  animation-delay: calc(var(--_index) * -22ms - 11ms);
+}
+
+.loader__infinity-y {
+  animation: loader-infinity-bob 600ms infinite;
+  animation-delay: calc(var(--_index) * -22ms - 448ms);
+}
+
+.loader__infinity-comet {
+  animation: loader-infinity-turn 1.2s infinite;
+  animation-delay: calc(var(--_index) * -22ms);
+}
+
+@keyframes loader-infinity-swing {
+  0%,
+  50%,
+  100% {
+    transform: translateX(28px);
+    animation-timing-function: cubic-bezier(0.465, 0.333, 0.716, 1.016);
+  }
+
+  25% {
+    transform: translateX(46.9px);
+    animation-timing-function: cubic-bezier(0.285, -0.015, 0.527, 0.658);
+  }
+
+  75% {
+    transform: translateX(9.1px);
+    animation-timing-function: cubic-bezier(0.285, -0.015, 0.527, 0.658);
+  }
+}
+
+@keyframes loader-infinity-bob {
+  0%,
+  100% {
+    transform: translateY(7.31px);
+    animation-timing-function: cubic-bezier(0.416, -0.013, 0.584, 1.013);
+  }
+
+  45.668% {
+    transform: translateY(20.69px);
+    animation-timing-function: cubic-bezier(0.42, 0.03, 0.582, 0.972);
+  }
+}
+
+/* Half a turn forwards on the right loop, back again on the left loop */
+@keyframes loader-infinity-turn {
+  0% {
+    transform: rotate(-56.83deg);
+    animation-timing-function: cubic-bezier(0.882, 0.62, 0.599, 0.478);
+  }
+
+  24.084%,
+  74.084% {
+    transform: rotate(90deg);
+    animation-timing-function: cubic-bezier(0.397, 0.513, 0.118, 0.383);
+  }
+
+  48% {
+    transform: rotate(236.08deg);
+    animation-timing-function: linear;
+  }
+
+  50% {
+    transform: rotate(236.83deg);
+    animation-timing-function: cubic-bezier(0.882, 0.62, 0.599, 0.478);
+  }
+
+  98% {
+    transform: rotate(-56.08deg);
+    animation-timing-function: linear;
+  }
+
+  100% {
+    transform: rotate(-56.83deg);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Reduced motion: every drawing stops on its still frame (SVG attributes / resting styles)
+ * ------------------------------------------------------------------------------------------------ */
+.loader__indicator,
+.loader__indicator * {
+  @apply motion-reduce:animate-none;
+}

@@ -1,0 +1,146 @@
+{
+  "name": "@heroui/pro",
+  "version": "3.2.8",
+  "private": true,
+  "description": "Clean-room re-implementation of HeroUI Pro components on top of HeroUI v3 (private remake).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./css": {
+      "style": "./css/index.css",
+      "default": "./css/index.css"
+    },
+    "./css/*.css": "./css/components/*.css",
+    "./package.json": "./package.json",
+    "./*": {
+      "types": "./src/components/*/index.ts",
+      "import": "./src/components/*/index.ts",
+      "default": "./src/components/*/index.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@internationalized/number": "^3.6.9",
+    "tailwind-variants": "4.0.2"
+  },
+  "devDependencies": {
+    "@heroui/react": "workspace:*",
+    "@heroui/standard": "workspace:*",
+    "@heroui/styles": "workspace:*",
+    "@iconify/react": "6.0.4",
+    "@number-flow/react": "0.6.2",
+    "@storybook/react": "10.6.8",
+    "@tiptap/extension-bubble-menu": "3.35.0",
+    "@tiptap/extension-floating-menu": "3.35.0",
+    "@tiptap/extensions": "3.35.0",
+    "@tiptap/pm": "3.35.0",
+    "@tiptap/react": "3.35.0",
+    "@tiptap/starter-kit": "3.35.0",
+    "@tiptap/suggestion": "3.35.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "embla-carousel": "8.6.0",
+    "embla-carousel-react": "8.6.0",
+    "maplibre-gl": "6.19.0",
+    "marked": "18.3.0",
+    "react": "19.3.1",
+    "react-aria": "3.53.1",
+    "react-aria-components": "1.22.1",
+    "react-dom": "19.3.1",
+    "react-markdown": "10.1.0",
+    "react-resizable-panels": "4.24.1",
+    "recharts": "3.11.1",
+    "remark-gfm": "4.0.1",
+    "shiki": "4.6.0",
+    "streamdown": "2.8.1",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3"
+  },
+  "peerDependencies": {
+    "@heroui/react": ">=3.2.8",
+    "@heroui/styles": ">=3.2.8",
+    "@number-flow/react": ">=0.6.0",
+    "@tiptap/extension-bubble-menu": ">=3.0.0",
+    "@tiptap/extension-floating-menu": ">=3.0.0",
+    "@tiptap/extensions": ">=3.0.0",
+    "@tiptap/pm": ">=3.0.0",
+    "@tiptap/react": ">=3.0.0",
+    "@tiptap/starter-kit": ">=3.0.0",
+    "@tiptap/suggestion": ">=3.0.0",
+    "embla-carousel-react": ">=8.0.0",
+    "maplibre-gl": ">=5.0.0",
+    "marked": ">=15.0.0",
+    "react": ">=19.0.0",
+    "react-aria": "^3.53.1",
+    "react-aria-components": "^1.22.1",
+    "react-dom": ">=19.0.0",
+    "react-markdown": ">=10.0.0",
+    "react-resizable-panels": ">=4.0.0",
+    "recharts": ">=3.0.0",
+    "remark-gfm": ">=4.0.0",
+    "shiki": ">=3.0.0",
+    "streamdown": ">=2.0.0",
+    "tailwindcss": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@number-flow/react": {
+      "optional": true
+    },
+    "@tiptap/extension-bubble-menu": {
+      "optional": true
+    },
+    "@tiptap/extension-floating-menu": {
+      "optional": true
+    },
+    "@tiptap/extensions": {
+      "optional": true
+    },
+    "@tiptap/pm": {
+      "optional": true
+    },
+    "@tiptap/react": {
+      "optional": true
+    },
+    "@tiptap/starter-kit": {
+      "optional": true
+    },
+    "@tiptap/suggestion": {
+      "optional": true
+    },
+    "embla-carousel-react": {
+      "optional": true
+    },
+    "maplibre-gl": {
+      "optional": true
+    },
+    "marked": {
+      "optional": true
+    },
+    "react-markdown": {
+      "optional": true
+    },
+    "recharts": {
+      "optional": true
+    },
+    "remark-gfm": {
+      "optional": true
+    },
+    "shiki": {
+      "optional": true
+    },
+    "streamdown": {
+      "optional": true
+    }
+  }
+}

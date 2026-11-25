@@ -1,0 +1,75 @@
+/* Chat Conversation - stick-to-bottom scroll viewport for streaming chat messages */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (scroll viewport)
+ * A flex column that fills its parent (give the root or its parent a bounded height). The top and
+ * bottom edges fade out over --chat-conversation-shadow-size; a second, full-height mask layer
+ * keeps a --chat-conversation-scrollbar-mask-size wide strip at the end edge unfaded, so the
+ * scrollbar stays crisp.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-conversation {
+  --chat-conversation-shadow-size: 32px;
+  --chat-conversation-scrollbar-mask-size: 10px;
+
+  @apply relative flex min-h-0 flex-1 scrollbar flex-col overflow-y-auto text-sm;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent,
+      black var(--chat-conversation-shadow-size),
+      black calc(100% - var(--chat-conversation-shadow-size)),
+      transparent
+    ),
+    linear-gradient(black, black);
+  mask-position:
+    0 0,
+    100% 0;
+  mask-repeat: no-repeat;
+  mask-size:
+    100% 100%,
+    var(--chat-conversation-scrollbar-mask-size) 100%;
+
+  /* Focus lands here (tabindex="-1") when the scroll button hides after a keyboard press */
+  &[tabindex="-1"] {
+    @apply outline-none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (message column)
+ * Centres itself; the width, gap and padding come from the app (e.g. max-w-[714px] gap-8 px-4 py-8).
+ * ------------------------------------------------------------------------------------------------ */
+.chat-conversation__content {
+  @apply mx-auto flex w-full flex-col;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Scroll button
+ * The container follows the content in the flow and sticks 16px above the bottom edge of the
+ * viewport. While the view is at the bottom it stays in place but turns invisible and inert.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-conversation__scroll-button-container {
+  @apply sticky bottom-4 z-10 mx-auto w-max;
+
+  &[data-state="hidden"] {
+    @apply pointer-events-none invisible;
+  }
+}
+
+/* OSS `.button.button--secondary.button--icon-only.button--sm` on a raised surface */
+.chat-conversation__scroll-button {
+  --button-bg: var(--surface);
+  --button-bg-hover: var(--surface-hover);
+  --button-bg-pressed: var(--surface-hover);
+  --button-fg: var(--foreground);
+
+  @apply border border-transparent bg-surface text-foreground shadow-surface dark:border-border;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Scroll anchor (deprecated): an empty, hidden 1px row at the end of the column
+ * ------------------------------------------------------------------------------------------------ */
+.chat-conversation__scroll-anchor {
+  @apply h-px w-full shrink-0 scroll-mt-4;
+}

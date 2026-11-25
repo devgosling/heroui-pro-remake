@@ -1,0 +1,51 @@
+/* Composed Chart - Recharts theming for mixed bar / line / area charts */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * Wraps the Recharts ResponsiveContainer. Series colours come from the props passed to each
+ * series (usually the accent-derived `--chart-1..5` palette); everything Recharts draws on its own
+ * (ticks, axes, grid, cursor, active dots, focus) is themed here with HeroUI tokens, so theme,
+ * accent and dark-mode changes apply automatically.
+ * ------------------------------------------------------------------------------------------------ */
+.composed-chart {
+  @apply w-full;
+
+  /* Axis tick labels: 10px muted text (overrides Recharts' `fill="#666"` attribute) */
+  & .recharts-cartesian-axis-tick-value {
+    @apply fill-muted! text-[10px];
+  }
+
+  /* Axis and tick lines are hidden by default */
+  & .recharts-cartesian-axis-line,
+  & .recharts-cartesian-axis-tick-line {
+    @apply stroke-none!;
+  }
+
+  /* Grid lines: muted stroke at 15% opacity */
+  & .recharts-cartesian-grid line {
+    @apply stroke-muted;
+    stroke-opacity: 0.15;
+  }
+
+  /* Tooltip cursor: dashed vertical line on hover */
+  & .recharts-tooltip-cursor {
+    @apply stroke-muted stroke-1;
+    stroke-dasharray: 4 4;
+  }
+
+  /* Active dots are outlined with the surface colour so they separate from the series */
+  & .recharts-active-dot circle {
+    @apply stroke-surface stroke-2;
+  }
+
+  /* Keyboard focus (Recharts accessibility layer): outline on the SVG surface only */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    @apply outline-2 outline-offset-(--ring-offset-width) outline-focus outline-solid;
+  }
+}

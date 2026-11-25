@@ -1,0 +1,200 @@
+/* Chat Tool - collapsible tool-call cards (OSS Disclosure) with a status trigger row and a panel
+ * holding JSON code blocks (Pro Code Block), error details and approve / reject actions.
+ * Chat Tool Group wraps consecutive cards in one collapsible card. */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (card)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool,
+.chat-tool-group {
+  @apply w-full overflow-hidden border border-default;
+  border-radius: calc(var(--radius) * 1.5);
+
+  /* Keyboard focus is drawn on the card, not on the full-bleed trigger inside it */
+  &:has(
+    > [data-slot="disclosure-heading"]
+      > :is(.chat-tool__trigger, .chat-tool-group__trigger):is(
+        :focus-visible:not([data-focused]),
+        [data-focus-visible="true"]
+      )
+  ) {
+    @apply status-focused;
+  }
+
+  & [data-slot="disclosure-heading"] {
+    @apply w-full;
+  }
+}
+
+/* State borders */
+.chat-tool--error {
+  @apply border-danger/30;
+}
+
+.chat-tool--requires-action {
+  @apply border-warning/40;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (layered on the OSS `.disclosure__trigger`)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool__trigger,
+.chat-tool-group__trigger {
+  @apply inline-flex h-auto min-h-9 w-full items-center justify-between gap-2 rounded-none px-3 py-2 text-start text-xs font-normal text-foreground no-highlight;
+  cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply bg-default;
+  }
+
+  /* The card carries the focus ring; drop the OSS ring on the trigger itself */
+  &:is(:focus-visible:not([data-focused]), [data-focus-visible="true"]) {
+    @apply shadow-none ring-0;
+  }
+}
+
+/* Nothing to expand: the trigger is disabled (OSS `.disclosure__trigger:disabled` fades it) */
+.chat-tool__trigger[data-expandable="false"],
+.chat-tool__trigger[data-expandable="false"]:hover,
+.chat-tool__trigger[data-expandable="false"][data-hovered="true"],
+.chat-tool__trigger[data-expandable="false"]:active,
+.chat-tool__trigger[data-expandable="false"][data-pressed="true"] {
+  @apply cursor-default bg-transparent;
+}
+
+.chat-tool[data-disabled="true"] .chat-tool__trigger,
+.chat-tool-group[data-disabled="true"] .chat-tool-group__trigger {
+  @apply status-disabled;
+}
+
+.chat-tool--streaming .chat-tool__trigger,
+.chat-tool--running .chat-tool__trigger {
+  @apply text-foreground;
+}
+
+/* Label (status icon + text). The preset nests a second label span around the text. */
+.chat-tool__trigger-label,
+.chat-tool-group__trigger-label {
+  @apply flex min-w-0 items-center gap-2 text-xs font-normal;
+}
+
+/* Shimmering label while the tool is streaming or running */
+.chat-tool__trigger-label > .text-shimmer {
+  @apply inline-flex min-w-0 items-center gap-2;
+}
+
+.chat-tool__trigger-name {
+  @apply font-medium;
+}
+
+/* Chevron (OSS `.disclosure__indicator` keeps the rotation transition) */
+.chat-tool__indicator,
+.chat-tool-group__indicator {
+  @apply size-3.5 shrink-0 text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Status icon
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool__status {
+  @apply inline-flex size-3.5 shrink-0 items-center justify-center text-muted;
+}
+
+.chat-tool__status-icon {
+  @apply size-3.5 shrink-0;
+}
+
+.chat-tool__status-icon--complete {
+  @apply text-success;
+}
+
+.chat-tool__status-icon--error {
+  @apply text-danger;
+}
+
+.chat-tool__status-icon--requires-action {
+  @apply text-warning;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content panel (layered on the OSS `.disclosure__content`, whose body adds 8px of padding)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool__content,
+.chat-tool-group__content {
+  @apply border-t-0 border-default;
+
+  /* Collapse snaps the height to 0 while the opacity fades out */
+  &:not([data-expanded="true"]) {
+    opacity: 0;
+    height: 0 !important;
+  }
+}
+
+.chat-tool__content-body {
+  @apply flex flex-col gap-1 p-1;
+}
+
+.chat-tool-group__content-body {
+  @apply flex flex-col gap-1.5 p-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Sections (args / result / error)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool__args,
+.chat-tool__result,
+.chat-tool__error {
+  @apply text-xs;
+}
+
+.chat-tool__args-label,
+.chat-tool__result-label,
+.chat-tool__error-label {
+  @apply mb-1 text-[10px] font-medium tracking-wide text-muted uppercase;
+}
+
+/* Compact Code Block inside the panel */
+.chat-tool__args .code-block,
+.chat-tool__result .code-block {
+  @apply my-1;
+  border-radius: calc(var(--radius) * 1.5);
+}
+
+.chat-tool__args .code-block__code,
+.chat-tool__result .code-block__code {
+  @apply text-[11px] leading-5;
+
+  & pre {
+    @apply px-2.5 py-1.5;
+  }
+}
+
+.chat-tool__error {
+  @apply text-danger;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Approval (requires-action)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool__approval {
+  @apply flex flex-col gap-2 pt-3;
+}
+
+.chat-tool__approval-actions {
+  @apply flex items-center justify-end gap-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Meta (tool call id)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-tool__meta {
+  @apply border-t border-default pt-2 font-mono text-xs text-muted;
+}

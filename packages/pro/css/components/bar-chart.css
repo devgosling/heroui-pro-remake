@@ -1,0 +1,59 @@
+/* Bar Chart - Recharts bar chart themed with HeroUI tokens */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (wraps the Recharts ResponsiveContainer)
+ * ------------------------------------------------------------------------------------------------ */
+.bar-chart {
+  @apply w-full;
+
+  /* --------------------------------------------------------------------------------------------
+   * Axes: 10px muted tick labels; axis and tick lines hidden (Recharts sets them as attributes)
+   * -------------------------------------------------------------------------------------------- */
+  & .recharts-cartesian-axis-tick-value {
+    @apply fill-muted! text-[10px];
+  }
+
+  & .recharts-cartesian-axis-line,
+  & .recharts-cartesian-axis-tick-line {
+    @apply stroke-none!;
+  }
+
+  /* --------------------------------------------------------------------------------------------
+   * Grid: hairlines in the muted colour at 15%
+   * -------------------------------------------------------------------------------------------- */
+  & .recharts-cartesian-grid line {
+    @apply stroke-muted;
+    stroke-opacity: 0.15;
+  }
+
+  /* --------------------------------------------------------------------------------------------
+   * Tooltip cursor: subtle band behind the hovered category (follows the text colour, so it is a
+   * dark tint in light mode and a light tint in dark mode)
+   * -------------------------------------------------------------------------------------------- */
+  & .recharts-tooltip-cursor {
+    @apply fill-current opacity-5;
+
+    /* The band has no outline. Recharts 3.11 paints its default cursor with a #ccc stroke (older
+     * 3.x releases wrote stroke="none"); a stroke passed through the Tooltip `cursor` prop still
+     * applies. */
+    &[stroke="#ccc"] {
+      @apply stroke-none;
+    }
+  }
+
+  /* --------------------------------------------------------------------------------------------
+   * Focus: Recharts' accessibility layer makes the surface focusable (arrow keys move the
+   * tooltip). Outline instead of the ring utility: box-shadow does not paint on SVG content and
+   * the offset gap must stay transparent over the card surface.
+   * -------------------------------------------------------------------------------------------- */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: var(--ring-offset-width);
+  }
+}

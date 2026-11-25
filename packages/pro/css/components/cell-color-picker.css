@@ -1,0 +1,107 @@
+/* Cell Color Picker - a settings row (label + hex value + swatch) that opens the OSS ColorPicker
+ * popover. Root is the OSS ColorPicker wrapper (.color-picker), the row is a RAC Button, the swatch
+ * is the OSS ColorSwatch (.color-swatch) and the panel is the OSS ColorPicker.Popover
+ * (.color-picker__popover).
+ *
+ * Same "field row" recipe as Cell Switch (no shared `.cell` base class in Pro): h-9 / px-3 / gap-3 /
+ * rounded-field / bg-field / shadow-field, field hover + focus tokens and a `--secondary` trigger on
+ * bg-default without shadow. Rules are nested under the block so they beat the OSS `.color-picker*`
+ * and `.color-swatch*` rules (same layer) regardless of import order.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (OSS ColorPicker wrapper)
+ * ------------------------------------------------------------------------------------------------ */
+.cell-color-picker {
+  --cell-color-picker-swatch-size: 1.25rem;
+
+  @apply flex;
+
+  /* ----------------------------------------------------------------------------------------------
+   * Trigger (RAC Button - the clickable row)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-color-picker__trigger {
+    @apply flex h-9 w-full items-center gap-3 rounded-field border bg-field px-3 text-field-foreground shadow-field outline-none no-highlight;
+    border-width: var(--border-width-field);
+    border-color: var(--color-field-border);
+    /* Pro pins the trailing inset to 0.75rem (it does not scale with --spacing like the leading one) */
+    padding-inline-end: 0.75rem;
+    cursor: var(--cursor-interactive);
+
+    /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+    transition:
+      background-color 150ms var(--ease-smooth),
+      border-color 150ms var(--ease-smooth),
+      box-shadow 150ms var(--ease-out);
+    @apply motion-reduce:transition-none;
+
+    @media (hover: hover) {
+      &[data-hovered="true"] {
+        @apply bg-field-hover;
+        border-color: var(--color-field-border-hover);
+      }
+    }
+
+    &:focus-visible:not([data-focused]),
+    &[data-focus-visible="true"] {
+      @apply status-focused;
+      border-color: var(--color-field-border-focus);
+      background-color: var(--color-field-focus);
+    }
+
+    &:disabled,
+    &[data-disabled="true"],
+    &[aria-disabled="true"] {
+      @apply status-disabled;
+    }
+  }
+
+  .cell-color-picker__trigger--default {
+    /* No styles as this is the default variant */
+  }
+
+  .cell-color-picker__trigger--secondary {
+    @apply bg-default shadow-none;
+
+    @media (hover: hover) {
+      &[data-hovered="true"] {
+        @apply bg-default-hover;
+      }
+    }
+
+    &:focus-visible:not([data-focused]),
+    &[data-focus-visible="true"] {
+      @apply bg-default;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Label (leading, takes the free space)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-color-picker__label {
+    @apply min-w-0 flex-1 truncate text-start text-sm font-medium text-foreground;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Value display (#RRGGBB, trailing)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-color-picker__value-display {
+    @apply ms-auto shrink-0 truncate text-end text-sm text-muted;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Swatch (OSS ColorSwatch, resized to the cell)
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-color-picker__swatch {
+    @apply size-(--cell-color-picker-swatch-size) shrink-0 rounded-full;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Popover (OSS ColorPicker.Popover). It is portaled out of the root by default, so this only
+   * applies when the popover is rendered inside the root (e.g. a custom portal container); the
+   * portaled panel keeps the OSS `min-w-62`.
+   * ---------------------------------------------------------------------------------------------- */
+  .cell-color-picker__popover {
+    min-width: var(--trigger-width);
+  }
+}

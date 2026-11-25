@@ -1,0 +1,48 @@
+/* Line Chart - HeroUI theming of the Recharts internals rendered by LineChart
+ * Series colours come from the shared `--chart-1..5` palette (defined in chart-tooltip.css). */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.line-chart {
+  @apply w-full;
+
+  /* Axis tick labels: 10px muted text (beats the `fill` attribute Recharts sets) */
+  & .recharts-cartesian-axis-tick-value {
+    @apply fill-muted! text-[10px];
+  }
+
+  /* Axis and tick lines are hidden; the grid carries the structure */
+  & .recharts-cartesian-axis-line,
+  & .recharts-cartesian-axis-tick-line {
+    @apply stroke-none!;
+  }
+
+  /* Hairline grid in the muted colour */
+  & .recharts-cartesian-grid line {
+    @apply stroke-muted;
+    stroke-opacity: 0.15;
+  }
+
+  /* Hover cursor: dashed vertical guide */
+  & .recharts-tooltip-cursor {
+    @apply stroke-muted stroke-1;
+    stroke-dasharray: 4 4;
+  }
+
+  /* Active point: ringed with the surface colour so it separates from the line */
+  & .recharts-active-dot circle {
+    @apply stroke-surface stroke-2;
+  }
+
+  /* Keyboard focus (Recharts accessibility layer): ring only for keyboard users */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    @apply outline-2 outline-offset-(--ring-offset-width) outline-focus outline-solid;
+  }
+}

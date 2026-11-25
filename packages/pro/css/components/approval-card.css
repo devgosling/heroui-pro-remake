@@ -1,0 +1,273 @@
+/* Approval Card - questions and approvals an agent asks one at a time (layered on the OSS Card) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (OSS .card) + tokens
+ * ------------------------------------------------------------------------------------------------ */
+.approval-card {
+  /* Step dot colour */
+  --approval-card-color-duration: 150ms;
+  --approval-card-color-ease: var(--ease-smooth);
+  /* Question change: fade, rise and blur of the new title / content */
+  --approval-card-swap-duration: 200ms;
+  --approval-card-swap-ease: var(--ease-out-quint);
+  --approval-card-swap-offset: --spacing(1);
+  --approval-card-swap-blur: 2px;
+  /* Step dot width */
+  --approval-card-step-duration: var(--approval-card-swap-duration);
+  --approval-card-step-ease: var(--ease-in-out-quart);
+  /* Question change under prefers-reduced-motion */
+  --approval-card-reduced-duration: 120ms;
+  /* Option list */
+  --approval-card-options-max-height: --spacing(48);
+  --approval-card-fade-size: --spacing(6);
+  --approval-card-control-size: --spacing(4);
+  /* Step dots */
+  --approval-card-dot-answered: color-mix(in oklab, var(--color-muted) 45%, transparent);
+  --approval-card-dot-size: --spacing(1.5);
+  --approval-card-pill-width: --spacing(5);
+  --approval-card-edge-size: --spacing(1);
+  --approval-card-step-hit-size: --spacing(6);
+  --approval-card-step-gap: --spacing(1.5);
+
+  @apply gap-1 p-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header
+ * ------------------------------------------------------------------------------------------------ */
+.approval-card__header {
+  @apply flex items-start gap-3 px-2 pt-2 pb-1;
+}
+
+.approval-card__title {
+  @apply min-w-0 flex-1 text-base font-semibold text-foreground;
+}
+
+/* Sits in the card's top-end corner like the OSS Modal close button */
+.approval-card .approval-card__dismiss {
+  @apply absolute end-2 top-2;
+}
+
+/* Keep the title clear of the dismiss button */
+.approval-card__header:has(> .approval-card__dismiss) > .approval-card__title {
+  @apply me-9;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (tab panel while ApprovalCard.Steps is placed)
+ * ------------------------------------------------------------------------------------------------ */
+.approval-card__content {
+  @apply flex flex-col gap-1 outline-none;
+
+  &:focus-visible {
+    @apply status-focused;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Options (OSS RadioGroup / CheckboxGroup + ScrollShadow)
+ * ------------------------------------------------------------------------------------------------ */
+.approval-card__option-list {
+  @apply flex max-h-(--approval-card-options-max-height) flex-col;
+}
+
+.approval-card__option {
+  @apply relative rounded-lg px-2 py-1.5;
+
+  @media (hover: hover) {
+    &:has(> [data-hovered="true"]) {
+      @apply bg-default/60;
+    }
+  }
+}
+
+/* The label stretches over the whole row (description included) through its ::after */
+.approval-card__option > .approval-card__option-content {
+  @apply static items-start;
+
+  &::after {
+    @apply absolute inset-0 rounded-[inherit] content-[''];
+  }
+}
+
+/* Centre the control on the first label line */
+.approval-card__option-content > .approval-card__option-control {
+  margin-block: calc((1lh - var(--approval-card-control-size)) / 2);
+}
+
+.approval-card__option-label {
+  @apply min-w-0 text-sm font-normal text-foreground;
+}
+
+.approval-card__custom-input {
+  @apply mx-2 mt-1;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Footer
+ * ------------------------------------------------------------------------------------------------ */
+.approval-card__footer {
+  @apply flex items-center gap-2.5 p-2;
+}
+
+/* Step dots (tab list) */
+.approval-card__steps {
+  @apply flex items-center gap-(--approval-card-step-gap);
+}
+
+.approval-card__step {
+  @apply flex h-(--approval-card-step-hit-size) w-(--approval-card-dot-size) shrink-0 items-center justify-center outline-none;
+  cursor: var(--cursor-interactive);
+  transition: width var(--approval-card-step-duration) var(--approval-card-step-ease);
+
+  &::before {
+    @apply h-(--approval-card-dot-size) w-full rounded-full bg-default content-[''];
+    transition:
+      background-color var(--approval-card-color-duration) var(--approval-card-color-ease),
+      height var(--approval-card-step-duration) var(--approval-card-step-ease);
+  }
+
+  &[data-answered]::before {
+    background-color: var(--approval-card-dot-answered);
+  }
+
+  /* Current question: a wider pill */
+  &[data-current] {
+    @apply w-(--approval-card-pill-width);
+
+    &::before {
+      @apply bg-muted;
+    }
+  }
+
+  @media (hover: hover) {
+    &[data-hovered]:not([data-current])::before {
+      background-color: var(--approval-card-dot-answered);
+    }
+
+    &[data-answered][data-hovered]::before {
+      @apply bg-muted;
+    }
+  }
+
+  /* Smaller dot at the edge of the maxVisible window */
+  &[data-edge] {
+    @apply w-(--approval-card-edge-size);
+
+    &::before {
+      @apply h-(--approval-card-edge-size);
+    }
+  }
+
+  &[data-hidden] {
+    @apply hidden;
+  }
+
+  &[data-focus-visible]::before {
+    @apply status-focused;
+  }
+}
+
+/* "2/3" */
+.approval-card__step-count {
+  @apply text-xs text-muted/60 tabular-nums;
+}
+
+.approval-card__step-count-current {
+  @apply text-muted;
+}
+
+/* "N skipped" - only on the last question while other questions have no answer */
+.approval-card__skipped-count {
+  @apply min-w-0 truncate text-xs text-muted tabular-nums;
+
+  &:not([data-last-step]),
+  &[data-empty] {
+    @apply hidden;
+  }
+}
+
+.approval-card__actions {
+  @apply ms-auto flex items-center gap-2;
+}
+
+/* Continue / Send: reserve the width of the wider label so Skip stays in place */
+.approval-card__continue-label {
+  @apply inline-flex flex-col items-center;
+
+  &::after {
+    @apply invisible h-0 overflow-hidden;
+    content: attr(data-reserve) / "";
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Question change (enter transition of the remounted parts)
+ * ------------------------------------------------------------------------------------------------ */
+.approval-card__title[data-swapped],
+.approval-card__content[data-swapped],
+.approval-card__skipped-count[data-swapped],
+.approval-card__continue-label[data-swapped] {
+  transition:
+    opacity var(--approval-card-swap-duration) var(--approval-card-swap-ease),
+    translate var(--approval-card-swap-duration) var(--approval-card-swap-ease),
+    filter var(--approval-card-swap-duration) var(--approval-card-swap-ease);
+}
+
+@starting-style {
+  .approval-card__title[data-swapped],
+  .approval-card__content[data-swapped],
+  .approval-card__skipped-count[data-swapped],
+  .approval-card__continue-label[data-swapped] {
+    opacity: 0;
+    filter: blur(var(--approval-card-swap-blur));
+  }
+
+  .approval-card__title[data-swapped],
+  .approval-card__content[data-swapped] {
+    translate: 0 var(--approval-card-swap-offset);
+  }
+}
+
+/* Reduced motion: the new question only fades; dots switch width at once, colour still fades */
+@media (prefers-reduced-motion: reduce) {
+  .approval-card__title[data-swapped],
+  .approval-card__content[data-swapped],
+  .approval-card__skipped-count[data-swapped],
+  .approval-card__continue-label[data-swapped] {
+    transition: opacity var(--approval-card-reduced-duration) linear;
+  }
+
+  .approval-card__step {
+    @apply transition-none;
+
+    &::before {
+      transition-property: background-color;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Forced colors
+ * ------------------------------------------------------------------------------------------------ */
+@media (forced-colors: active) {
+  .approval-card__step::before {
+    background-color: GrayText;
+  }
+
+  .approval-card__step[data-answered]::before {
+    background-color: CanvasText;
+  }
+
+  .approval-card__step[data-current]::before,
+  .approval-card__step[data-hovered]:not([data-current])::before,
+  .approval-card__step[data-answered][data-hovered]::before {
+    background-color: Highlight;
+  }
+
+  .approval-card__content:focus-visible,
+  .approval-card__step[data-focus-visible]::before {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

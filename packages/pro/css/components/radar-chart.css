@@ -1,0 +1,45 @@
+/* Radar Chart - HeroUI theming for the Recharts polar chart (RadarChart + PolarGrid + axes) */
+
+.radar-chart {
+  @apply w-full;
+
+  /* ----------------------------------------------------------------------------------------------
+   * Axes: Recharts writes literal `fill` attributes on the tick text, so the token wins with !important
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-polar-angle-axis-tick-value {
+    @apply fill-muted! text-[11px];
+  }
+
+  & .recharts-polar-radius-axis-tick-value {
+    @apply fill-muted! text-[10px];
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Grid: concentric shapes and angle spokes in a faint muted stroke
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-polar-grid-concentric-polygon,
+  & .recharts-polar-grid-concentric-circle,
+  & .recharts-polar-grid-angle line {
+    @apply stroke-muted;
+    stroke-opacity: 0.2;
+  }
+
+  /* The radial cursor line adds nothing on a radar: the active dots already mark the category */
+  & .recharts-tooltip-cursor {
+    @apply hidden;
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * Focus: the SVG surface is keyboard navigable (Recharts accessibility layer, arrow keys move
+   * the tooltip), so it shows the theme focus outline on keyboard focus only.
+   * ---------------------------------------------------------------------------------------------- */
+  & .recharts-surface,
+  & .recharts-surface * {
+    @apply outline-none;
+  }
+
+  & .recharts-surface:focus-visible,
+  & .recharts-surface [tabindex="0"]:focus-visible {
+    @apply outline-2 outline-offset-(--ring-offset-width) outline-focus outline-solid;
+  }
+}

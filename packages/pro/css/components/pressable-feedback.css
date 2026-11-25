@@ -1,0 +1,179 @@
+/* Pressable Feedback - press interaction layer (highlight, ripple, hold-to-confirm, progress) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root: an unstyled pressable that inherits the radius of whatever it wraps
+ * ------------------------------------------------------------------------------------------------ */
+.pressable-feedback {
+  @apply relative inline-flex overflow-hidden outline-none no-highlight;
+  border-radius: inherit;
+  cursor: var(--cursor-interactive);
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Highlight: opacity-based state layer driven by the parent's hover / press state
+ * ------------------------------------------------------------------------------------------------ */
+.pressable-feedback__highlight {
+  --pressable-feedback-highlight-color: currentColor;
+  --pressable-feedback-highlight-opacity: 0.08;
+  --pressable-feedback-highlight-pressed-opacity: 0.12;
+  --pressable-feedback-transition-duration: 150ms;
+
+  @apply pointer-events-none absolute inset-0;
+  border-radius: inherit;
+  background-color: var(--pressable-feedback-highlight-color);
+  opacity: 0;
+  transition: opacity var(--pressable-feedback-transition-duration) ease;
+  @apply motion-reduce:transition-none;
+}
+
+@media (hover: hover) {
+  :hover > .pressable-feedback__highlight {
+    opacity: var(--pressable-feedback-highlight-opacity);
+  }
+}
+
+[data-hovered="true"] > .pressable-feedback__highlight {
+  opacity: var(--pressable-feedback-highlight-opacity);
+}
+
+:active > .pressable-feedback__highlight,
+[data-pressed="true"] > .pressable-feedback__highlight {
+  opacity: var(--pressable-feedback-highlight-pressed-opacity);
+}
+
+:disabled > .pressable-feedback__highlight,
+[aria-disabled="true"] > .pressable-feedback__highlight {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Ripple: Material 3 style state layer (::before = hover, ::after = radial press wave).
+ * The press wave geometry is animated from JS (see use-ripple.ts).
+ * ------------------------------------------------------------------------------------------------ */
+.pressable-feedback__ripple {
+  @apply pointer-events-none absolute inset-0 m-auto block size-full overflow-hidden;
+  border-radius: inherit;
+
+  &[aria-disabled="true"] {
+    @apply hidden;
+  }
+
+  @media (forced-colors: active) {
+    @apply hidden;
+  }
+}
+
+.pressable-feedback__ripple-surface {
+  @apply pointer-events-none absolute inset-0;
+  border-radius: inherit;
+
+  &::before,
+  &::after {
+    content: "";
+    @apply absolute opacity-0;
+  }
+
+  /* Hover state layer */
+  &::before {
+    @apply inset-0 size-full;
+    background-color: var(--pressable-feedback-ripple-color, currentColor);
+    transition:
+      opacity var(--pressable-feedback-ripple-duration, 150ms),
+      background-color var(--pressable-feedback-ripple-duration, 150ms);
+  }
+
+  /* Press wave: soft-edged radial gradient, grown via the Web Animations API */
+  &::after {
+    @apply inset-0;
+    background: radial-gradient(
+      closest-side,
+      var(--pressable-feedback-ripple-color, currentColor) max(calc(100% - 70px), 65%),
+      transparent 100%
+    );
+    transform-origin: center center;
+    transition: opacity 375ms;
+  }
+
+  &[data-hovered="true"]::before {
+    opacity: var(--pressable-feedback-ripple-hover-opacity, 0.08);
+  }
+
+  &[data-pressed="true"]::after {
+    opacity: var(--pressable-feedback-ripple-pressed-opacity, 0.12);
+    transition-duration: 75ms;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Hold confirm / progress feedback: clip-path reveal overlays
+ * ------------------------------------------------------------------------------------------------ */
+.pressable-feedback__hold-confirm,
+.pressable-feedback__progress-feedback {
+  @apply pointer-events-none absolute inset-0 flex items-center justify-center;
+  gap: inherit;
+  border-radius: inherit;
+
+  &[data-sweep="right"] {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  &[data-sweep="left"] {
+    clip-path: inset(0 0 0 100%);
+  }
+
+  &[data-sweep="down"] {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  &[data-sweep="up"] {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+.pressable-feedback__hold-confirm {
+  --pressable-feedback-hold-confirm-duration: 2000ms;
+  --pressable-feedback-hold-confirm-release-duration: 200ms;
+
+  transition: clip-path var(--pressable-feedback-hold-confirm-release-duration) ease-out;
+
+  &[data-holding="true"] {
+    clip-path: inset(0);
+    transition: clip-path var(--pressable-feedback-hold-confirm-duration) linear;
+  }
+}
+
+.pressable-feedback__progress-feedback {
+  --pressable-feedback-progress-feedback-duration: 2000ms;
+  --pressable-feedback-progress-feedback-release-duration: 300ms;
+
+  transition: clip-path var(--pressable-feedback-progress-feedback-release-duration) ease-out;
+
+  &[data-progressing="true"] {
+    clip-path: inset(0);
+    transition: clip-path var(--pressable-feedback-progress-feedback-duration) linear;
+  }
+}
+
+/* Completed overlays stay fully revealed without animating (declared last to win over states) */
+.pressable-feedback__hold-confirm[data-complete="true"],
+.pressable-feedback__progress-feedback[data-complete="true"] {
+  clip-path: inset(0);
+  transition: none;
+}
+
+:disabled > .pressable-feedback__hold-confirm,
+[aria-disabled="true"] > .pressable-feedback__hold-confirm,
+:disabled > .pressable-feedback__progress-feedback,
+[aria-disabled="true"] > .pressable-feedback__progress-feedback {
+  @apply hidden;
+}

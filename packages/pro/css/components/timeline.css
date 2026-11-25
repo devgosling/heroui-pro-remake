@@ -1,0 +1,209 @@
+/* Timeline - read-only chronology (ordered list of events with a marker rail) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (ordered list; owns the --timeline-* variables)
+ * ------------------------------------------------------------------------------------------------ */
+.timeline {
+  /* Every dimension scales with the theme spacing unit */
+  --timeline-spacing: var(--spacing, 0.25rem);
+
+  /* Size (md defaults) */
+  --timeline-marker-size: calc(var(--timeline-spacing) * 7);
+  --timeline-rail-width: calc(var(--timeline-spacing) * 7);
+  --timeline-gap: calc(var(--timeline-spacing) * 3.5);
+
+  /* Density (comfortable default) */
+  --timeline-item-gap: calc(var(--timeline-spacing) * 4);
+
+  /* Lines */
+  --timeline-connector-size: calc(var(--timeline-spacing) * 0.5);
+  --timeline-marker-border-width: calc(var(--timeline-spacing) * 0.25);
+  --timeline-marker-border-width-lg: calc(var(--timeline-spacing) * 0.5);
+
+  /* Tones */
+  --timeline-current-color: var(--color-accent);
+  --timeline-marker-border: var(--color-border);
+  --timeline-marker-fg: var(--color-muted);
+  --timeline-connector-color: var(--color-separator);
+
+  @apply m-0 list-none p-0;
+}
+
+.timeline--axis-start,
+.timeline--axis-center {
+  @apply flex flex-col;
+}
+
+/* Density ---------------------------------------------------------------------------------------- */
+.timeline--compact {
+  --timeline-item-gap: calc(var(--timeline-spacing) * 3);
+}
+
+.timeline--comfortable {
+  /* No styles as this is the default density */
+}
+
+/* Size ------------------------------------------------------------------------------------------- */
+.timeline--sm {
+  --timeline-marker-size: calc(var(--timeline-spacing) * 5.5);
+  --timeline-rail-width: calc(var(--timeline-spacing) * 5.5);
+  --timeline-gap: calc(var(--timeline-spacing) * 2.5);
+}
+
+.timeline--md {
+  /* No styles as this is the default size */
+}
+
+.timeline--lg {
+  --timeline-marker-size: calc(var(--timeline-spacing) * 9);
+  --timeline-rail-width: calc(var(--timeline-spacing) * 9);
+  --timeline-gap: calc(var(--timeline-spacing) * 4.5);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (grid row: rail column + content column(s))
+ * ------------------------------------------------------------------------------------------------ */
+.timeline__item {
+  @apply relative grid;
+  column-gap: var(--timeline-gap);
+  padding-bottom: var(--timeline-item-gap);
+
+  &[data-last="true"] {
+    @apply pb-0;
+  }
+}
+
+/* Rail first, content next; the trailing auto track takes optional extra content */
+.timeline--axis-start .timeline__item {
+  grid-template-columns: var(--timeline-rail-width) minmax(0, 1fr) auto;
+}
+
+/* Content on either side of a centered rail */
+.timeline--axis-center .timeline__item {
+  grid-template-columns: minmax(0, 1fr) var(--timeline-rail-width) minmax(0, 1fr);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Rail (marker + connector column; spans every row the content creates)
+ * ------------------------------------------------------------------------------------------------ */
+.timeline__rail {
+  @apply relative row-[1/span_20] flex justify-center;
+  min-height: var(--timeline-marker-size);
+}
+
+.timeline--axis-start .timeline__rail {
+  @apply col-1;
+}
+
+.timeline--axis-center .timeline__rail {
+  @apply col-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Marker
+ * ------------------------------------------------------------------------------------------------ */
+.timeline__marker {
+  @apply relative z-10 flex shrink-0 items-center justify-center rounded-full bg-transparent text-xs font-semibold;
+  width: var(--timeline-marker-size);
+  height: var(--timeline-marker-size);
+  border: var(--timeline-marker-border-width) solid var(--timeline-marker-border);
+  color: var(--timeline-marker-fg);
+
+  & svg {
+    @apply size-[55%];
+  }
+}
+
+.timeline__marker--sm {
+  /* 10px label; the line-height follows the rail like the other sizes' text would */
+  @apply text-[10px] leading-[inherit];
+}
+
+.timeline__marker--md {
+  /* No styles as this is the default size */
+}
+
+.timeline__marker--lg {
+  @apply text-sm;
+  border-width: var(--timeline-marker-border-width-lg);
+}
+
+/* Status tones ----------------------------------------------------------------------------------- */
+.timeline__marker[data-status="default"],
+.timeline__marker[data-status="muted"] {
+  @apply bg-transparent;
+  border-color: var(--timeline-marker-border);
+  color: var(--timeline-marker-fg);
+}
+
+.timeline__marker[data-status="muted"] {
+  @apply opacity-70;
+}
+
+.timeline__marker[data-status="current"] {
+  @apply bg-accent-soft text-accent;
+  border-color: var(--timeline-current-color);
+}
+
+.timeline__marker[data-status="success"] {
+  @apply text-success;
+  background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-success) 55%, var(--timeline-marker-border));
+}
+
+.timeline__marker[data-status="warning"] {
+  @apply text-warning;
+  background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 55%, var(--timeline-marker-border));
+}
+
+.timeline__marker[data-status="danger"] {
+  @apply text-danger;
+  background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 55%, var(--timeline-marker-border));
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Connector (line from below the marker down through the item gap to the next marker)
+ * ------------------------------------------------------------------------------------------------ */
+.timeline__connector {
+  @apply absolute;
+  top: var(--timeline-marker-size);
+  bottom: calc(var(--timeline-item-gap) * -1);
+  left: calc(50% - var(--timeline-connector-size) / 2);
+  width: var(--timeline-connector-size);
+  background-color: var(--timeline-connector-color);
+}
+
+/* The component skips the last connector; this also covers hand-built markup */
+.timeline__item[data-last="true"] .timeline__connector:not([data-force]) {
+  @apply hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content
+ * ------------------------------------------------------------------------------------------------ */
+.timeline__content {
+  @apply flex min-w-0 flex-col;
+  min-height: var(--timeline-marker-size);
+}
+
+.timeline__item--align-start .timeline__content {
+  @apply justify-start;
+}
+
+.timeline__item--align-center .timeline__content {
+  @apply justify-center;
+}
+
+.timeline--axis-start .timeline__content {
+  @apply col-2;
+}
+
+.timeline--axis-center .timeline__content[data-side="start"] {
+  @apply col-1 items-end justify-self-end text-end;
+}
+
+.timeline--axis-center .timeline__content[data-side="end"] {
+  @apply col-3 items-start justify-self-start text-start;
+}

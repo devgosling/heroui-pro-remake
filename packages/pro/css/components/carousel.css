@@ -1,0 +1,184 @@
+/* Carousel - Embla-driven slide viewer with arrows, dots and thumbnails */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.carousel {
+  /* Slide spacing token (Pro exposes it; slides themselves render edge to edge by default) */
+  --carousel-gap: calc(var(--spacing) * 4);
+  @apply outline-none;
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Types
+ * ------------------------------------------------------------------------------------------------ */
+.carousel--in-place {
+  /* No styles as this is the default type */
+}
+
+.carousel--modal {
+  @apply flex flex-col items-center gap-4;
+}
+
+.carousel--miniatures {
+  @apply flex flex-col items-center;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Viewport
+ * ------------------------------------------------------------------------------------------------ */
+.carousel__viewport-wrapper {
+  /* Positioning context for the Previous / Next buttons */
+  @apply relative;
+}
+
+.carousel__viewport {
+  @apply overflow-hidden;
+}
+
+.carousel__content {
+  @apply flex;
+}
+
+/* opts.axis: "y" - give .carousel__viewport a height so the slides have something to fill */
+.carousel__content--vertical {
+  @apply h-full flex-col;
+}
+
+.carousel__item {
+  @apply relative min-w-0 shrink-0 grow-0 basis-full;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Previous / Next (OSS .button tertiary sm icon-only)
+ * ------------------------------------------------------------------------------------------------ */
+.carousel__previous,
+.carousel__next {
+  @apply absolute z-10;
+
+  &:dir(rtl) svg {
+    @apply -scale-x-100;
+  }
+}
+
+.carousel__previous--in-place,
+.carousel__next--in-place {
+  @apply top-1/2 -translate-y-1/2;
+}
+
+.carousel__previous--in-place {
+  @apply start-5;
+}
+
+.carousel__next--in-place {
+  @apply end-5;
+}
+
+.carousel__previous--modal,
+.carousel__next--modal {
+  @apply top-1/2 -translate-y-1/2;
+}
+
+.carousel__previous--modal {
+  @apply -start-15;
+}
+
+.carousel__next--modal {
+  @apply -end-15;
+}
+
+/* Inline with the thumbnail row */
+.carousel__previous--miniatures,
+.carousel__next--miniatures {
+  @apply relative inset-x-auto top-auto shrink-0 transform-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Dots
+ * ------------------------------------------------------------------------------------------------ */
+.carousel__dots {
+  @apply mt-4 flex items-center justify-center gap-2;
+}
+
+.carousel__dot {
+  @apply size-2 bg-default outline-none no-highlight;
+  /* Theme-aware pill: follows --radius (square when --radius is 0) */
+  border-radius: calc(var(--radius) * 9999);
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: background-color 200ms;
+  @apply motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-selected="true"] {
+    @apply bg-accent;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Thumbnails (OSS .scroll-shadow, horizontal, hidden scrollbar)
+ * ------------------------------------------------------------------------------------------------ */
+.carousel__thumbnails {
+  /* The 4px padding keeps the selected ring of the edge thumbnails inside the scroll clip */
+  @apply -mx-1 mt-4 flex items-center gap-3 p-1;
+  cursor: var(--cursor-interactive);
+}
+
+.carousel__thumbnails--miniatures {
+  @apply mt-0 justify-center;
+}
+
+.carousel__thumbnail {
+  @apply relative size-16 shrink-0 rounded-2xl outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    box-shadow 150ms,
+    opacity 150ms,
+    transform 150ms;
+  @apply motion-reduce:transition-none;
+
+  & img {
+    @apply pointer-events-none absolute inset-0 size-full rounded-2xl object-cover select-none;
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply opacity-85;
+    }
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    transform: scale(0.95);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  /* Ring drawn with box-shadow so selection causes no layout shift (wins over the focus ring) */
+  &[data-selected="true"] {
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+}

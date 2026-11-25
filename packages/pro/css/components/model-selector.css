@@ -1,0 +1,996 @@
+/* Model Selector - AI model picker built on HeroUI Select, ListBox, SearchField and Slider */
+
+/* ------------------------------------------------------------------------------------------------
+ * Motion tokens (shared by the trigger and the portalled popover)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector,
+.model-selector__popover {
+  --model-selector-duration: 150ms;
+  --model-selector-exit-duration: 100ms;
+  --model-selector-crossfade-duration: 120ms;
+  --model-selector-ease: var(--ease-out-quint);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (HeroUI Select)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector {
+  --model-selector-name-max-width: 160px;
+  @apply inline-flex min-w-0 flex-row gap-0;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (HeroUI Button, ghost)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__trigger {
+  @apply min-w-0 gap-1.5 ps-2 pe-1.5 font-medium;
+
+  /* Open: React Aria keeps the trigger pressed (pressed fill), without the press scale */
+  &[aria-expanded="true"] {
+    transform: none;
+  }
+}
+
+.model-selector__trigger-icon {
+  @apply inline-flex size-4 shrink-0 items-center justify-center;
+}
+
+.model-selector__trigger-icon > svg,
+.model-selector__item-icon > svg,
+.model-selector__detail-icon > svg {
+  @apply size-full;
+}
+
+.model-selector__trigger-name {
+  @apply min-w-0 truncate;
+  max-width: var(--model-selector-name-max-width);
+}
+
+.model-selector__trigger-indicator {
+  @apply size-4 shrink-0 text-muted;
+  stroke-width: 1.5px;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: rotate var(--model-selector-duration) var(--model-selector-ease);
+  @apply motion-reduce:transition-none;
+}
+
+/* Outrank the generic `.button svg` sizing (size-5 / -mx-0.5) for the logo and the chevron */
+.model-selector__trigger.model-selector__trigger
+  :is(.model-selector__trigger-indicator, .model-selector__trigger-icon > svg) {
+  @apply m-0 size-4;
+}
+
+.model-selector__trigger[aria-expanded="true"] .model-selector__trigger-indicator {
+  rotate: 180deg;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Popover (HeroUI Select.Popover)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__popover {
+  --model-selector-popover-width: calc(var(--spacing) * 60);
+  /* 7.5 rows and two group titles */
+  --model-selector-list-max-height: calc(var(--spacing) * (9 * 7.5 + 7.5 * 2 + 1));
+  --model-selector-popover-radius: calc(var(--radius) * 2);
+  --model-selector-popover-padding: calc(var(--spacing) * 1.5);
+  /* Concentric with the popover */
+  --model-selector-row-radius: max(
+    0px,
+    var(--model-selector-popover-radius) - var(--model-selector-popover-padding)
+  );
+
+  /* Visible overflow lets the detail card sit beside the popover */
+  @apply flex min-w-0 flex-col overflow-visible;
+  width: var(--model-selector-popover-width);
+  max-width: calc(100vw - var(--spacing) * 4);
+  padding: var(--model-selector-popover-padding);
+  border-radius: var(--model-selector-popover-radius);
+}
+
+/* Reduced motion: the popover only fades */
+.model-selector__popover[data-entering="true"][data-placement] {
+  @variant motion-reduce {
+    animation-name: heroui-overlay-fade-in;
+  }
+}
+
+.model-selector__popover[data-exiting="true"][data-placement] {
+  @variant motion-reduce {
+    animation-name: heroui-overlay-fade-out;
+  }
+}
+
+.model-selector__title {
+  @apply px-2 pt-1.5 pb-0.5 text-xs font-medium text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Search (HeroUI SearchField, secondary)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__search {
+  --field-radius: var(--model-selector-row-radius);
+  @apply shrink-0;
+}
+
+.model-selector__search-status {
+  @apply sr-only;
+}
+
+.model-selector__search ~ .model-selector__title {
+  @apply pt-2.5;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * List (HeroUI ListBox rendered as a HeroUI ScrollShadow)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__list {
+  @apply flex flex-col overflow-x-hidden overscroll-contain p-0 pb-1;
+  max-height: var(--model-selector-list-max-height);
+  /* Keep a focused row clear of the sticky group title and of the bottom fade */
+  scroll-padding-block: calc(var(--spacing) * 7.5) var(--scroll-shadow-size);
+
+  /* With search the list keeps one height while filtering */
+  &[data-searchable] {
+    @apply mt-1;
+    height: var(--model-selector-list-max-height);
+  }
+
+  & > * + * {
+    @apply mt-0;
+  }
+}
+
+.model-selector__title ~ .model-selector__list[data-searchable] {
+  @apply mt-0;
+}
+
+.model-selector__group {
+  @apply w-full;
+}
+
+.model-selector__group-title {
+  @apply sticky top-0 z-10 bg-overlay px-2 pt-2.5 pb-1 text-xs font-normal text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (HeroUI ListBox.Item)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__item {
+  @apply h-9 min-h-9 shrink-0 gap-2.5 px-2 py-0 text-sm;
+  border-radius: var(--model-selector-row-radius);
+
+  /* Inset ring, so it is not clipped by the scrolling list */
+  &[data-focus-visible="true"] {
+    @apply bg-default outline-none;
+    box-shadow: inset 0 0 0 2px var(--focus);
+  }
+
+  /* The popover closes on select, so the check animation would never be seen */
+  & .list-box-item__indicator,
+  & [data-slot="list-box-item-indicator--checkmark"] {
+    transition-property: none;
+  }
+}
+
+.model-selector__item-icon {
+  @apply inline-flex size-4 shrink-0 items-center justify-center;
+}
+
+.model-selector__item-name {
+  @apply min-w-0 flex-1 truncate text-foreground;
+}
+
+.model-selector__item[data-selected="true"] .model-selector__item-name {
+  @apply font-medium;
+}
+
+.model-selector__item-meta {
+  @apply shrink-0 text-xs text-muted;
+}
+
+.model-selector__item-description {
+  @apply sr-only;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Empty search result
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__empty {
+  @apply flex flex-col items-center gap-1 px-4 pt-6 pb-5 text-center;
+}
+
+.model-selector__empty-title {
+  @apply text-sm font-medium text-foreground;
+}
+
+.model-selector__empty-hint {
+  @apply text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Detail card (beside the popover, on the side with room)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__detail {
+  --model-selector-detail-width: calc(var(--spacing) * 48);
+  --model-selector-detail-gap: calc(var(--spacing) * 2);
+  --model-selector-detail-nudge: 5px;
+  --model-selector-detail-margin: calc(var(--spacing) * 2);
+  --model-selector-dot-size: calc(var(--spacing) * 1.5);
+  --model-selector-dot-gap: calc(var(--spacing) * 0.75);
+  --model-selector-detail-offset: calc(100% + var(--model-selector-detail-gap));
+
+  @apply pointer-events-none invisible absolute top-0 flex flex-col bg-overlay p-3 opacity-0;
+  inset-inline-start: var(--model-selector-detail-offset);
+  width: var(--model-selector-detail-width);
+  max-height: calc(100dvh - var(--model-selector-detail-margin) * 2);
+  border-radius: var(--model-selector-popover-radius);
+  box-shadow: var(--overlay-shadow);
+  /* Lines the title up with the row, kept inside the viewport */
+  transform: translateY(
+    clamp(
+      var(--model-selector-detail-min-y) + var(--model-selector-detail-margin),
+      var(--model-selector-detail-y, 0px) - var(--model-selector-detail-nudge),
+      var(--model-selector-detail-max-y) - var(--model-selector-detail-margin)
+    )
+  );
+  transition:
+    opacity var(--model-selector-exit-duration) var(--model-selector-ease),
+    visibility 0s linear var(--model-selector-exit-duration);
+
+  /* Reduced motion: fades only, no glide */
+  @variant motion-reduce {
+    transition:
+      opacity var(--model-selector-exit-duration) linear,
+      visibility 0s linear var(--model-selector-exit-duration);
+  }
+
+  &[data-visible] {
+    @apply pointer-events-auto visible opacity-100;
+    transition: opacity var(--model-selector-duration) var(--model-selector-ease);
+
+    @variant motion-reduce {
+      transition: opacity var(--model-selector-duration) linear;
+    }
+
+    /* Bridge over the gap, so the pointer can travel from the row to the card */
+    &::before {
+      @apply absolute inset-y-0 end-full;
+      content: "";
+      width: calc(var(--model-selector-detail-gap) + var(--spacing) * 2);
+    }
+  }
+
+  &[data-visible][data-glide] {
+    transition:
+      opacity var(--model-selector-duration) var(--model-selector-ease),
+      transform var(--model-selector-duration) var(--model-selector-ease);
+
+    @variant motion-reduce {
+      transition: opacity var(--model-selector-duration) linear;
+    }
+  }
+
+  &[data-side="start"] {
+    inset-inline-start: auto;
+    inset-inline-end: var(--model-selector-detail-offset);
+
+    &::before {
+      inset-inline: 100% auto;
+    }
+  }
+
+  &[data-side="none"] {
+    @apply hidden;
+  }
+}
+
+.model-selector__detail-body {
+  @apply flex min-h-0 flex-col gap-3 overflow-y-auto;
+}
+
+.model-selector__detail[data-glide] .model-selector__detail-body {
+  animation: heroui-overlay-fade-in var(--model-selector-crossfade-duration)
+    var(--model-selector-ease);
+}
+
+.model-selector__detail-header {
+  @apply flex flex-col gap-1;
+}
+
+.model-selector__detail-title {
+  @apply flex items-center gap-2;
+}
+
+.model-selector__detail-icon {
+  @apply inline-flex size-4 shrink-0 items-center justify-center;
+}
+
+.model-selector__detail-name {
+  @apply min-w-0 text-sm font-semibold text-foreground;
+}
+
+.model-selector__detail-description {
+  @apply text-xs text-pretty text-muted;
+}
+
+.model-selector__detail-ratings {
+  @apply flex flex-col gap-2 border-t border-separator pt-3;
+}
+
+.model-selector__detail-rating {
+  @apply flex items-center justify-between gap-2 text-xs text-muted;
+}
+
+.model-selector__detail-dots {
+  @apply flex;
+  gap: var(--model-selector-dot-gap);
+}
+
+.model-selector__detail-dot {
+  @apply rounded-full bg-foreground/15;
+  width: var(--model-selector-dot-size);
+  height: var(--model-selector-dot-size);
+
+  &[data-filled] {
+    @apply bg-foreground;
+  }
+}
+
+.model-selector__detail-dot:not([data-filled]) {
+  @variant dark {
+    @apply bg-foreground/18;
+  }
+}
+
+.model-selector__detail-context {
+  @apply mt-1 text-xs text-muted;
+
+  & > strong {
+    @apply font-medium text-foreground tabular-nums;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Effort (HeroUI Slider)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__effort {
+  /* Geometry */
+  --model-selector-effort-height: calc(var(--spacing) * 4);
+  --model-selector-effort-radius: calc(var(--radius) * 0.75);
+  --model-selector-effort-inset: calc(var(--spacing) * 0.5);
+  --model-selector-effort-thumb-width: calc(var(--spacing) * 2.5);
+  --model-selector-effort-thumb-radius: max(
+    0px,
+    var(--model-selector-effort-radius) - var(--model-selector-effort-inset)
+  );
+  /* Distance from a track end to the thumb centre at that end */
+  --model-selector-effort-edge: calc(
+    var(--model-selector-effort-inset) + var(--model-selector-effort-thumb-width) / 2
+  );
+  --model-selector-effort-hit-size: calc(var(--spacing) * 6);
+  --model-selector-effort-tick-width: 2px;
+  --model-selector-effort-tick-height: 4px;
+  --model-selector-effort-direction: 1;
+
+  /* Motion */
+  --model-selector-effort-step-duration: 200ms;
+  --model-selector-effort-sheen-duration: 8s;
+  --model-selector-effort-sheen-strength: 18%;
+  --model-selector-effort-sheen-ultra-opacity: 0.25;
+  --model-selector-effort-glow-duration: 10s;
+  --model-selector-effort-glow-rest: 0.75;
+  --model-selector-effort-glow-enter-scale: 0.96;
+
+  /* Neutral colours */
+  --model-selector-effort-track: var(--default);
+  --model-selector-effort-ring: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --model-selector-effort-fill: color-mix(in oklab, var(--foreground) 22%, transparent);
+  --model-selector-effort-thumb: var(--surface);
+  --model-selector-effort-thumb-shadow:
+    0 0 0 0.5px color-mix(in oklab, var(--foreground) 16%, transparent),
+    0 1px 2px color-mix(in oklab, var(--foreground) 18%, transparent);
+  --model-selector-effort-tick-filled: color-mix(in oklab, var(--surface) 85%, transparent);
+  --model-selector-effort-tick-empty: color-mix(in oklab, var(--foreground) 20%, transparent);
+
+  /* Max / Ultra colours */
+  --model-selector-effort-accent: var(--accent);
+  --model-selector-effort-on-accent: var(--accent-foreground);
+  --model-selector-effort-sheen-color: var(--model-selector-effort-on-accent);
+  --model-selector-effort-glow: color-mix(in oklab, var(--accent) 30%, transparent);
+  --model-selector-effort-thumb-glow: color-mix(in oklab, var(--accent) 22%, transparent);
+  --model-selector-effort-glow-spread: var(--model-selector-effort-spark-reach-end);
+  --model-selector-effort-spark-color: color-mix(in oklab, var(--accent) 88%, var(--black));
+  --model-selector-effort-star-color: color-mix(in oklab, var(--accent) 96%, var(--black));
+  --model-selector-effort-star-center: var(--model-selector-effort-star-color);
+
+  /* Ultra particles */
+  --model-selector-effort-spark-size: 4px;
+  --model-selector-effort-glint-size: 7px;
+  --model-selector-effort-star-size: 9px;
+  --model-selector-effort-spark-speed: 3.5px;
+  --model-selector-effort-spark-drift: 1.2px;
+  --model-selector-effort-spark-rise: 2px;
+  --model-selector-effort-spark-floor: 0.45;
+  /* The room up to the header and down to the ends row */
+  --model-selector-effort-spark-reach-start: calc(var(--spacing) * 2.5);
+  --model-selector-effort-spark-reach-end: calc(var(--spacing) * 1.5);
+
+  /* The Slider grid becomes a simple column */
+  @apply flex flex-col gap-0 border-t border-separator px-2 pt-3 pb-2;
+
+  &:dir(rtl) {
+    --model-selector-effort-direction: -1;
+  }
+
+  /* Relative colour syntax: keep the particles readable on light and dark accents */
+  @supports (color: oklch(from red l c h)) {
+    --model-selector-effort-spark-color: oklch(from var(--accent) min(l, 0.57) c h);
+    --model-selector-effort-star-color: oklch(from var(--accent) min(l, 0.6) c h);
+  }
+
+  @variant dark {
+    --model-selector-effort-ring: color-mix(in oklab, var(--foreground) 6%, transparent);
+    --model-selector-effort-thumb: var(--foreground);
+    --model-selector-effort-thumb-shadow:
+      0 0 0 0.5px color-mix(in oklab, var(--black) 35%, transparent),
+      0 1px 2px color-mix(in oklab, var(--black) 45%, transparent);
+    --model-selector-effort-sheen-color: var(--model-selector-effort-spark-color);
+    --model-selector-effort-glow: color-mix(in oklab, var(--accent) 45%, transparent);
+    --model-selector-effort-thumb-glow: color-mix(in oklab, var(--accent) 32%, transparent);
+    --model-selector-effort-spark-color: color-mix(in oklab, var(--accent) 45%, var(--white));
+    --model-selector-effort-star-color: color-mix(in oklab, var(--accent) 30%, var(--white));
+    --model-selector-effort-star-center: color-mix(in oklab, var(--accent) 6%, var(--white));
+
+    @supports (color: oklch(from red l c h)) {
+      --model-selector-effort-spark-color: oklch(from var(--accent) max(l, 0.84) calc(c * 0.45) h);
+      --model-selector-effort-star-color: oklch(from var(--accent) max(l, 0.9) calc(c * 0.36) h);
+    }
+  }
+
+  /* Max and Ultra put the thumb and ticks on the accent fill */
+  &:is([data-tone="max"], [data-tone="ultra"]) {
+    --model-selector-effort-thumb: var(--model-selector-effort-on-accent);
+    --model-selector-effort-thumb-shadow:
+      0 0 0 0.5px color-mix(in oklab, var(--black) 35%, transparent),
+      0 1px 2px color-mix(in oklab, var(--black) 45%, transparent);
+    --model-selector-effort-tick-filled: color-mix(
+      in oklab,
+      var(--model-selector-effort-on-accent) 80%,
+      transparent
+    );
+  }
+
+  &[data-tone="max"] {
+    --model-selector-effort-thumb-shadow:
+      0 0 0 1px color-mix(in oklab, var(--model-selector-effort-accent) 55%, transparent),
+      0 1px 2px color-mix(in oklab, var(--black) 25%, transparent);
+    --model-selector-effort-tick-empty: color-mix(in oklab, var(--foreground) 30%, transparent);
+
+    @variant dark {
+      --model-selector-effort-thumb-shadow:
+        0 0 0 0.5px color-mix(in oklab, var(--black) 35%, transparent),
+        0 1px 2px color-mix(in oklab, var(--black) 45%, transparent);
+      --model-selector-effort-tick-empty: color-mix(in oklab, var(--foreground) 20%, transparent);
+    }
+  }
+}
+
+.model-selector__effort-header {
+  @apply flex items-baseline gap-1 text-xs text-muted;
+}
+
+.model-selector__effort .model-selector__effort-label {
+  @apply text-xs font-normal text-muted;
+}
+
+/* The Slider dims as a whole when disabled; the label must not dim twice */
+.model-selector__effort[data-disabled] .model-selector__effort-label {
+  @apply opacity-100;
+}
+
+.model-selector__effort .model-selector__effort-value {
+  @apply text-xs font-medium text-foreground;
+}
+
+.model-selector__effort-body {
+  @apply mt-2.5 flex flex-col gap-1.5;
+}
+
+/* Track (Slider.Track) */
+.model-selector__effort .model-selector__effort-track {
+  container-type: inline-size;
+  border-radius: var(--model-selector-effort-radius);
+  background-color: var(--model-selector-effort-track);
+  box-shadow: inset 0 0 0 1px var(--model-selector-effort-ring);
+  cursor: var(--cursor-interactive, pointer);
+  /* A colour fade, not motion, so it stays under reduced motion */
+  transition: background-color var(--model-selector-duration) ease;
+}
+
+.model-selector__effort[data-orientation="horizontal"] .model-selector__effort-track {
+  @apply border-x-0;
+  height: var(--model-selector-effort-height);
+}
+
+/* Taller pointer target than the visible track */
+.model-selector__effort-track::before {
+  @apply absolute inset-x-0;
+  content: "";
+  inset-block: calc(
+    (var(--model-selector-effort-hit-size) - var(--model-selector-effort-height)) / -2
+  );
+}
+
+@media (hover: hover) {
+  .model-selector__effort:not([data-disabled]) .model-selector__effort-track:hover,
+  .model-selector__effort:not([data-disabled]) .model-selector__effort-track[data-hovered="true"] {
+    --model-selector-effort-track: var(--default-hover);
+    --model-selector-effort-fill: color-mix(in oklab, var(--foreground) 26%, transparent);
+    --model-selector-effort-ring: color-mix(in oklab, var(--foreground) 7%, transparent);
+  }
+
+  .model-selector__effort:not([data-disabled], [data-tone])
+    .model-selector__effort-track:is(:hover, [data-hovered="true"])
+    .model-selector__effort-thumb {
+    --model-selector-effort-thumb-shadow:
+      0 0 0 0.5px color-mix(in oklab, var(--foreground) 18%, transparent),
+      0 2px 6px color-mix(in oklab, var(--foreground) 22%, transparent);
+  }
+}
+
+/* The thumb's travel range: thumb centres stay `edge` away from the track ends */
+.model-selector__effort-rail {
+  @apply absolute inset-y-0 isolate;
+  inset-inline: var(--model-selector-effort-edge);
+}
+
+/* Fill (Slider.Fill): reaches past the rail to the track ends */
+.model-selector__effort .model-selector__effort-fill {
+  @apply isolate box-content overflow-hidden;
+  margin-inline-start: calc(var(--model-selector-effort-edge) * -1);
+  padding-inline: var(--model-selector-effort-edge);
+  border-radius: var(--model-selector-effort-radius);
+  background-color: var(--model-selector-effort-fill);
+  transition:
+    width var(--model-selector-effort-step-duration) var(--model-selector-ease),
+    background-color var(--model-selector-duration) ease;
+
+  /* Reduced motion: the fill jumps between levels and only its colours crossfade.
+     The variant also reaches ::after, whose tone overlay crossfades its opacity. */
+  @variant motion-reduce {
+    transition:
+      background-color var(--model-selector-crossfade-duration) linear,
+      opacity var(--model-selector-crossfade-duration) linear;
+  }
+}
+
+.model-selector__effort:is([data-tone="max"], [data-tone="ultra"]) .model-selector__effort-fill {
+  background-color: var(--model-selector-effort-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--black) 6%, transparent);
+}
+
+/* Light from the start, shade toward the thumb, and a soft diagonal band */
+.model-selector__effort-fill::after {
+  @apply pointer-events-none absolute inset-0 -z-1 opacity-0;
+  content: "";
+  background-image:
+    linear-gradient(
+      in oklab 90deg,
+      color-mix(in oklab, var(--surface) 55%, transparent) 0%,
+      color-mix(in oklab, var(--surface) 15%, transparent) 60%,
+      transparent 100%
+    ),
+    linear-gradient(
+      in oklab 90deg,
+      transparent 45%,
+      color-mix(in oklab, var(--foreground) 32%, transparent) 100%
+    ),
+    linear-gradient(
+      in oklab 115deg,
+      transparent 30%,
+      color-mix(in oklab, var(--foreground) 16%, transparent) 50%,
+      transparent 70%
+    );
+  transition: opacity var(--model-selector-duration) ease;
+}
+
+.model-selector__effort-fill:dir(rtl)::after {
+  scale: -1 1;
+}
+
+.model-selector__effort:is([data-tone="max"], [data-tone="ultra"])
+  .model-selector__effort-fill::after {
+  @apply opacity-100;
+}
+
+/* Thumb (Slider.Thumb): a full-height hit box with a slim pill drawn by ::after */
+.model-selector__effort .model-selector__effort-thumb {
+  @apply bg-transparent;
+  transition:
+    left var(--model-selector-effort-step-duration) var(--model-selector-ease),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+}
+
+.model-selector__effort[data-orientation="horizontal"] .model-selector__effort-thumb {
+  width: calc(var(--model-selector-effort-edge) * 2);
+  border-radius: var(--model-selector-effort-radius);
+
+  &::after {
+    width: var(--model-selector-effort-thumb-width);
+    height: calc(100% - var(--model-selector-effort-inset) * 2);
+    border-radius: var(--model-selector-effort-thumb-radius);
+    background-color: var(--model-selector-effort-thumb);
+    box-shadow: var(--model-selector-effort-thumb-shadow);
+  }
+}
+
+.model-selector__effort:not([data-tone]) .model-selector__effort-thumb[data-dragging] {
+  --model-selector-effort-thumb: var(--surface-hover);
+}
+
+/* Ticks (Slider.Steps) */
+.model-selector__effort-ticks .slider__step {
+  width: var(--model-selector-effort-tick-width);
+  height: var(--model-selector-effort-tick-height);
+  border-radius: calc(var(--model-selector-effort-tick-width) / 2);
+  background-color: var(--model-selector-effort-tick-empty);
+  transition: background-color var(--model-selector-effort-step-duration) var(--model-selector-ease);
+  @apply motion-reduce:transition-none;
+
+  &[data-filled="true"] {
+    background-color: var(--model-selector-effort-tick-filled);
+  }
+}
+
+.model-selector__effort-ends {
+  @apply flex justify-between text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Level hint (collapses when the level has no description)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__effort-hint {
+  @apply grid grid-rows-[1fr];
+  transition: grid-template-rows var(--model-selector-effort-step-duration)
+    var(--model-selector-ease);
+  @apply motion-reduce:transition-none;
+
+  &[data-empty] {
+    @apply grid-rows-[0fr];
+  }
+}
+
+.model-selector__effort-hint-content {
+  @apply min-h-0 overflow-hidden;
+}
+
+.model-selector__effort-hint-body {
+  @apply flex items-start gap-1.5 pt-3 text-xs text-muted;
+  transition: translate var(--model-selector-effort-step-duration) var(--model-selector-ease);
+  @apply motion-reduce:transition-none;
+}
+
+.model-selector__effort-hint[data-empty] .model-selector__effort-hint-body {
+  translate: 0 calc(var(--spacing) * -1);
+}
+
+.model-selector__effort-hint-icon {
+  @apply mt-px size-3.5 shrink-0;
+  transition:
+    opacity var(--model-selector-effort-step-duration) var(--model-selector-ease),
+    visibility var(--model-selector-effort-step-duration);
+  @apply motion-reduce:transition-none;
+}
+
+.model-selector__effort-hint[data-empty] .model-selector__effort-hint-icon {
+  @apply invisible opacity-0;
+}
+
+.model-selector__effort-hint-stack {
+  @apply grid min-w-0 flex-1;
+}
+
+/* Every description sits in the same cell, so swapping them crossfades without a jump */
+.model-selector__effort-hint-text {
+  @apply invisible opacity-0;
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--model-selector-effort-step-duration) var(--model-selector-ease),
+    visibility var(--model-selector-effort-step-duration);
+  @apply motion-reduce:transition-none;
+
+  &[data-active] {
+    @apply visible opacity-100;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Max sheen (a light band sweeping across the fill)
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__effort-sheen {
+  --_band: color-mix(
+    in oklab,
+    var(--model-selector-effort-sheen-color) var(--model-selector-effort-sheen-strength),
+    transparent
+  );
+  --_band-edge: color-mix(in oklab, var(--_band) 40%, transparent);
+
+  @apply pointer-events-none absolute inset-0 opacity-0;
+  background-image: linear-gradient(
+    in oklab 115deg,
+    transparent 42%,
+    var(--_band-edge) 47%,
+    var(--_band) 50%,
+    var(--_band-edge) 53%,
+    transparent 58%
+  );
+  scale: var(--model-selector-effort-direction) 1;
+  translate: calc(var(--model-selector-effort-direction) * -100%) 0;
+  transition: opacity var(--model-selector-duration) ease;
+  animation: model-selector-effort-sheen var(--model-selector-effort-sheen-duration) ease-in-out
+    infinite;
+
+  @variant motion-reduce {
+    display: none;
+  }
+}
+
+.model-selector__effort[data-tone="max"] .model-selector__effort-sheen {
+  @apply opacity-100;
+}
+
+.model-selector__effort[data-tone="ultra"] .model-selector__effort-sheen {
+  opacity: var(--model-selector-effort-sheen-ultra-opacity);
+}
+
+.model-selector__effort:has(.model-selector__effort-thumb[data-dragging])
+  .model-selector__effort-sheen {
+  @apply opacity-0;
+}
+
+.model-selector__effort:not([data-tone]) .model-selector__effort-sheen,
+.model-selector__popover[data-exiting="true"] .model-selector__effort-sheen {
+  animation-play-state: paused;
+}
+
+.model-selector__effort[data-disabled] .model-selector__effort-sheen {
+  animation: none;
+}
+
+/* One pass in the first 60% of the loop, then a rest */
+@keyframes model-selector-effort-sheen {
+  60%,
+  100% {
+    translate: calc(var(--model-selector-effort-direction) * 100%) 0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Ultra glow and particles
+ * ------------------------------------------------------------------------------------------------ */
+.model-selector__effort-glow,
+.model-selector__effort-sparks {
+  @apply pointer-events-none invisible absolute opacity-0;
+  transition:
+    opacity var(--model-selector-effort-step-duration) ease,
+    scale var(--model-selector-effort-step-duration) var(--model-selector-ease),
+    visibility var(--model-selector-effort-step-duration);
+}
+
+.model-selector__effort[data-tone="ultra"]:not([data-disabled])
+  :is(.model-selector__effort-glow, .model-selector__effort-sparks) {
+  @apply visible opacity-100;
+}
+
+.model-selector__effort:is(:not([data-tone="ultra"]), [data-disabled])
+  :is(.model-selector__effort-glow, .model-selector__effort-sparks),
+.model-selector__popover[data-exiting="true"]
+  :is(.model-selector__effort-glow, .model-selector__effort-sparks) {
+  animation-play-state: paused;
+}
+
+/* Light adds up on dark themes */
+:is(.dark, [data-theme="dark"], [data-theme$="-dark"])
+  :is(.model-selector__effort-glow, .model-selector__effort-sheen, .model-selector__effort-sparks) {
+  mix-blend-mode: plus-lighter;
+}
+
+/* Soft glow around the track plus a halo behind the thumb at the track's end */
+.model-selector__effort-glow {
+  --_halo-offset: calc(
+    var(--model-selector-effort-edge) + var(--model-selector-effort-glow-spread)
+  );
+
+  inset: calc(var(--model-selector-effort-glow-spread) * -1);
+  scale: var(--model-selector-effort-glow-enter-scale);
+  background-image: radial-gradient(
+    circle var(--_halo-offset) at
+      calc(50% + var(--model-selector-effort-direction) * (50% - var(--_halo-offset))) 50%,
+    var(--model-selector-effort-thumb-glow),
+    color-mix(in oklab, var(--model-selector-effort-thumb-glow) 35%, transparent) 50%,
+    transparent
+  );
+
+  &::before {
+    @apply absolute;
+    content: "";
+    inset: var(--model-selector-effort-glow-spread);
+    border-radius: var(--model-selector-effort-radius);
+    box-shadow: 0 0 calc(var(--model-selector-effort-glow-spread) * 2)
+      var(--model-selector-effort-glow);
+    animation: model-selector-effort-glow var(--model-selector-effort-glow-duration) ease-in-out
+      infinite;
+    animation-play-state: inherit;
+  }
+
+  /* Reduced motion: a static glow. The variant also reaches ::before, stopping its breathing. */
+  @variant motion-reduce {
+    scale: none;
+    animation: none;
+  }
+}
+
+.model-selector__effort[data-tone="ultra"]:not([data-disabled]) .model-selector__effort-glow {
+  scale: 1;
+}
+
+@keyframes model-selector-effort-glow {
+  50% {
+    opacity: var(--model-selector-effort-glow-rest);
+  }
+}
+
+/* Particles inside the fill drift along it; particles outside float above and below the track */
+.model-selector__effort-sparks[data-layer="inner"] {
+  --_color: var(--model-selector-effort-on-accent);
+  --_star-color: var(--model-selector-effort-on-accent);
+  --_star-center: var(--model-selector-effort-on-accent);
+  --_star-size: var(--model-selector-effort-glint-size);
+  --_speed: var(--model-selector-effort-spark-speed);
+  --_dy: 0px;
+
+  /* Sized to the track (container), so particles stay put while the fill width animates */
+  inset-block: var(--model-selector-effort-inset);
+  inset-inline-start: 0;
+  inline-size: 100cqi;
+
+  @variant motion-reduce {
+    display: none;
+  }
+
+  & > * {
+    inset-block-start: calc(var(--_v) * 100% - var(--_size) / 2);
+  }
+}
+
+.model-selector__effort-sparks[data-layer="outer"] {
+  --_color: var(--model-selector-effort-spark-color);
+  --_star-color: var(--model-selector-effort-star-color);
+  --_star-center: var(--model-selector-effort-star-center);
+  --_star-size: var(--model-selector-effort-star-size);
+  --_speed: var(--model-selector-effort-spark-drift);
+  --_above: var(--model-selector-effort-spark-reach-start);
+  --_below: var(--model-selector-effort-spark-reach-end);
+
+  @apply inset-0;
+
+  @variant motion-reduce {
+    display: none;
+  }
+
+  & > * {
+    /* --_side: -1 above the track, 1 below it */
+    --_reach: calc(((1 - var(--_side)) * var(--_above) + (1 + var(--_side)) * var(--_below)) / 2);
+    --_room: max(0px, var(--_reach) - var(--model-selector-effort-spark-rise) - var(--_size) / 2);
+    --_dy: calc(var(--_side) * var(--model-selector-effort-spark-rise));
+
+    inset-block-start: calc(
+      50% + var(--_side) * (50% + var(--_v) * var(--_room)) - var(--_size) / 2
+    );
+  }
+}
+
+.model-selector__effort-spark {
+  --_size: var(--model-selector-effort-spark-size);
+  --_dx: calc(var(--_life) * var(--_speed) * var(--model-selector-effort-direction));
+  /* Brighter toward the thumb end */
+  --_peak: calc(
+    var(--model-selector-effort-spark-floor) + (1 - var(--model-selector-effort-spark-floor)) *
+      var(--_x)
+  );
+
+  @apply absolute rounded-full opacity-0;
+  inset-inline-start: calc(var(--_x) * 100% - var(--_size) / 2);
+  inline-size: var(--_size);
+  block-size: var(--_size);
+  background-image: radial-gradient(
+    closest-side,
+    var(--_color) 35%,
+    color-mix(in oklab, var(--_color) 30%, transparent) 65%,
+    transparent
+  );
+  animation: model-selector-effort-drift calc(var(--_life) * 1s) linear calc(var(--_delay) * 1s)
+    infinite;
+  animation-play-state: inherit;
+
+  /* Four-point star */
+  &[data-star] {
+    --_size: var(--_star-size);
+
+    @apply rounded-none;
+    background-image: radial-gradient(
+      closest-side,
+      var(--_star-center) 20%,
+      var(--_star-color) 60%
+    );
+    animation-name: model-selector-effort-twinkle;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M6 0Q6.4 5.6 12 6Q6.4 6.4 6 12Q5.6 6.4 0 6Q5.6 5.6 6 0Z'/></svg>")
+      center / contain no-repeat;
+  }
+}
+
+@keyframes model-selector-effort-drift {
+  0% {
+    opacity: 0;
+    scale: 1;
+    translate: calc(var(--_dx) * -0.5) 0;
+  }
+
+  20%,
+  70% {
+    opacity: var(--_peak);
+  }
+
+  100% {
+    opacity: 0;
+    scale: 0.5;
+    translate: calc(var(--_dx) * 0.5) var(--_dy);
+  }
+}
+
+@keyframes model-selector-effort-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    scale: 0.4;
+  }
+
+  50% {
+    opacity: var(--_peak);
+    scale: 1;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Forced colours
+ * ------------------------------------------------------------------------------------------------ */
+@media (forced-colors: active) {
+  .model-selector__effort-glow,
+  .model-selector__effort-sparks {
+    display: none;
+  }
+
+  .model-selector__effort-track {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+
+  .model-selector__effort-fill {
+    --model-selector-effort-fill: Highlight;
+    --model-selector-effort-accent: Highlight;
+  }
+
+  .model-selector__effort-thumb {
+    --model-selector-effort-thumb: HighlightText;
+  }
+
+  .model-selector__effort-ticks .slider__step {
+    background-color: CanvasText;
+
+    &[data-filled="true"] {
+      background-color: HighlightText;
+    }
+  }
+}

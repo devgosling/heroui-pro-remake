@@ -1,0 +1,25 @@
+/* Trend Chip - change badge layered on the OSS Chip (colours come from chip--{color}/--{variant}) */
+
+.trend-chip__indicator {
+  @apply size-3 shrink-0;
+}
+
+.trend-chip__value {
+  @apply tabular-nums;
+}
+
+.trend-chip__suffix {
+  @apply text-muted;
+}
+
+.trend-chip--sm .trend-chip__indicator {
+  /* No styles as this is the default size */
+}
+
+.trend-chip--md .trend-chip__indicator {
+  @apply size-3.5;
+}
+
+.trend-chip--lg .trend-chip__indicator {
+  @apply size-4;
+}

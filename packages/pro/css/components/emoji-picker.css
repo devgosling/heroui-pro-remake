@@ -1,0 +1,222 @@
+/* Emoji Picker - searchable, virtualized emoji grid (RAC Select + Autocomplete + Virtualizer) */
+
+/* ------------------------------------------------------------------------------------------------
+ * Trigger (unstyled button with a press scale) and value
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-picker__trigger {
+  @apply outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+  transform: translateZ(0);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    transform 250ms var(--ease-out-quart),
+    background-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  &:active,
+  &[data-pressed="true"] {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.emoji-picker__value {
+  @apply leading-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Popover (floating panel; also used as a plain container for the inline picker)
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-picker__popover {
+  @apply box-border flex flex-col overflow-hidden rounded-2xl bg-overlay shadow-overlay outline-none;
+
+  &[data-entering="true"] {
+    animation: heroui-overlay-enter-95 150ms var(--ease-out);
+  }
+
+  &[data-exiting="true"] {
+    animation: heroui-overlay-exit 100ms var(--ease-out);
+    @apply pointer-events-none;
+  }
+
+  &[data-entering="true"],
+  &[data-exiting="true"] {
+    will-change: opacity, transform;
+    @apply motion-reduce:animate-none;
+  }
+}
+
+.emoji-picker__popover--sm {
+  width: 240px;
+  height: 280px;
+}
+
+.emoji-picker__popover--md {
+  /* Default size */
+  width: 280px;
+  height: 350px;
+}
+
+.emoji-picker__popover--lg {
+  width: 320px;
+  height: 420px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (search field + grid + footer)
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-picker__content {
+  @apply flex flex-1 flex-col gap-1.5 overflow-hidden p-2;
+
+  /* Let the search input shrink so the skin tone trigger stays inside the field */
+  & .search-field__input {
+    @apply min-w-0;
+  }
+
+  & .search-field__group > .emoji-picker__skin-tone-picker {
+    @apply me-1;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Grid (RAC ListBox in a Virtualizer with GridLayout)
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-picker__grid {
+  @apply flex-1 scrollbar overflow-auto pt-1 outline-none;
+  scroll-padding: 4px;
+  -webkit-overflow-scrolling: touch;
+
+  /* Room for the absolutely positioned footer */
+  &:has(~ [data-slot="emoji-picker-footer"]) {
+    @apply pb-10;
+  }
+}
+
+.emoji-picker__item {
+  @apply flex size-full items-center justify-center rounded-lg outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &[data-focused="true"] {
+    @apply bg-default;
+  }
+
+  &[data-pressed="true"],
+  &[data-selected="true"] {
+    @apply bg-default-hover;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.emoji-picker__item--sm {
+  font-size: 20px;
+}
+
+.emoji-picker__item--md {
+  /* Default size */
+  font-size: 24px;
+}
+
+.emoji-picker__item--lg {
+  font-size: 28px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Footer (bar pinned to the bottom of the popover) and empty state
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-picker__footer {
+  @apply absolute inset-x-0 bottom-0 flex w-full items-center gap-2 border-t border-border/50 bg-surface px-1 py-1.5 text-xs text-muted;
+}
+
+.emoji-picker__empty {
+  @apply flex h-full flex-1 items-center justify-center py-6 text-center text-sm text-muted;
+
+  & .empty-state {
+    @apply flex h-full min-h-20 flex-1 flex-col items-center justify-center gap-2;
+  }
+
+  & .empty-state svg {
+    @apply size-5 text-muted;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Skin tone picker (trigger inside the search field, swatches in a popover dialog)
+ * ------------------------------------------------------------------------------------------------ */
+.emoji-picker__skin-tone-picker {
+  @apply flex size-6 shrink-0 items-center justify-center rounded-md text-base leading-none outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}
+
+.emoji-picker__skin-tone-options {
+  @apply flex items-center gap-0.5 p-1;
+}
+
+.emoji-picker__skin-tone-option {
+  @apply flex items-center justify-center rounded-2xl p-1 text-xl leading-none outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &[data-selected="true"] {
+    @apply bg-default-hover;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+}

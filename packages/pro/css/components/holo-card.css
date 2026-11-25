@@ -1,0 +1,223 @@
+/* Holo Card - 3D tilting card with a pointer-tracked holographic glare and texture overlay */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root: perspective wrapper that declares every customization variable.
+ * The pointer-driven variables (pointer / background / opacity) are written inline by JS and
+ * fall back to the resting values declared here.
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card {
+  /* Geometry */
+  --holo-card-width: 302px;
+  --holo-card-height: 453px;
+  --holo-card-radius: 20px;
+  --holo-card-bleed: 36px;
+  --holo-card-perspective: 600px;
+
+  /* Surface, hairline and textures (the card is a dark object in both themes) */
+  --holo-card-gradient: linear-gradient(
+    140deg,
+    #3a3730 0%,
+    #302f2c 18%,
+    #282829 38%,
+    #212226 58%,
+    #1a1b22 78%,
+    #12131c 100%
+  );
+  --holo-card-inset-color: rgb(255 255 255 / 0.06);
+  --holo-card-pattern:
+    repeating-linear-gradient(
+      115deg,
+      rgb(255 119 115 / 0.85) 0px,
+      rgb(255 237 95 / 0.85) 3px,
+      rgb(168 255 95 / 0.85) 6px,
+      rgb(131 255 247 / 0.85) 9px,
+      rgb(120 148 255 / 0.85) 12px,
+      rgb(216 117 255 / 0.85) 15px,
+      rgb(255 119 115 / 0.85) 18px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.4) 0px,
+      rgb(0 0 0 / 0.4) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  --holo-card-pattern-size: auto;
+  --holo-card-pattern-opacity: 0.9;
+  --holo-card-shine-pattern: var(--holo-card-pattern);
+  --holo-card-shine-opacity: 1;
+  --holo-card-texture-opacity: 0.1;
+  --holo-card-content-text-shadow: 0 4px 24px rgb(0 0 0 / calc(0.55 * var(--holo-card-opacity)));
+
+  /* Pointer-driven (read-only) */
+  --holo-card-pointer-x: 50%;
+  --holo-card-pointer-y: 50%;
+  --holo-card-background-x: 50%;
+  --holo-card-background-y: 50%;
+  --holo-card-opacity: 0;
+
+  @apply grid w-fit origin-center touch-auto;
+}
+
+/* A card that reserves touch drags for its tilt keeps vertical scrolling and pinch-zoom only */
+.holo-card[data-tilt-on-touch="true"] {
+  touch-action: pan-y pinch-zoom;
+
+  @media (prefers-reduced-motion: reduce) {
+    @apply touch-auto;
+  }
+}
+
+/* Live cards build the 3D context; inert cards (static / activateOnHover at rest) stay flat */
+.holo-card[data-active="true"] {
+  perspective: var(--holo-card-perspective);
+  @apply transform-3d;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Rotator: 3D tilt layer (rotation written inline by JS)
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__rotator {
+  @apply pointer-events-auto grid origin-center;
+}
+
+.holo-card[data-active="true"] .holo-card__rotator {
+  @apply will-change-transform transform-3d;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Frame: fixed clipping bounds that leave the scaled, tilted card room to move
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__frame {
+  @apply relative overflow-clip;
+  grid-area: 1 / 1;
+  width: calc(var(--holo-card-width) + var(--holo-card-bleed) * 2);
+  height: calc(var(--holo-card-height) + var(--holo-card-bleed) * 2);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Surface: the card body, clips every layer to the radius
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__surface {
+  @apply absolute top-1/2 left-1/2 z-1 overflow-clip;
+  transform: translate(-50%, -50%);
+  width: var(--holo-card-width);
+  height: var(--holo-card-height);
+  border-radius: var(--holo-card-radius);
+  background: var(--holo-card-gradient);
+  /* The lift fades in with the glare */
+  box-shadow:
+    0 4px 16px rgb(0 0 0 / calc(0.12 * var(--holo-card-opacity))),
+    0 12px 32px rgb(0 0 0 / calc(0.08 * var(--holo-card-opacity)));
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: box-shadow 150ms;
+  @apply motion-reduce:transition-none;
+}
+
+/* Transparent 1px outline: anti-aliases the edges of layers rasterized in 3D */
+.holo-card__rotator,
+.holo-card__frame,
+.holo-card__surface,
+.holo-card__inset {
+  outline: 1px solid transparent;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Image: full-bleed art beneath every overlay
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__image {
+  @apply absolute inset-0 z-0 size-full object-cover select-none;
+  border-radius: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Inset: hairline border inside the card edge
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__inset {
+  @apply pointer-events-none absolute inset-2 z-1 overflow-clip;
+  border: 1px solid var(--holo-card-inset-color);
+  border-radius: calc(var(--holo-card-radius) - 8px);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Pattern: static texture beneath the content
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__pattern {
+  @apply pointer-events-none absolute inset-0 z-2 bg-repeat mix-blend-overlay;
+  border-radius: inherit;
+  opacity: var(--holo-card-texture-opacity);
+  background-image: var(--holo-card-pattern);
+  background-size: var(--holo-card-pattern-size);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content: full-bleed parallax layer for the card face (drift written inline by JS).
+ * The layer itself ignores the pointer so stacked layers never block each other.
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__content {
+  @apply pointer-events-none absolute inset-0 z-20 flex;
+  text-shadow: var(--holo-card-content-text-shadow);
+
+  & > * {
+    @apply pointer-events-auto;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shine: pointer-tracked glare, blended over everything below it.
+ * ::before is a white base the filter turns black, ::after the radial light under the pointer.
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__shine {
+  @apply pointer-events-none absolute inset-0 z-6 grid overflow-hidden mix-blend-color-dodge;
+  border-radius: inherit;
+  filter: brightness(1.25) contrast(1.1) saturate(1.2);
+  opacity: calc(var(--holo-card-opacity) * var(--holo-card-shine-opacity));
+  /* No glare layers are rasterized while the card is inert */
+  content-visibility: hidden;
+
+  & > * {
+    grid-area: 1 / 1;
+  }
+
+  &::before,
+  &::after {
+    content: "";
+    grid-area: 1 / 1;
+    border-radius: inherit;
+  }
+
+  &::before {
+    @apply bg-white bg-blend-screen mix-blend-hard-light;
+    filter: brightness(0) contrast(1.1);
+  }
+
+  &::after {
+    @apply bg-cover bg-center mix-blend-luminosity;
+    background-image: radial-gradient(
+      farthest-corner circle at var(--holo-card-pointer-x) var(--holo-card-pointer-y),
+      #b8b8b8 0%,
+      rgb(199 199 199 / 0.19) 25%,
+      #000 90%
+    );
+    filter: brightness(0.5) contrast(2);
+  }
+}
+
+.holo-card[data-active="true"] .holo-card__shine {
+  @apply will-change-[opacity];
+  content-visibility: visible;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shine pattern: the texture the glare reveals, parallaxed against the pointer
+ * ------------------------------------------------------------------------------------------------ */
+.holo-card__shine-pattern {
+  @apply absolute inset-0 z-2 bg-repeat mix-blend-soft-light;
+  border-radius: inherit;
+  opacity: var(--holo-card-pattern-opacity);
+  background-image: var(--holo-card-shine-pattern);
+  background-size: var(--holo-card-pattern-size);
+  background-position: calc((50% - var(--holo-card-background-x)) * 2.6 + 50%)
+    calc((50% - var(--holo-card-background-y)) * 3.5 + 50%);
+}

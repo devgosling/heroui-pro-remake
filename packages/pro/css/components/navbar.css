@@ -1,0 +1,319 @@
+/* Navbar - composable top navigation bar with hide-on-scroll and a responsive mobile menu */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (<nav>)
+ * --navbar-height is also written inline by the `height` prop; the header size classes re-declare
+ * it on the header itself, so the bar height follows the size while the menu keeps the root value.
+ * ------------------------------------------------------------------------------------------------ */
+.navbar {
+  @apply relative z-40 flex w-full flex-col bg-background;
+  --navbar-height: 4rem;
+  --navbar-max-width: 1024px;
+  --navbar-transition-duration: 300ms;
+
+  &[data-hidden="true"] {
+    @apply pointer-events-none;
+  }
+
+  &[data-menu-open="true"] {
+    @apply border-b-transparent;
+  }
+}
+
+/* Positions */
+.navbar--sticky {
+  @apply sticky top-0;
+}
+
+.navbar--static {
+  @apply static;
+
+  &[data-menu-open="true"] {
+    /* Containing block for the absolutely positioned menu */
+    @apply relative;
+  }
+}
+
+.navbar--floating {
+  @apply sticky top-2 mx-2 rounded-2xl border border-border shadow-surface;
+}
+
+/* Inside AppLayout the layout owns positioning, chrome and size */
+.navbar[data-in-app-layout="true"] {
+  @apply static z-auto h-full w-full;
+
+  &.navbar--sticky,
+  &.navbar--static,
+  &.navbar--floating {
+    @apply static m-0 rounded-none border-none shadow-none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header (horizontal bar)
+ * ------------------------------------------------------------------------------------------------ */
+.navbar__header {
+  @apply mx-auto flex w-full items-center gap-4 px-6;
+  max-width: var(--navbar-max-width);
+  height: var(--navbar-height);
+}
+
+.navbar__header--sm {
+  @apply gap-3 px-4;
+  --navbar-height: 3rem;
+}
+
+.navbar__header--md {
+  /* No styles as this is the default size */
+}
+
+.navbar__header--lg {
+  @apply gap-5 px-8;
+  --navbar-height: 5rem;
+}
+
+/* Max widths */
+.navbar__header--max-sm {
+  --navbar-max-width: 640px;
+}
+
+.navbar__header--max-md {
+  --navbar-max-width: 768px;
+}
+
+.navbar__header--max-lg {
+  --navbar-max-width: 1024px;
+}
+
+.navbar__header--max-xl {
+  --navbar-max-width: 1280px;
+}
+
+.navbar__header--max-2xl {
+  --navbar-max-width: 1536px;
+}
+
+.navbar__header--max-full {
+  --navbar-max-width: 100%;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Layout parts
+ * ------------------------------------------------------------------------------------------------ */
+.navbar__brand {
+  @apply flex shrink-0 items-center gap-2;
+}
+
+.navbar__content {
+  @apply flex items-center gap-1;
+}
+
+.navbar__spacer {
+  @apply flex-1;
+}
+
+/* Extends the OSS vertical .separator */
+.navbar__separator {
+  @apply h-6 self-center border-separator;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Item (desktop link / action)
+ * Paddings are fixed pixel values on purpose: a `--spacing` override (compact density) scales
+ * gaps and icons but keeps the hit area of the items.
+ * ------------------------------------------------------------------------------------------------ */
+.navbar__item {
+  @apply relative flex items-center gap-2 rounded-lg px-[12px] py-[6px] text-sm font-normal text-muted outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply text-foreground;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &:active,
+  &[data-pressed="true"],
+  &[data-current="true"] {
+    @apply text-foreground;
+  }
+
+  & > [data-slot="icon"] {
+    @apply size-5 shrink-0;
+  }
+}
+
+.navbar__item--sm {
+  @apply px-[8px] py-[4px] text-xs;
+
+  & > [data-slot="icon"] {
+    @apply size-4;
+  }
+}
+
+.navbar__item--md {
+  /* No styles as this is the default size */
+}
+
+.navbar__item--lg {
+  @apply px-[16px] py-[8px] text-base;
+
+  & > [data-slot="icon"] {
+    @apply size-6;
+  }
+}
+
+.navbar__label {
+  @apply truncate;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Menu toggle (hamburger <-> close, drawn with two pseudo-element lines)
+ * ------------------------------------------------------------------------------------------------ */
+.navbar__menu-toggle {
+  @apply relative flex size-9 items-center justify-center rounded-lg outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply bg-default-hover;
+  }
+}
+
+.navbar__menu-toggle--sm {
+  @apply size-7;
+}
+
+.navbar__menu-toggle--md {
+  /* No styles as this is the default size */
+}
+
+.navbar__menu-toggle--lg {
+  @apply size-11;
+}
+
+.navbar__menu-toggle-icon {
+  @apply pointer-events-none flex h-full w-6 flex-col items-center justify-center;
+
+  &::before,
+  &::after {
+    @apply block h-px w-6 bg-current content-[''];
+    transition: transform 150ms ease;
+    @apply motion-reduce:transition-none;
+  }
+
+  &::before {
+    transform: translateY(-4px) rotate(0deg);
+  }
+
+  &::after {
+    transform: translateY(4px) rotate(0deg);
+  }
+}
+
+.navbar__menu-toggle[data-selected="true"] .navbar__menu-toggle-icon {
+  &::before {
+    transform: translateY(0.5px) rotate(45deg);
+  }
+
+  &::after {
+    transform: translateY(-0.5px) rotate(-45deg);
+  }
+}
+
+.navbar__menu-toggle[data-pressed="true"] .navbar__menu-toggle-icon {
+  @apply opacity-70;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Mobile menu (dropdown below the bar; height/opacity are animated inline)
+ * ------------------------------------------------------------------------------------------------ */
+.navbar__menu {
+  @apply absolute inset-x-0 top-full flex scrollbar flex-col gap-1 overflow-x-hidden overflow-y-auto bg-background px-6 pt-2 pb-6;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Menu item
+ * ------------------------------------------------------------------------------------------------ */
+.navbar__menu-item {
+  @apply flex items-center gap-3 rounded-lg px-[12px] py-[10px] text-base font-medium text-foreground outline-none no-highlight;
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    @apply status-disabled;
+  }
+
+  &:active,
+  &[data-pressed="true"] {
+    @apply bg-default-hover;
+  }
+
+  &[data-current="true"] {
+    @apply bg-default text-foreground;
+  }
+
+  & > [data-slot="icon"] {
+    @apply size-5 shrink-0;
+  }
+}
+
+.navbar__menu-item--sm {
+  @apply px-[10px] py-[8px] text-sm;
+
+  & > [data-slot="icon"] {
+    @apply size-4;
+  }
+}
+
+.navbar__menu-item--md {
+  /* No styles as this is the default size */
+}
+
+.navbar__menu-item--lg {
+  @apply px-[16px] py-[12px] text-lg;
+
+  & > [data-slot="icon"] {
+    @apply size-6;
+  }
+}

@@ -1,0 +1,66 @@
+/* Widget - dashboard shell: secondary-surface frame with an elevated content surface */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (outer shell)
+ * ------------------------------------------------------------------------------------------------ */
+.widget {
+  @apply flex flex-col overflow-hidden rounded-2xl bg-surface-secondary;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header (title block on the start side, legend / actions on the end side)
+ * ------------------------------------------------------------------------------------------------ */
+.widget__header {
+  @apply mt-0.5 flex min-h-8 items-center justify-between gap-3 px-4;
+}
+
+.widget__title {
+  @apply text-sm font-semibold text-foreground;
+}
+
+.widget__description {
+  @apply text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content (elevated inner surface, inset 6px from the shell)
+ * ------------------------------------------------------------------------------------------------ */
+.widget__content {
+  @apply mx-1.5 mb-1.5 flex-1 overflow-hidden rounded-xl bg-surface p-4;
+
+  /* Hairline ring + soft drop, identical in light and dark (Pro uses literal black alphas here) */
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.03),
+    0 1px 2px 0 rgb(0 0 0 / 0.04);
+
+  /* Without a header the content is inset on all four sides */
+  &:first-child {
+    @apply mt-1.5;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Footer
+ * ------------------------------------------------------------------------------------------------ */
+.widget__footer {
+  @apply flex items-center gap-3 px-4 pt-3 pb-4;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Legend
+ * ------------------------------------------------------------------------------------------------ */
+.widget__legend {
+  @apply flex items-center gap-3;
+}
+
+.widget__legend-item {
+  @apply flex items-center gap-1.5;
+}
+
+.widget__legend-item-dot {
+  @apply size-2.5 shrink-0 rounded-full;
+}
+
+.widget__legend-item-label {
+  @apply text-xs text-muted;
+}

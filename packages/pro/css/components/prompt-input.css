@@ -1,0 +1,601 @@
+/* Prompt Input - AI prompt composer: shell, autosizing input, toolbar, send states, queue, tokens */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input {
+  @apply relative w-full;
+
+  &[data-disabled="true"] {
+    @apply opacity-60;
+  }
+}
+
+/* Sizes only change the input's minimum height and the room kept for the toolbar */
+.prompt-input--sm :is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply mb-10 min-h-12;
+}
+
+.prompt-input--md {
+  /* No styles as this is the default size */
+}
+
+.prompt-input--lg :is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply mb-14 min-h-18;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shell (composer surface)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input__shell {
+  @apply relative flex w-full flex-col overflow-hidden border-solid;
+  border-radius: calc(var(--radius) * 2);
+  border-color: var(--field-border, var(--border));
+  border-width: var(--border-width-field, var(--field-border-width, 1px));
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition:
+    background-color 150ms var(--ease-smooth),
+    border-color 150ms var(--ease-smooth),
+    box-shadow 150ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  /* Drag-and-drop target (ChatAttachmentInput.Dropzone sets data-dragging) */
+  &[data-dragging="true"] {
+    @apply border-dotted border-accent bg-accent-soft;
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+}
+
+.prompt-input__shell--primary {
+  background-color: var(--field-background, var(--default));
+  border-color: var(--field-border, var(--border));
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      border-color: var(--field-border-hover);
+    }
+  }
+}
+
+.prompt-input:focus-within .prompt-input__shell--primary {
+  background-color: var(--field-focus, var(--field-background, var(--default)));
+  border-color: var(--field-border-focus, var(--field-border, var(--border)));
+}
+
+.prompt-input__shell--secondary {
+  @apply bg-default shadow-none;
+  border-color: var(--field-border, var(--border));
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover;
+    }
+  }
+}
+
+.prompt-input:focus-within .prompt-input__shell--secondary {
+  @apply bg-default;
+  border-color: var(--field-border-focus, var(--field-border, var(--border)));
+}
+
+/* Cursor: the whole surface focuses the input; the toolbar keeps the default cursor */
+.prompt-input:not([data-disabled="true"]) .prompt-input__shell {
+  cursor: text;
+}
+
+.prompt-input:not([data-disabled="true"]) .prompt-input__toolbar {
+  cursor: default;
+}
+
+.prompt-input[data-disabled="true"] .prompt-input__shell {
+  cursor: not-allowed;
+}
+
+/* Running (submitted / streaming) */
+.prompt-input[data-pending="true"] .prompt-input__shell {
+  opacity: 0.95;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Content, attachments and input
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input__content {
+  @apply flex min-h-0 flex-1 flex-col gap-1;
+}
+
+.prompt-input__attachments {
+  @apply flex flex-wrap gap-2 px-3 pt-3 pb-1;
+}
+
+:is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply mb-14 min-h-14 px-3 pt-3;
+  scrollbar-width: var(--scrollbar-width);
+  scrollbar-color: var(--scrollbar-color);
+  scrollbar-gutter: var(--scrollbar-gutter);
+}
+
+.prompt-input__attachments + :is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply pt-1;
+}
+
+.prompt-input__textarea {
+  @apply resize-none;
+  transition: height 100ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+}
+
+/* The OSS TextArea surface (fill, border, shadow and focus ring) is replaced by the shell */
+.prompt-input__shell .prompt-input__textarea.textarea {
+  --prompt-input-no-shadow: 0 0 #0000;
+  @apply border-0 border-transparent bg-transparent;
+  box-shadow: none;
+  --tw-shadow: var(--prompt-input-no-shadow);
+  --tw-inset-shadow: var(--prompt-input-no-shadow);
+  --tw-ring-shadow: var(--prompt-input-no-shadow);
+  --tw-inset-ring-shadow: var(--prompt-input-no-shadow);
+  --tw-ring-offset-shadow: var(--prompt-input-no-shadow);
+
+  @media (hover: hover) {
+    &:hover:not(:focus):not(:focus-visible),
+    &[data-hovered="true"]:not([data-focused="true"]):not([data-focus-visible="true"]) {
+      @apply border-transparent bg-transparent;
+      box-shadow: none;
+    }
+  }
+
+  &:focus,
+  &:focus-visible,
+  &[data-focused="true"],
+  &[data-focus-visible="true"] {
+    @apply border-transparent bg-transparent outline-none;
+    box-shadow: none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Token input (contenteditable React Aria TokenField)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input__token-input {
+  @apply relative overflow-y-auto text-base text-field-foreground outline-none sm:text-sm;
+  overflow-wrap: anywhere;
+  max-height: var(--prompt-input-max-height);
+
+  &[data-empty]::before {
+    @apply pointer-events-none absolute text-field-placeholder;
+    content: attr(data-placeholder);
+  }
+}
+
+.prompt-input__token {
+  @apply inline-flex max-w-full items-center bg-accent-soft px-1 align-baseline text-accent;
+  border-radius: calc(var(--radius) * 0.75);
+
+  &[data-selected] {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  &[data-disabled] {
+    @apply opacity-60;
+  }
+}
+
+/* Suggestion popover anchored to the active trigger */
+.prompt-input__token-suggestions {
+  @apply min-w-56 overflow-y-auto overscroll-contain bg-overlay p-0 text-sm outline-none;
+  box-shadow: var(--shadow-overlay);
+  max-width: min(22rem, 80svw);
+  border-radius: calc(var(--radius) * 2);
+  scroll-padding-block: --spacing(1);
+  scrollbar-width: var(--scrollbar-width);
+  scrollbar-color: var(--scrollbar-color);
+  scrollbar-gutter: var(--scrollbar-gutter);
+
+  /* Hidden while the menu has no items */
+  &:has(:is([role="menu"], [role="listbox"]):empty) {
+    visibility: hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Toolbar
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input__toolbar {
+  @apply absolute inset-x-3 bottom-3 flex items-center justify-between gap-2;
+}
+
+.prompt-input__toolbar-start,
+.prompt-input__toolbar-end {
+  @apply flex items-center gap-2;
+}
+
+.prompt-input__toolbar-end {
+  @apply ms-auto;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Send button
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input__send {
+  @apply shrink-0;
+}
+
+.prompt-input .prompt-input__send .prompt-input__send-icon {
+  @apply size-4;
+}
+
+.prompt-input[data-status="error"] .prompt-input__send {
+  @apply bg-danger text-danger-foreground;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Footer
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input__footer {
+  @apply mt-1 text-center text-xs text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Compact and inline layouts
+ *
+ * Inline: always one grid row (attachments above) while the textarea grows.
+ * Compact: a single-row pill until the text wraps (data-expanded) or attachments are added,
+ * then the stacked composer with the absolute toolbar.
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input[data-layout="compact"] .prompt-input__shell--compact,
+.prompt-input[data-layout="inline"] .prompt-input__shell--inline {
+  background-color: var(--field-background, var(--default));
+  border-color: var(--field-border, var(--border));
+  border-radius: var(--radius-2xl, 1rem);
+  transition:
+    background-color 150ms var(--ease-smooth),
+    border-color 150ms var(--ease-smooth),
+    border-radius 200ms var(--ease-out),
+    box-shadow 150ms var(--ease-out),
+    min-height 200ms var(--ease-out);
+
+  /* Reduced motion keeps the colour fades but snaps the shape */
+  @media (prefers-reduced-motion: reduce) {
+    transition:
+      background-color 150ms var(--ease-smooth),
+      border-color 150ms var(--ease-smooth),
+      box-shadow 150ms var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      border-color: var(--field-border-hover);
+    }
+  }
+}
+
+.prompt-input[data-layout="compact"]:focus-within .prompt-input__shell--compact,
+.prompt-input[data-layout="inline"]:focus-within .prompt-input__shell--inline {
+  background-color: var(--field-focus, var(--field-background, var(--default)));
+  border-color: var(--field-border-focus, var(--field-border, var(--border)));
+}
+
+/* Compact and inline action / send buttons are 32px */
+.prompt-input[data-layout="compact"] .prompt-input__send,
+.prompt-input[data-layout="compact"] [data-slot="prompt-input-action"],
+.prompt-input[data-layout="inline"] .prompt-input__send,
+.prompt-input[data-layout="inline"] [data-slot="prompt-input-action"] {
+  @apply size-8 max-h-8 min-h-8 max-w-8 min-w-8 shrink-0;
+}
+
+/* Single-row grid: [toolbar-start] [textarea] [toolbar-end] */
+.prompt-input[data-layout="inline"] .prompt-input__shell--inline,
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *)) {
+  @apply grid min-h-12 overflow-hidden py-0;
+  border-radius: calc(var(--radius) * 3);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(--spacing(12), auto);
+  grid-template-areas:
+    "attachments attachments attachments"
+    "toolbar-start textarea toolbar-end";
+}
+
+.prompt-input[data-layout="inline"][data-expanded] .prompt-input__shell--inline,
+.prompt-input[data-layout="inline"]
+  .prompt-input__shell--inline:has(.prompt-input__attachments > *) {
+  border-radius: var(--radius-2xl, 1rem);
+}
+
+.prompt-input[data-layout="inline"] :is(.prompt-input__content, .prompt-input__toolbar),
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *))
+  :is(.prompt-input__content, .prompt-input__toolbar) {
+  display: contents;
+}
+
+.prompt-input[data-layout="inline"] :is(.prompt-input__textarea, .prompt-input__token-input),
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *))
+  :is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply mb-0 min-h-12 resize-none self-start overflow-y-auto px-2 py-3.5;
+  grid-area: textarea;
+  transition:
+    height 100ms var(--ease-out),
+    min-height 200ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+}
+
+.prompt-input[data-layout="inline"] .prompt-input__textarea,
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *))
+  .prompt-input__textarea {
+  max-height: none;
+}
+
+/* Collapsed compact: exactly one line */
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *))
+  :is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply max-h-12 self-center overflow-y-hidden;
+}
+
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *))
+  .prompt-input__toolbar-start {
+  @apply h-8 self-center ps-2;
+  grid-area: toolbar-start;
+}
+
+.prompt-input[data-layout="compact"]:not([data-expanded])
+  .prompt-input__shell--compact:not(:has(.prompt-input__attachments > *))
+  .prompt-input__toolbar-end {
+  @apply h-8 self-center pe-2;
+  grid-area: toolbar-end;
+}
+
+.prompt-input[data-layout="inline"] .prompt-input__attachments {
+  @apply flex flex-wrap gap-2 px-3 pt-3 pb-1;
+  grid-area: attachments;
+}
+
+.prompt-input[data-layout="inline"]
+  .prompt-input__attachments
+  + :is(.prompt-input__textarea, .prompt-input__token-input) {
+  @apply pt-1;
+}
+
+.prompt-input[data-layout="inline"] .prompt-input__toolbar-start {
+  @apply mt-2 h-8 self-start ps-2;
+  grid-area: toolbar-start;
+}
+
+.prompt-input[data-layout="inline"] .prompt-input__toolbar-end {
+  @apply mt-2 h-8 self-start pe-2;
+  grid-area: toolbar-end;
+}
+
+/* Expanded compact (wrapped text or attachments): stacked composer with a 32px toolbar */
+.prompt-input[data-layout="compact"][data-expanded] .prompt-input__shell--compact,
+.prompt-input[data-layout="compact"]
+  .prompt-input__shell--compact:has(.prompt-input__attachments > *) {
+  @apply flex min-h-28 flex-col;
+  border-radius: var(--radius-2xl, 1rem);
+}
+
+:is(
+  .prompt-input[data-layout="compact"][data-expanded],
+  .prompt-input[data-layout="compact"]
+    .prompt-input__shell--compact:has(.prompt-input__attachments > *)
+) {
+  & .prompt-input__content {
+    @apply flex min-h-0 flex-1 flex-col gap-1;
+  }
+
+  & .prompt-input__toolbar {
+    @apply absolute inset-x-3 bottom-3 flex items-center justify-between gap-2;
+  }
+
+  & .prompt-input__attachments {
+    @apply flex flex-wrap gap-2 px-3 pt-3 pb-1;
+  }
+
+  & :is(.prompt-input__textarea, .prompt-input__token-input) {
+    @apply mb-12 min-h-18 resize-none px-3 pt-3;
+    transition:
+      height 100ms var(--ease-out),
+      min-height 200ms var(--ease-out);
+    @apply motion-reduce:transition-none;
+  }
+
+  & .prompt-input__textarea {
+    max-height: none;
+  }
+
+  & .prompt-input__attachments + :is(.prompt-input__textarea, .prompt-input__token-input) {
+    @apply pt-1;
+  }
+
+  & .prompt-input__toolbar-start {
+    @apply shrink-0 ps-0;
+  }
+
+  & .prompt-input__toolbar-end {
+    @apply shrink-0 pe-0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Outline select trigger inside the composer (e.g. a model or mode picker)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input [data-slot="select-trigger"].prompt-input__select-trigger--outline {
+  @apply border-solid bg-transparent shadow-none;
+  --field-border: var(--border);
+  --field-border-hover: var(--border);
+  --field-border-focus: var(--border);
+  --button-bg-hover: color-mix(in srgb, var(--default) 60%, transparent);
+  border-width: var(--border-width, 1px);
+  border-color: var(--border);
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      border-color: var(--border);
+      background-color: var(--button-bg-hover);
+    }
+  }
+
+  &:focus-visible,
+  &[data-focus-visible="true"] {
+    @apply bg-transparent;
+    border-color: var(--border);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Queue (queued follow-up prompts above the shell)
+ * ------------------------------------------------------------------------------------------------ */
+.prompt-input:has(> .prompt-input__queue) {
+  @apply flex w-full flex-col gap-2 overflow-x-hidden;
+
+  & > .prompt-input__shell {
+    @apply w-full shrink-0;
+  }
+}
+
+.prompt-input__queue {
+  @apply relative w-full shrink-0 overflow-hidden border-solid;
+  border-radius: calc(var(--radius) * 2);
+  border-color: var(--field-border, var(--border));
+  border-width: var(--border-width-field, var(--field-border-width, 1px));
+  transition:
+    background-color 150ms var(--ease-smooth),
+    border-color 150ms var(--ease-smooth);
+  @apply motion-reduce:transition-none;
+}
+
+.prompt-input[data-variant="primary"] .prompt-input__queue,
+.prompt-input:not([data-variant]) .prompt-input__queue {
+  background-color: var(--field-background, var(--default));
+
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--field-border-hover, var(--field-border, var(--border)));
+    }
+  }
+}
+
+.prompt-input[data-variant="secondary"] .prompt-input__queue {
+  @apply bg-default;
+}
+
+.prompt-input:focus-within[data-variant="primary"] .prompt-input__queue,
+.prompt-input:focus-within:not([data-variant]) .prompt-input__queue,
+.prompt-input[data-layout="compact"]:focus-within .prompt-input__queue,
+.prompt-input[data-layout="inline"]:focus-within .prompt-input__queue {
+  border-color: var(--field-border-focus, var(--field-border, var(--border)));
+}
+
+.prompt-input__queue-list {
+  @apply max-h-40 w-full overflow-x-hidden;
+}
+
+.prompt-input__queue-list-items {
+  @apply m-0 list-none p-0;
+}
+
+.prompt-input__queue-item {
+  @apply flex min-w-0 items-center gap-2 px-2 py-1;
+}
+
+.prompt-input__queue-item + .prompt-input__queue-item {
+  @apply border-t border-border/50;
+}
+
+.prompt-input__queue-item-handle {
+  @apply size-7 min-h-7 min-w-7 shrink-0 text-muted opacity-100 transition-opacity;
+  @apply motion-reduce:transition-none;
+
+  &[data-reorder-enabled] {
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}
+
+.prompt-input__queue-item-body {
+  @apply flex min-w-0 flex-1 items-center gap-2;
+
+  &:has(.prompt-input__queue-item-attachments) {
+    @apply flex-col items-stretch gap-2;
+
+    & .prompt-input__queue-item-icon {
+      @apply self-start;
+    }
+  }
+}
+
+.prompt-input__queue-item:has(> .prompt-input__queue-item-attachments) {
+  @apply flex-wrap;
+
+  & .prompt-input__queue-item-actions {
+    @apply self-center;
+  }
+}
+
+.prompt-input__queue-item > .prompt-input__queue-item-attachments {
+  @apply basis-full ps-9;
+}
+
+.prompt-input__queue-item-icon {
+  @apply flex shrink-0 items-center justify-center self-center text-muted;
+}
+
+.prompt-input__queue .prompt-input__queue-item .prompt-input__queue-icon {
+  @apply size-3.5;
+}
+
+.prompt-input__queue-steer-arrow {
+  @apply text-xs text-muted;
+}
+
+.prompt-input__queue-item-content {
+  @apply min-w-0 flex-1 self-center overflow-hidden text-xs leading-tight text-muted;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.prompt-input__queue-item-description {
+  @apply text-xs leading-tight text-muted;
+}
+
+.prompt-input__queue-item-actions {
+  @apply flex shrink-0 items-center gap-0.5 self-center transition-opacity;
+  @apply motion-reduce:transition-none;
+}
+
+.prompt-input__queue[data-actions-visibility="hover"] .prompt-input__queue-item-actions {
+  @apply opacity-0;
+}
+
+.prompt-input__queue[data-actions-visibility="always"] .prompt-input__queue-item-actions,
+.prompt-input__queue[data-actions-visibility="hover"]
+  .prompt-input__queue-item:is(
+    :hover,
+    :focus-within,
+    :has([aria-expanded="true"]),
+    :has([data-open="true"])
+  )
+  .prompt-input__queue-item-actions {
+  @apply opacity-100;
+}
+
+.prompt-input__queue-item-attachments {
+  @apply flex min-w-0 flex-wrap items-center gap-2;
+}
+
+.prompt-input__queue-item-attachments-overflow {
+  @apply text-xs text-muted;
+}

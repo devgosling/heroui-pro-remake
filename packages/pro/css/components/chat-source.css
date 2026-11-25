@@ -1,0 +1,181 @@
+/* Chat Source - citation chips with hover previews, and grouped source lists for AI answers */
+
+/* ------------------------------------------------------------------------------------------------
+ * Source root, chip and hover-card trigger wrapper share one inline 24px box, so a chip can sit
+ * inside a line of text without changing its height.
+ * ------------------------------------------------------------------------------------------------ */
+.chat-source,
+.chat-source__trigger,
+.chat-source .hover-card__trigger {
+  @apply inline-flex h-6 max-w-full items-center;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Chip (link for URL sources, plain text for documents)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-source__trigger-link {
+  @apply inline-flex h-6 max-w-full items-center gap-1 rounded-full border border-border bg-default ps-1 pe-2 text-xs whitespace-nowrap text-foreground/86 no-underline;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-colors duration-150 motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Icons (favicon, custom logo, first-letter fallback, document glyph)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-source__icon,
+.chat-source__document-icon {
+  @apply size-4 shrink-0 object-contain;
+}
+
+.chat-source__document-icon {
+  @apply text-muted;
+}
+
+.chat-source__icon-fallback {
+  @apply inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-default text-[10px] leading-none font-medium text-muted uppercase;
+}
+
+/* Inside the chip the fallback sits on the default background, so it lifts to the surface */
+.chat-source__trigger-link .chat-source__icon-fallback {
+  @apply bg-surface;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Label
+ * ------------------------------------------------------------------------------------------------ */
+.chat-source__title {
+  @apply min-w-0 truncate text-start font-normal;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Hover preview (rendered inside .hover-card__content)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-source__preview {
+  @apply w-80;
+}
+
+.chat-source__preview-link {
+  @apply flex flex-col gap-1.5 no-underline;
+}
+
+.chat-source__preview-header {
+  @apply flex items-center gap-1.5;
+}
+
+.chat-source__preview-domain {
+  @apply truncate text-sm text-foreground;
+}
+
+.chat-source__preview-title {
+  @apply line-clamp-2 text-sm font-medium;
+}
+
+.chat-source__preview-description {
+  @apply line-clamp-2 text-sm text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Grouped sources (built on the HeroUI Disclosure)
+ * ------------------------------------------------------------------------------------------------ */
+.chat-sources,
+.chat-sources [data-slot="disclosure-heading"] {
+  @apply w-full;
+}
+
+.chat-sources__trigger {
+  @apply inline-flex h-auto min-h-8 w-fit items-center gap-2 px-0 py-1 text-start text-xs font-medium text-muted;
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  transition: color 100ms var(--ease-out);
+  @apply motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply text-foreground;
+    }
+  }
+}
+
+.chat-sources__trigger-label {
+  @apply inline-flex min-w-0 items-center gap-2;
+}
+
+.chat-sources__indicator {
+  @apply size-3.5 shrink-0 text-muted;
+}
+
+/* Faster panel and chevron than the stock Disclosure */
+.chat-sources .chat-sources__content {
+  transition:
+    height 150ms var(--ease-out-quad),
+    opacity 150ms var(--ease-out);
+}
+
+.chat-sources [data-slot="disclosure-indicator"] {
+  @apply duration-150;
+}
+
+/* CRITICAL: motion-reduce must be AFTER the transitions above */
+.chat-sources .chat-sources__content,
+.chat-sources [data-slot="disclosure-indicator"] {
+  @apply motion-reduce:transition-none;
+}
+
+/* Hairline between the trigger and the list, only while the panel is open */
+.chat-sources__content {
+  @apply border-t-0 border-separator;
+
+  &[data-expanded="true"] {
+    @apply border-t;
+  }
+}
+
+.chat-sources__content-body {
+  @apply pt-2;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Source list and "+N more" / "Show less" chip
+ * ------------------------------------------------------------------------------------------------ */
+.chat-sources__list {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.chat-sources__toggle {
+  @apply inline-flex h-6 shrink-0 items-center rounded-full border border-border bg-transparent px-2 text-xs whitespace-nowrap text-muted no-highlight;
+  cursor: var(--cursor-interactive);
+
+  /* CRITICAL: motion-reduce must be AFTER transition for correct override specificity */
+  @apply transition-colors duration-150 motion-reduce:transition-none;
+
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      @apply bg-default-hover text-foreground;
+    }
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+}
+
+/* "sources" completes the accessible name ("+2 more sources") without showing */
+.chat-sources__toggle-hidden-text {
+  @apply sr-only;
+}

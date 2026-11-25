@@ -1,0 +1,723 @@
+/* Agenda - day / week / month calendar with timed, all-day and multi-day events */
+
+/* ------------------------------------------------------------------------------------------------
+ * Root (public CSS variables)
+ * ------------------------------------------------------------------------------------------------ */
+.agenda {
+  --agenda-slot-height: 60px;
+  --agenda-time-column-width: 58px;
+  --agenda-current-time-color: var(--color-danger);
+  --agenda-day-header-height: calc(var(--spacing) * 10);
+  --agenda-all-day-min-height: calc(var(--spacing) * 8);
+  --agenda-event-radius: var(--radius-md);
+  --agenda-event-gap: 2px;
+  --agenda-event-foreground: var(--color-accent-foreground);
+  --agenda-surface: var(--color-background);
+  --agenda-past-fade: 40%;
+  --agenda-month-event-height: 20px;
+  --agenda-month-event-gap: 2px;
+  --agenda-month-date-offset: 20px;
+
+  @apply flex h-full flex-col overflow-hidden outline-none select-none;
+
+  @variant max-sm {
+    --agenda-slot-height: 48px;
+    --agenda-month-event-height: 16px;
+    --agenda-month-event-gap: 1px;
+    --agenda-month-date-offset: 16px;
+  }
+}
+
+/* Day / week only parts are hidden in the month view */
+.agenda--month {
+  & .agenda__week-header,
+  & .agenda__all-day-section,
+  & .agenda__time-grid {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Header
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__header {
+  @apply flex items-center gap-3 px-4 pt-4 pb-1;
+
+  @variant max-sm {
+    @apply grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-2 px-3 pt-3;
+  }
+}
+
+.agenda__heading {
+  @apply flex-1 text-xl font-medium text-foreground tabular-nums;
+
+  @variant max-sm {
+    @apply col-start-1 row-start-1 text-sm;
+  }
+}
+
+.agenda__view-selector {
+  @apply w-fit;
+
+  @variant max-sm {
+    @apply col-start-1 row-start-2;
+  }
+}
+
+.agenda__navigation {
+  @apply flex items-center gap-1;
+
+  @variant max-sm {
+    @apply col-start-2 row-start-1;
+  }
+}
+
+.agenda__nav-button svg {
+  @apply rtl:-scale-x-100;
+}
+
+.agenda__today-button {
+  @apply text-xs;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Body + days tracks (swipe)
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__body {
+  @apply relative flex flex-1 flex-col overflow-hidden;
+}
+
+.agenda__body--month {
+  @apply scrollbar overflow-auto;
+}
+
+.agenda__days,
+.agenda__day-columns {
+  @apply flex min-w-0 flex-1 overflow-x-clip;
+}
+
+.agenda__days-track {
+  @apply relative flex w-full shrink-0 transition-none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Week header
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__week-header {
+  @apply flex border-b border-separator;
+  padding-inline-start: var(--agenda-time-column-width);
+}
+
+.agenda__day-header {
+  @apply flex min-w-0 flex-1 flex-row items-center justify-center gap-1.5 py-1.5;
+  height: var(--agenda-day-header-height);
+}
+
+.agenda__day-header-name {
+  @apply text-xs leading-none font-medium text-muted capitalize;
+
+  &[data-today="true"] {
+    @apply text-foreground;
+  }
+
+  @variant max-sm {
+    @apply text-[10px];
+  }
+}
+
+.agenda__day-header-date {
+  @apply flex items-center justify-center px-1 py-0.5 text-xs leading-none font-medium text-muted;
+  border-radius: calc(var(--radius) * 2);
+
+  &[data-today="true"] {
+    @apply bg-danger text-danger-foreground;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * All-day section
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__all-day-section {
+  @apply relative flex border-b border-separator;
+  min-height: var(--agenda-all-day-min-height);
+}
+
+.agenda__all-day-gutter {
+  @apply flex shrink-0 items-center justify-end pe-1.5;
+  width: var(--agenda-time-column-width);
+}
+
+.agenda__all-day-toggle {
+  @apply flex h-5 max-w-full min-w-5 items-center justify-center px-0.5 text-muted outline-none;
+  border-radius: calc(var(--radius) * 0.5);
+  cursor: var(--cursor-interactive);
+
+  & svg {
+    @apply shrink-0 -rotate-90 rtl:rotate-90;
+    transition: rotate 150ms;
+    @apply motion-reduce:transition-none;
+  }
+
+  &[data-expanded] svg {
+    @apply rotate-0;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      @apply bg-default;
+    }
+  }
+
+  &:focus-visible {
+    @apply status-focused;
+  }
+}
+
+.agenda__all-day-label {
+  @apply min-w-0 truncate text-end text-[11px];
+}
+
+.agenda__all-day-grid {
+  @apply grid auto-rows-min items-start gap-x-0 gap-y-0.5 py-1;
+}
+
+.agenda__all-day-summary {
+  @apply flex min-h-[22px] items-center justify-center text-[11px] text-muted;
+}
+
+.agenda__all-day-dividers {
+  @apply pointer-events-none absolute inset-0 flex;
+}
+
+.agenda__all-day-divider {
+  @apply min-w-0 flex-1 border-s border-separator;
+
+  &[data-weekend] {
+    @apply bg-default/40;
+  }
+}
+
+.agenda__all-day-event {
+  @apply relative z-1 mx-0.5 block min-h-[22px] truncate px-2 py-0.5 text-xs leading-[22px] font-medium outline-none no-highlight;
+  /* Keeps the label visible when the event starts before the first visible day */
+  padding-inline-start: calc(
+    var(--spacing) * 2 +
+      clamp(
+        0px,
+        (var(--agenda-visible-start, 0) - var(--agenda-event-start, 0)) * 100% /
+          var(--agenda-event-span, 1),
+        100% - var(--spacing) * 4
+      )
+  );
+  border-radius: calc(var(--radius) * 0.75);
+  background-color: var(--agenda-event-accent, var(--color-accent));
+  color: var(--agenda-event-foreground);
+  cursor: var(--cursor-interactive);
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-status="unconfirmed"] {
+    border: 1px dashed var(--agenda-event-accent, var(--color-accent));
+    background-color: var(--agenda-surface);
+    color: var(--agenda-event-accent, var(--color-accent));
+  }
+
+  &[data-status="declined"] {
+    @apply text-muted line-through;
+    border: 1px solid var(--agenda-event-accent, var(--color-accent));
+    background-color: var(--agenda-surface);
+  }
+
+  @variant max-sm {
+    @apply min-h-[18px] text-[10px] leading-[18px];
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Time grid
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__time-grid {
+  @apply relative flex flex-1 scrollbar-none items-start overflow-y-auto outline-none;
+
+  &[data-focus-visible="true"] {
+    @apply outline-2 -outline-offset-2 outline-focus;
+  }
+}
+
+.agenda__time-labels {
+  @apply sticky start-0 z-10 flex h-fit shrink-0 flex-col;
+  width: var(--agenda-time-column-width);
+}
+
+.agenda__time-label {
+  @apply relative pe-2 text-end text-[11px] leading-none text-muted;
+  height: var(--agenda-slot-height);
+
+  & span {
+    @apply absolute end-2 top-0 -translate-y-1/2;
+  }
+
+  @variant max-sm {
+    @apply text-[9px];
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Day columns
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__day-column {
+  @apply relative;
+
+  &[data-weekend] {
+    @apply bg-default/40;
+  }
+}
+
+.agenda__time-grid--day .agenda__day-column,
+.agenda__time-grid--week .agenda__day-column {
+  @apply min-w-0 flex-1 border-s border-separator;
+}
+
+.agenda__time-grid--week .agenda__day-column:first-child {
+  @apply border-s-0;
+}
+
+.agenda__time-slot {
+  @apply border-b border-separator;
+  height: var(--agenda-slot-height);
+  cursor: var(--cursor-interactive);
+
+  &[data-last] {
+    @apply border-b-0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Timed event
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__event {
+  --agenda-event-hover: var(--agenda-event-accent, var(--color-accent));
+
+  @apply absolute inset-x-0.5 z-20 min-h-5 overflow-hidden px-2 py-1 outline-none no-highlight;
+  container-type: inline-size;
+  border-inline-start: 3px solid var(--agenda-event-accent, var(--color-accent));
+  border-radius: var(--agenda-event-radius);
+  background-color: var(
+    --agenda-event-color,
+    color-mix(in oklab, var(--color-accent) 15%, var(--agenda-surface))
+  );
+  cursor: var(--cursor-interactive);
+
+  &[data-selected="true"],
+  &[data-resizing="true"] {
+    @apply ring-2;
+    --tw-ring-color: var(--agenda-event-accent, var(--color-accent));
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-dragging="true"] {
+    @apply cursor-grabbing shadow-overlay;
+  }
+
+  &[data-status="unconfirmed"] {
+    border: 1px dashed var(--agenda-event-accent, var(--color-accent));
+    background-color: var(--agenda-surface);
+    color: var(--agenda-event-accent, var(--color-accent));
+  }
+
+  &[data-status="declined"] {
+    border: 1px solid var(--agenda-event-accent, var(--color-accent));
+    background-color: var(--agenda-surface);
+
+    & .agenda__event-title {
+      @apply text-muted line-through;
+    }
+  }
+
+  &[data-status="unconfirmed"],
+  &[data-status="declined"] {
+    padding-inline-start: calc(var(--spacing) * 2 + 2px);
+  }
+
+  /* Too short for two lines: title and start time share one line */
+  &[data-short] {
+    @apply flex items-baseline gap-1 py-0.5;
+
+    & .agenda__event-title {
+      @apply min-w-0;
+    }
+
+    & .agenda__event-time {
+      @apply shrink-0;
+    }
+  }
+
+  @variant max-sm {
+    @apply px-1 py-0.5;
+
+    &[data-status="unconfirmed"],
+    &[data-status="declined"] {
+      padding-inline-start: calc(var(--spacing) + 2px);
+    }
+  }
+}
+
+.agenda__event-title {
+  @apply block truncate text-xs leading-tight font-medium text-foreground;
+
+  @variant max-sm {
+    @apply text-[10px];
+  }
+}
+
+.agenda__event-time {
+  @apply block truncate text-[10px] leading-tight text-muted;
+
+  /* Narrow events (overlaps) only keep their title */
+  @container not (min-width: 4.5rem) {
+    @apply hidden;
+  }
+
+  @variant max-sm {
+    @apply hidden;
+  }
+}
+
+.agenda__resize-handle {
+  @apply absolute inset-x-0 bottom-0 h-2 cursor-row-resize;
+
+  &::after {
+    @apply absolute bottom-0.5 left-1/2 block h-0.5 w-6 -translate-x-1/2 rounded-full opacity-0;
+    content: "";
+    background-color: var(--agenda-event-accent, var(--color-accent));
+    transition: opacity 150ms;
+    @apply motion-reduce:transition-none;
+  }
+
+  &:hover::after,
+  &:active::after {
+    @apply opacity-60;
+  }
+
+  @variant max-sm {
+    @apply hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Create / drop previews
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__create-preview {
+  @apply pointer-events-none absolute inset-x-0.5 z-10 border border-dashed border-accent bg-accent-soft;
+  border-radius: var(--agenda-event-radius);
+  /* 150ms spring-like settle (sampled from Pro's entrance) */
+  animation: agenda-create-preview-in 150ms
+    linear(
+      0,
+      0.1419 7.14%,
+      0.3799 14.29%,
+      0.5882 21.43%,
+      0.7399 28.57%,
+      0.8411 35.71%,
+      0.9052 42.86%,
+      0.9445 50%,
+      0.9679 57.14%,
+      0.9817 64.29%,
+      0.9896 71.43%,
+      0.9942 78.57%,
+      0.9967 85.71%,
+      0.9982 92.86%,
+      1
+    )
+    both;
+  @apply motion-reduce:animate-none;
+
+  @variant max-sm {
+    @apply hidden;
+  }
+}
+
+@keyframes agenda-create-preview-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.agenda__drop-preview {
+  @apply pointer-events-none absolute inset-x-0.5 z-10 border-2 border-solid opacity-50;
+  border-radius: var(--agenda-event-radius);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Current time indicator
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__current-time-indicator {
+  @apply pointer-events-none absolute inset-x-0 z-30 flex h-0 items-center;
+}
+
+.agenda__current-time-label-wrap {
+  @apply flex shrink-0 items-center justify-end pe-px;
+  width: var(--agenda-time-column-width);
+}
+
+.agenda__current-time-label {
+  @apply rounded-md p-0.5 text-[10px] leading-none whitespace-nowrap text-danger-foreground;
+  background-color: var(--agenda-current-time-color);
+
+  @variant max-sm {
+    @apply px-1 text-[9px];
+  }
+}
+
+.agenda__current-time-track {
+  @apply relative h-0.5 flex-1;
+
+  & > .agenda__days {
+    @apply absolute inset-0;
+  }
+}
+
+.agenda__current-time-line--faded {
+  @apply absolute inset-0 opacity-20;
+  background-color: var(--agenda-current-time-color);
+}
+
+.agenda__current-time-line--active {
+  @apply absolute inset-y-0;
+  background-color: var(--agenda-current-time-color);
+
+  /* Small vertical tick at the start of today's column */
+  &::before {
+    @apply absolute start-0 top-1/2 block h-2 w-0.5 -translate-y-1/2 rounded-[2px];
+    content: "";
+    background-color: var(--agenda-current-time-color);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Month grid
+ * ------------------------------------------------------------------------------------------------ */
+.agenda__month-grid {
+  @apply flex flex-1 flex-col;
+}
+
+.agenda__month-weekday-header {
+  @apply sticky top-0 z-20 flex border-b border-separator bg-background;
+}
+
+.agenda__month-weekday {
+  @apply flex flex-1 items-center justify-center py-1.5 text-[11px] font-medium text-muted;
+
+  &[data-today="true"] {
+    @apply font-semibold text-foreground;
+  }
+}
+
+.agenda__month-row {
+  @apply relative flex min-h-[100px] flex-1 border-b border-separator;
+
+  &:last-child {
+    @apply border-b-0;
+  }
+
+  &:has([data-dragging]) {
+    @apply z-40 overflow-visible;
+  }
+
+  @variant max-sm {
+    @apply min-h-[72px];
+  }
+}
+
+.agenda__month-cell {
+  @apply relative flex flex-1 flex-col overflow-hidden p-1;
+  padding-top: calc(var(--agenda-month-spanning-zone, 0px) + var(--agenda-month-date-offset) + 2px);
+
+  & + & {
+    @apply border-s border-separator;
+  }
+
+  &:has([data-dragging]) {
+    @apply z-40 overflow-visible;
+  }
+
+  &[data-weekend] {
+    @apply bg-default/40;
+  }
+
+  &[data-drop-target] {
+    @apply rounded-md;
+    box-shadow: inset 0 0 0 2px var(--agenda-drop-color, var(--color-accent));
+  }
+
+  &[data-outside-month="true"] {
+    @apply opacity-40;
+  }
+}
+
+.agenda__month-cell-date {
+  @apply absolute end-1 top-1 z-10 flex items-center justify-center px-1 py-0.5 text-[11px] leading-none font-medium text-muted outline-none no-highlight;
+  border-radius: calc(var(--radius) * 2);
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover {
+      @apply bg-default;
+    }
+  }
+
+  &:focus-visible {
+    @apply status-focused;
+  }
+
+  &[data-today="true"] {
+    @apply bg-danger text-danger-foreground;
+
+    @media (hover: hover) {
+      &:hover {
+        @apply bg-danger/80;
+      }
+    }
+  }
+
+  @variant max-sm {
+    @apply text-[9px];
+  }
+}
+
+.agenda__month-cell-more {
+  @apply mt-px w-full truncate px-1 py-px text-start text-[10px] leading-tight text-muted outline-none no-highlight;
+  border-radius: calc(var(--radius) * 0.5);
+  cursor: var(--cursor-interactive);
+
+  @media (hover: hover) {
+    &:hover {
+      @apply bg-default;
+    }
+  }
+
+  &:focus-visible {
+    @apply status-focused;
+  }
+}
+
+.agenda__month-spanning-event {
+  @apply z-1 flex items-center truncate px-1.5 text-[10px] leading-none font-medium outline-none no-highlight;
+  border-radius: calc(var(--radius) * 0.75);
+  background-color: var(--agenda-event-accent, var(--color-accent));
+  color: var(--agenda-event-foreground);
+  cursor: var(--cursor-interactive);
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-status="unconfirmed"] {
+    border: 1px dashed var(--agenda-event-accent, var(--color-accent));
+    background-color: var(--agenda-surface);
+    color: var(--agenda-event-accent, var(--color-accent));
+  }
+
+  &[data-status="declined"] {
+    @apply text-muted line-through;
+    border: 1px solid var(--agenda-event-accent, var(--color-accent));
+    background-color: var(--agenda-surface);
+  }
+
+  @variant max-sm {
+    @apply text-[9px];
+  }
+}
+
+.agenda__month-event {
+  @apply relative truncate px-1 py-px text-[10px] leading-tight outline-none no-highlight;
+  border-radius: calc(var(--radius) * 0.5);
+  background-color: var(
+    --agenda-event-color,
+    color-mix(in oklab, var(--color-accent) 15%, var(--agenda-surface))
+  );
+  color: var(--agenda-event-text, var(--color-accent-soft-foreground));
+  cursor: var(--cursor-interactive);
+
+  & + & {
+    @apply mt-px;
+  }
+
+  &:focus-visible:not([data-focused]),
+  &[data-focus-visible="true"] {
+    @apply status-focused;
+  }
+
+  &[data-dragging] {
+    @apply z-50 cursor-grabbing;
+  }
+
+  &[data-status="unconfirmed"] {
+    border: 1px dashed var(--agenda-event-text, var(--color-accent));
+    background-color: var(--agenda-surface);
+    color: var(--agenda-event-text, var(--color-accent));
+  }
+
+  &[data-status="declined"] {
+    @apply text-muted line-through;
+    border: 1px solid var(--agenda-event-text, var(--color-accent));
+    background-color: var(--agenda-surface);
+  }
+
+  @variant max-sm {
+    @apply text-[9px];
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Shared event states (hover tint, past fade)
+ * ------------------------------------------------------------------------------------------------ */
+:is(.agenda__event, .agenda__all-day-event, .agenda__month-spanning-event, .agenda__month-event) {
+  @media (hover: hover) {
+    &:hover,
+    &[data-hovered="true"] {
+      background-image: linear-gradient(
+        color-mix(in srgb, var(--agenda-event-hover, currentColor) 12%, transparent) 0 0
+      );
+    }
+  }
+
+  /* Past events fade toward the surface (unless selected) */
+  &[data-past]:not([data-selected="true"]) {
+    border-color: color-mix(
+      in srgb,
+      var(--agenda-event-accent, var(--color-accent)),
+      var(--agenda-surface) var(--agenda-past-fade)
+    );
+
+    &::after {
+      @apply pointer-events-none absolute inset-0;
+      content: "";
+      border-radius: inherit;
+      background-color: var(--agenda-surface);
+      opacity: var(--agenda-past-fade);
+    }
+  }
+}
+
+.agenda__month-event[data-past]:not([data-selected="true"]) {
+  border-color: color-mix(
+    in srgb,
+    var(--agenda-event-text, var(--color-accent)),
+    var(--agenda-surface) var(--agenda-past-fade)
+  );
+}
