@@ -15,6 +15,7 @@
   "scripts": {
     "dev": "dotenv -- turbo dev --filter=@heroui/storybook",
     "dev:docs": "dotenv -- turbo dev --filter=@heroui/docs",
+    "dev:showcase": "pnpm --filter @heroui/pro-showcase dev",
     "build": "turbo build --filter=@heroui/styles --filter=@heroui/react",
     "build:docs": "dotenv -- turbo build --filter=@heroui/docs",
     "build:react": "turbo build --filter=@heroui/react",
