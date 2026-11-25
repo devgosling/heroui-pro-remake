@@ -17,6 +17,7 @@ import {
   DateSegment as DateSegmentPrimitive,
 } from "react-aria-components/DateField";
 import {Group as GroupPrimitive} from "react-aria-components/Group";
+import {useLocale} from "react-aria-components/I18nProvider";
 
 import {composeSlotClassName, useResolvedClassName} from "../../utils/compose";
 import {dom} from "../../utils/dom";
@@ -131,8 +132,26 @@ interface DateInputGroupSegmentProps
   className?: string;
 }
 
-const DateInputGroupSegment = ({className, segment, ...props}: DateInputGroupSegmentProps) => {
+/**
+ * Languages whose date placeholders are conventionally written in capitals. React Aria ships
+ * German placeholders in lower case (`tt.mm.jjjj`); German forms write `TT.MM.JJJJ`.
+ */
+const UPPERCASE_PLACEHOLDER_LANGUAGES = new Set(["de"]);
+
+const DateInputGroupSegment = ({
+  children,
+  className,
+  segment,
+  ...props
+}: DateInputGroupSegmentProps) => {
   const {slots} = use(DateInputGroupContext);
+  const {locale} = useLocale();
+  const placeholderText =
+    children == null &&
+    segment.isPlaceholder &&
+    UPPERCASE_PLACEHOLDER_LANGUAGES.has(locale.split("-")[0]!.toLowerCase())
+      ? segment.text.toLocaleUpperCase(locale)
+      : undefined;
 
   // TimeSegment and DateSegment have compatible interfaces
   // React Aria Components will handle the correct primitive based on parent context
@@ -143,7 +162,9 @@ const DateInputGroupSegment = ({className, segment, ...props}: DateInputGroupSeg
       data-slot="date-input-group-segment"
       segment={segment}
       {...props}
-    />
+    >
+      {children ?? placeholderText}
+    </DateSegmentPrimitive>
   );
 };
 

@@ -7,6 +7,7 @@ import {Time} from "@internationalized/date";
 import {Description} from "@/components/description";
 import {FieldError} from "@/components/field-error";
 import {Label} from "@/components/label";
+import {I18nProvider} from "@/components/rac";
 import {TimeField} from "@/components/time-field";
 
 const renderTimeField = (props: Partial<ComponentProps<typeof TimeField>> = {}) =>
@@ -222,5 +223,45 @@ describe("TimeField", () => {
 
     expect(screen.getByRole("spinbutton", {name: /hour/i})).toBeInTheDocument();
     expect(screen.getByText("Required")).toBeInTheDocument();
+  });
+  describe("locale formatting", () => {
+    const inputText = () =>
+      // React Aria wraps times in Unicode directional isolates (U+2066 … U+2069).
+      (document.querySelector('[data-slot="date-input-group-input"]')?.textContent ?? "").replace(
+        /[⁦-⁩]/g,
+        "",
+      );
+
+    it("renders a leading zero on the hour by default", () => {
+      renderTimeField({defaultValue: new Time(9, 5)});
+
+      expect(screen.getByRole("spinbutton", {name: /hour/i})).toHaveTextContent(/^09$/);
+      expect(screen.getByRole("spinbutton", {name: /minute/i})).toHaveTextContent(/^05$/);
+    });
+
+    it("renders de-DE on a 24-hour clock without a day period", () => {
+      render(
+        <I18nProvider locale="de-DE">
+          <TimeField defaultValue={new Time(9, 5)} name="time">
+            <Label>Uhrzeit</Label>
+            <TimeField.Group>
+              <TimeField.Input>
+                {(segment) => <TimeField.Segment segment={segment} />}
+              </TimeField.Input>
+            </TimeField.Group>
+          </TimeField>
+        </I18nProvider>,
+      );
+
+      expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
+      expect(inputText()).toBe("09:05");
+    });
+
+    it("supports hourCycle to force a 24-hour clock in any locale", () => {
+      renderTimeField({defaultValue: new Time(21, 5), hourCycle: 24});
+
+      expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
+      expect(inputText()).toBe("21:05");
+    });
   });
 });

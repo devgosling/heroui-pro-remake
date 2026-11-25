@@ -6,6 +6,7 @@ import {CalendarDate} from "@internationalized/date";
 import {DateField} from "@/components/date-field";
 import {DateRangePicker} from "@/components/date-range-picker";
 import {Label} from "@/components/label";
+import {I18nProvider} from "@/components/rac";
 import {RangeCalendar} from "@/components/range-calendar";
 
 type DateRange = {
@@ -17,9 +18,10 @@ const renderDateRangePicker = (
   props: {
     defaultValue?: DateRange;
     onChange?: (value: DateRange | null) => void;
+    locale?: string;
   } = {},
 ) => {
-  return render(
+  const picker = (
     <DateRangePicker
       data-testid="date-range-picker"
       defaultValue={props.defaultValue}
@@ -62,7 +64,11 @@ const renderDateRangePicker = (
           </RangeCalendar.Grid>
         </RangeCalendar>
       </DateRangePicker.Popover>
-    </DateRangePicker>,
+    </DateRangePicker>
+  );
+
+  return render(
+    props.locale ? <I18nProvider locale={props.locale}>{picker}</I18nProvider> : picker,
   );
 };
 
@@ -140,5 +146,16 @@ describe("DateRangePicker", () => {
 
     expect(value.start.toString()).toBe("2026-08-10");
     expect(value.end.toString()).toBe("2026-08-12");
+  });
+  it("renders both ends as de-DE TT.MM.JJJJ with leading zeros", () => {
+    renderDateRangePicker({
+      defaultValue: {end: new CalendarDate(2026, 3, 9), start: new CalendarDate(2026, 3, 5)},
+      locale: "de-DE",
+    });
+
+    const inputs = document.querySelectorAll('[data-slot="date-input-group-input"]');
+
+    expect(inputs[0]?.textContent).toBe("05.03.2026");
+    expect(inputs[1]?.textContent).toBe("09.03.2026");
   });
 });

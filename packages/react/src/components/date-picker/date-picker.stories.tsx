@@ -2,7 +2,7 @@ import type {DateValue} from "@internationalized/date";
 import type {Meta, StoryObj} from "@storybook/react";
 
 import {Icon} from "@iconify/react";
-import {getLocalTimeZone, today} from "@internationalized/date";
+import {getLocalTimeZone, parseDate, parseDateTime, today} from "@internationalized/date";
 import React, {useState} from "react";
 
 import {Button} from "../button";
@@ -12,6 +12,7 @@ import {Description} from "../description";
 import {FieldError} from "../field-error";
 import {Form} from "../form";
 import {Label} from "../label";
+import {I18nProvider} from "../rac";
 
 import {DatePicker} from "./index";
 
@@ -220,4 +221,54 @@ export const FormExample: Story = {
       </Form>
     );
   },
+};
+
+/**
+ * Under `de-DE` the field reads TT.MM.JJJJ with 24-hour times, and the calendar shows German
+ * month and weekday names with weeks starting on Monday.
+ */
+export const GermanLocale: Story = {
+  render: () => (
+    <I18nProvider locale="de-DE">
+      <div className="flex flex-col gap-4">
+        <DatePicker className="w-[280px]" defaultValue={parseDate("2026-03-05")} name="german-date">
+          <Label>Datum</Label>
+          <DateField.Group fullWidth>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+            <DateField.Suffix>
+              <DatePicker.Trigger>
+                <DatePicker.TriggerIndicator />
+              </DatePicker.Trigger>
+            </DateField.Suffix>
+          </DateField.Group>
+          <DatePicker.Popover>
+            <CalendarContent />
+          </DatePicker.Popover>
+        </DatePicker>
+        <DatePicker
+          className="w-[280px]"
+          defaultValue={parseDateTime("2026-03-05T09:05")}
+          granularity="minute"
+          name="german-date-time"
+        >
+          <Label>Termin</Label>
+          <DateField.Group fullWidth>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+            <DateField.Suffix>
+              <DatePicker.Trigger>
+                <DatePicker.TriggerIndicator />
+              </DatePicker.Trigger>
+            </DateField.Suffix>
+          </DateField.Group>
+          <DatePicker.Popover>
+            <CalendarContent />
+          </DatePicker.Popover>
+        </DatePicker>
+      </div>
+    </I18nProvider>
+  ),
 };

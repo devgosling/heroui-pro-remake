@@ -2,12 +2,13 @@ import type {DateValue} from "@internationalized/date";
 import type {ComponentProps} from "react";
 
 import {render, screen, setupUser} from "@heroui/testing/helpers";
-import {CalendarDate} from "@internationalized/date";
+import {CalendarDate, CalendarDateTime} from "@internationalized/date";
 
 import {DateField} from "@/components/date-field";
 import {Description} from "@/components/description";
 import {FieldError} from "@/components/field-error";
 import {Label} from "@/components/label";
+import {I18nProvider} from "@/components/rac";
 
 const renderDateField = (props: Partial<ComponentProps<typeof DateField>> = {}) =>
   render(
@@ -217,5 +218,89 @@ describe("DateField", () => {
     const focusTarget = document.querySelector("[data-focus-visible='true']");
 
     expect(focusTarget).not.toBeNull();
+  });
+  describe("locale formatting", () => {
+    // React Aria wraps times in Unicode directional isolates (U+2066 … U+2069).
+    const inputText = () =>
+      (document.querySelector('[data-slot="date-input-group-input"]')?.textContent ?? "").replace(
+        /[⁦-⁩]/g,
+        "",
+      );
+
+    it("renders leading zeros by default", () => {
+      renderDateField({defaultValue: new CalendarDate(2026, 3, 5)});
+
+      expect(screen.getByRole("spinbutton", {name: /month/i})).toHaveTextContent(/^03$/);
+      expect(screen.getByRole("spinbutton", {name: /day/i})).toHaveTextContent(/^05$/);
+    });
+
+    it("supports opting out of leading zeros", () => {
+      renderDateField({defaultValue: new CalendarDate(2026, 3, 5), shouldForceLeadingZeros: false});
+
+      expect(screen.getByRole("spinbutton", {name: /month/i})).toHaveTextContent(/^3$/);
+      expect(screen.getByRole("spinbutton", {name: /day/i})).toHaveTextContent(/^5$/);
+    });
+
+    it("renders de-DE as TT.MM.JJJJ with dots and padded values", () => {
+      const {unmount} = render(
+        <I18nProvider locale="de-DE">
+          <DateField name="date">
+            <Label>Datum</Label>
+            <DateField.Group>
+              <DateField.Input>
+                {(segment) => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+            </DateField.Group>
+          </DateField>
+        </I18nProvider>,
+      );
+
+      expect(inputText()).toBe("TT.MM.JJJJ");
+      unmount();
+
+      render(
+        <I18nProvider locale="de-DE">
+          <DateField defaultValue={new CalendarDate(2026, 3, 5)} name="date">
+            <Label>Datum</Label>
+            <DateField.Group>
+              <DateField.Input>
+                {(segment) => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+            </DateField.Group>
+          </DateField>
+        </I18nProvider>,
+      );
+
+      expect(inputText()).toBe("05.03.2026");
+    });
+
+    it("keeps other locales' placeholders as React Aria ships them", () => {
+      renderDateField();
+
+      expect(inputText()).toBe("mm/dd/yyyy");
+    });
+
+    it("renders de-DE date and time on a 24-hour clock", () => {
+      render(
+        <I18nProvider locale="de-DE">
+          <DateField
+            defaultValue={new CalendarDateTime(2026, 3, 5, 21, 5)}
+            granularity="minute"
+            name="date"
+          >
+            <Label>Termin</Label>
+            <DateField.Group>
+              <DateField.Input>
+                {(segment) => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+            </DateField.Group>
+          </DateField>
+        </I18nProvider>,
+      );
+
+      expect(inputText()).toBe("05.03.2026, 21:05");
+      // Day, month, year, hour and minute: no AM/PM segment.
+      expect(screen.getAllByRole("spinbutton")).toHaveLength(5);
+    });
   });
 });

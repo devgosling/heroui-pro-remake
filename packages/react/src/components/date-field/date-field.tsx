@@ -21,6 +21,7 @@ function DateFieldRoot<T extends DateValue>({
   children,
   className,
   fullWidth,
+  shouldForceLeadingZeros = true,
   ...props
 }: DateFieldRootProps<T>) {
   const styles = React.useMemo(() => dateFieldVariants({fullWidth}), [fullWidth]);
@@ -31,6 +32,7 @@ function DateFieldRoot<T extends DateValue>({
       data-slot="date-field"
       {...props}
       className={useResolvedClassName(className, styles)}
+      shouldForceLeadingZeros={shouldForceLeadingZeros}
     >
       {children}
     </DateFieldPrimitive>

@@ -21,6 +21,7 @@ function TimeFieldRoot<T extends TimeValue>({
   children,
   className,
   fullWidth,
+  shouldForceLeadingZeros = true,
   ...props
 }: TimeFieldRootProps<T>) {
   const styles = React.useMemo(() => timeFieldVariants({fullWidth}), [fullWidth]);
@@ -31,6 +32,7 @@ function TimeFieldRoot<T extends TimeValue>({
       data-slot="time-field"
       {...props}
       className={useResolvedClassName(className, styles)}
+      shouldForceLeadingZeros={shouldForceLeadingZeros}
     >
       {children}
     </TimeFieldPrimitive>

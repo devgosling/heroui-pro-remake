@@ -2,7 +2,13 @@ import type {DateValue} from "@internationalized/date";
 import type {Meta, StoryObj} from "@storybook/react";
 
 import {Icon} from "@iconify/react";
-import {getLocalTimeZone, parseDate, parseZonedDateTime, today} from "@internationalized/date";
+import {
+  getLocalTimeZone,
+  parseDate,
+  parseDateTime,
+  parseZonedDateTime,
+  today,
+} from "@internationalized/date";
 import React, {useState} from "react";
 
 import {Button} from "../button";
@@ -11,6 +17,7 @@ import {FieldError} from "../field-error";
 import {Form} from "../form";
 import {Label} from "../label";
 import {ListBox} from "../list-box";
+import {I18nProvider} from "../rac";
 import {Select} from "../select";
 import {Tooltip} from "../tooltip";
 
@@ -465,5 +472,49 @@ export const AllVariations: Story = {
         </DateField>
       </div>
     </div>
+  ),
+};
+
+/**
+ * German formatting comes from the locale: `de-DE` orders the segments day, month, year,
+ * separates them with dots and uses a 24-hour clock. Leading zeros are on by default
+ * (`shouldForceLeadingZeros`), so March 5th reads 05.03.2026 rather than 5.3.2026.
+ */
+export const GermanLocale: Story = {
+  render: () => (
+    <I18nProvider locale="de-DE">
+      <div className="flex flex-col gap-4">
+        <DateField className="w-[256px]" name="german-date-empty">
+          <Label>Geburtsdatum</Label>
+          <DateField.Group>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+          </DateField.Group>
+          <Description>Format: TT.MM.JJJJ</Description>
+        </DateField>
+        <DateField className="w-[256px]" defaultValue={parseDate("2026-03-05")} name="german-date">
+          <Label>Datum</Label>
+          <DateField.Group>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+          </DateField.Group>
+        </DateField>
+        <DateField
+          className="w-[256px]"
+          defaultValue={parseDateTime("2026-03-05T09:05")}
+          granularity="minute"
+          name="german-date-time"
+        >
+          <Label>Datum mit Uhrzeit</Label>
+          <DateField.Group>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+          </DateField.Group>
+        </DateField>
+      </div>
+    </I18nProvider>
   ),
 };

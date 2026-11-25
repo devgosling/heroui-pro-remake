@@ -10,6 +10,7 @@ import {Description} from "../description";
 import {FieldError} from "../field-error";
 import {Form} from "../form";
 import {Label} from "../label";
+import {I18nProvider} from "../rac";
 
 import {TimeField} from "./index";
 
@@ -384,5 +385,47 @@ export const AllVariations: Story = {
         </TimeField>
       </div>
     </div>
+  ),
+};
+
+/**
+ * `de-DE` uses a 24-hour clock without AM/PM. Leading zeros are on by default
+ * (`shouldForceLeadingZeros`), so nine past five in the morning reads 09:05.
+ */
+export const GermanLocale: Story = {
+  render: () => (
+    <I18nProvider locale="de-DE">
+      <div className="flex flex-col gap-4">
+        <TimeField className="w-[256px]" name="german-time-empty">
+          <Label>Uhrzeit</Label>
+          <TimeField.Group>
+            <TimeField.Input>
+              {(segment) => <TimeField.Segment segment={segment} />}
+            </TimeField.Input>
+          </TimeField.Group>
+        </TimeField>
+        <TimeField className="w-[256px]" defaultValue={parseTime("09:05")} name="german-time">
+          <Label>Beginn</Label>
+          <TimeField.Group>
+            <TimeField.Input>
+              {(segment) => <TimeField.Segment segment={segment} />}
+            </TimeField.Input>
+          </TimeField.Group>
+        </TimeField>
+        <TimeField
+          className="w-[256px]"
+          defaultValue={parseTime("18:30:07")}
+          granularity="second"
+          name="german-time-seconds"
+        >
+          <Label>Ende (mit Sekunden)</Label>
+          <TimeField.Group>
+            <TimeField.Input>
+              {(segment) => <TimeField.Segment segment={segment} />}
+            </TimeField.Input>
+          </TimeField.Group>
+        </TimeField>
+      </div>
+    </I18nProvider>
   ),
 };

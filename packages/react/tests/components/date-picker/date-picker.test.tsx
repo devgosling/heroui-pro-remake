@@ -7,15 +7,17 @@ import {Calendar} from "@/components/calendar";
 import {DateField} from "@/components/date-field";
 import {DatePicker} from "@/components/date-picker";
 import {Label} from "@/components/label";
+import {I18nProvider} from "@/components/rac";
 
 const renderDatePicker = (
   props: {
     value?: DateValue | null;
     defaultValue?: DateValue;
     onChange?: (value: DateValue | null) => void;
+    locale?: string;
   } = {},
 ) => {
-  return render(
+  const picker = (
     <DatePicker
       data-testid="date-picker"
       defaultValue={props.defaultValue}
@@ -50,7 +52,11 @@ const renderDatePicker = (
           </Calendar.Grid>
         </Calendar>
       </DatePicker.Popover>
-    </DatePicker>,
+    </DatePicker>
+  );
+
+  return render(
+    props.locale ? <I18nProvider locale={props.locale}>{picker}</I18nProvider> : picker,
   );
 };
 
@@ -118,5 +124,23 @@ describe("DatePicker", () => {
     expect(value.year).toBe(2026);
     expect(value.month).toBe(8);
     expect(value.day).toBe(15);
+  });
+  it("renders de-DE as TT.MM.JJJJ with leading zeros and a Monday-first calendar", async () => {
+    renderDatePicker({defaultValue: new CalendarDate(2026, 3, 5), locale: "de-DE"});
+
+    expect(document.querySelector('[data-slot="date-input-group-input"]')?.textContent).toBe(
+      "05.03.2026",
+    );
+
+    await user.click(screen.getByRole("button", {name: /Open calendar/}));
+    runAllTimers();
+
+    const weekdays = Array.from(
+      document.querySelectorAll('[data-slot="calendar-header-cell"]'),
+      (cell) => cell.textContent,
+    ).join(" ");
+
+    expect(weekdays).toBe("Mo Di Mi Do Fr Sa So");
+    expect(screen.getByRole("dialog")).toHaveTextContent("März 2026");
   });
 });

@@ -2,7 +2,7 @@ import type {DateValue} from "@internationalized/date";
 import type {Meta, StoryObj} from "@storybook/react";
 
 import {Icon} from "@iconify/react";
-import {getLocalTimeZone, today} from "@internationalized/date";
+import {getLocalTimeZone, parseDate, today} from "@internationalized/date";
 import React, {useState} from "react";
 
 import {Button} from "../button";
@@ -11,6 +11,7 @@ import {Description} from "../description";
 import {FieldError} from "../field-error";
 import {Form} from "../form";
 import {Label} from "../label";
+import {I18nProvider} from "../rac";
 import {RangeCalendar} from "../range-calendar";
 
 import {DateRangePicker} from "./index";
@@ -274,4 +275,37 @@ export const FormExample: Story = {
       </Form>
     );
   },
+};
+
+/** Under `de-DE` both ends read TT.MM.JJJJ and the calendar starts its weeks on Monday. */
+export const GermanLocale: Story = {
+  render: () => (
+    <I18nProvider locale="de-DE">
+      <DateRangePicker
+        className="w-[320px]"
+        defaultValue={{end: parseDate("2026-03-09"), start: parseDate("2026-03-05")}}
+        endName="german-end"
+        startName="german-start"
+      >
+        <Label>Zeitraum</Label>
+        <DateField.Group fullWidth>
+          <DateField.Input slot="start">
+            {(segment) => <DateField.Segment segment={segment} />}
+          </DateField.Input>
+          <DateRangePicker.RangeSeparator />
+          <DateField.Input slot="end">
+            {(segment) => <DateField.Segment segment={segment} />}
+          </DateField.Input>
+          <DateField.Suffix>
+            <DateRangePicker.Trigger>
+              <DateRangePicker.TriggerIndicator />
+            </DateRangePicker.Trigger>
+          </DateField.Suffix>
+        </DateField.Group>
+        <DateRangePicker.Popover>
+          <RangeCalendarContent />
+        </DateRangePicker.Popover>
+      </DateRangePicker>
+    </I18nProvider>
+  ),
 };

@@ -47,6 +47,7 @@ const DatePickerRoot = <T extends DateValue>({
   children,
   className,
   onOpenChange,
+  shouldForceLeadingZeros = true,
   ...props
 }: DatePickerRootProps<T>) => {
   const slots = React.useMemo(() => datePickerVariants(), []);
@@ -92,6 +93,7 @@ const DatePickerRoot = <T extends DateValue>({
         data-slot="date-picker"
         {...props}
         className={useResolvedClassName(className, slots?.base())}
+        shouldForceLeadingZeros={shouldForceLeadingZeros}
         onOpenChange={handleOpenChange}
       >
         {children}

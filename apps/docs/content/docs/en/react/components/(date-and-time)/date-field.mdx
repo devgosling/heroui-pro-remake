@@ -208,7 +208,7 @@ DateField inherits all props from React Aria's [DateField](https://react-aria.ad
 | `granularity` | `Granularity` | - | Determines the smallest unit displayed. Defaults to `"day"` for dates, `"minute"` for times. |
 | `hourCycle` | `12 \| 24` | - | Whether to display time in 12 or 24 hour format. By default, determined by locale. |
 | `hideTimeZone` | `boolean` | `false` | Whether to hide the time zone abbreviation. |
-| `shouldForceLeadingZeros` | `boolean` | - | Whether to always show leading zeros in month, day, and hour fields. |
+| `shouldForceLeadingZeros` | `boolean` | `true` | Whether to always show leading zeros in month, day, and hour fields (05.03.2026 rather than 5.3.2026). Pass `false` to follow the locale. |
 
 #### State Props
 
