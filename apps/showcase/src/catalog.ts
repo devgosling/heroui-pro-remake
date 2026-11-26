@@ -94,6 +94,7 @@ export const CATALOG: CatalogCategory[] = [
       nativeEntry("fab", "FAB", 9),
       nativeEntry("morph-button", "Morph Button", 9),
       nativeEntry("slide-button", "Slide Button", 7),
+      nativeEntry("social-auth-button", "Social Auth Button", 8),
     ],
     name: "Buttons",
   },

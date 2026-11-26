@@ -58,6 +58,7 @@ export * from "./components/text-shimmer";
 export * from "./components/fab";
 export * from "./components/morph-button";
 export * from "./components/slide-button";
+export * from "./components/social-auth-button";
 
 // Feedback
 export * from "./components/emoji-reaction-button";

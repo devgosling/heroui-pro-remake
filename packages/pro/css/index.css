@@ -36,6 +36,7 @@
 @import "./components/fab.css" layer(components);
 @import "./components/morph-button.css" layer(components);
 @import "./components/slide-button.css" layer(components);
+@import "./components/social-auth-button.css" layer(components);
 
 /* Layout */
 @import "./components/resizable.css" layer(components);

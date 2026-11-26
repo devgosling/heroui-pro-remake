@@ -1,0 +1,25 @@
+/* ------------------------------------------------------------------------------------------------
+ * Social Auth Button (ported from HeroUI Pro Native)
+ * ------------------------------------------------------------------------------------------------
+ * The root is the HeroUI `Button` (default variant `outline`), so size, radius, press scale, hover
+ * and focus ring all come from `button.css`. This block only adds the logo + label row.
+ * ------------------------------------------------------------------------------------------------ */
+
+.social-auth-button {
+  /* Long or translated labels truncate instead of pushing the button wider than its container. */
+  @apply max-w-full;
+}
+
+.social-auth-button__icon {
+  @apply pointer-events-none shrink-0;
+}
+
+/* The Button nudges icons with `-mx-0.5`; Native keeps the full 8px gap between logo and label.
+ * (The size comes inline from `size`, so it beats the Button's 16/20px svg rule.) */
+.social-auth-button.button svg.social-auth-button__icon {
+  @apply m-0 self-center;
+}
+
+.social-auth-button__label {
+  @apply min-w-0 truncate;
+}
