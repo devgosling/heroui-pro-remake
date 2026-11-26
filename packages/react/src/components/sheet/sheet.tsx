@@ -22,11 +22,22 @@ import {CloseButton} from "../close-button";
 import {SurfaceContext} from "../surface";
 
 import {SheetContext, SheetSwipeDirectionContext, useSheetContext} from "./context";
+import {installSheetEnterGlide} from "./sheet-enter-glide";
 import {SheetLifecycle} from "./sheet-lifecycle";
 import {useSheetHandleDrag} from "./use-sheet-handle-drag";
 
 const STACK_ANIMATION = "heroui-sheet-scale-back";
 const BACKDROP_ANIMATION = "heroui-sheet-backdrop";
+
+/* The overlay's ref attaches during the commit that mounts its scroll container, before React
+ * Aria's enter effect scrolls it, so the faster entrance is in place for the very first open. */
+const sheetEnterGlideRef = (overlay: HTMLDivElement | null) => {
+  const scroller = overlay?.querySelector<HTMLElement>("[data-sheet-scroll]");
+
+  if (!overlay || !scroller) return;
+
+  return installSheetEnterGlide(scroller, () => !overlay.hasAttribute("data-closed"));
+};
 
 /* -------------------------------------------------------------------------------------------------
  * Types
@@ -221,7 +232,7 @@ const SheetBackdrop = ({
   // RAC forwards this compatibility prop to ModalOverlay at runtime.
   const retentionProps = {isExiting: hasOpened && isExiting};
   const overlayRef = useRef<HTMLDivElement>(null);
-  const mergedRef = useMemo(() => mergeRefs(overlayRef, ref), [ref]);
+  const mergedRef = useMemo(() => mergeRefs(overlayRef, ref, sheetEnterGlideRef), [ref]);
   const fadeRange = snapPoints?.length ? {start: snapPoints.length - 1} : undefined;
 
   // Releasing retained content must unmount it, rather than reveal a suspended

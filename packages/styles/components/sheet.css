@@ -176,6 +176,12 @@
   @apply snap-none!;
 }
 
+/* The opening glide (sheet-enter-glide.ts) scrolls step by step; mandatory snapping would pull
+   every step to a snap point. */
+[data-sheet-scroll][data-enter-gliding] {
+  @apply snap-none!;
+}
+
 .sheet__handle-bar {
   @apply block h-[0.3rem] w-8 rounded-full bg-default;
 }

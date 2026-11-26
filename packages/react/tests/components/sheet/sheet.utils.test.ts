@@ -1,4 +1,5 @@
 import {
+  SHEET_ENTER_MS,
   animateSheetValue,
   nearestSheetSnap,
   sheetDismissTarget,
@@ -153,6 +154,19 @@ describe("Sheet", () => {
         expect(update).toHaveBeenLastCalledWith(to);
         expect(complete).toHaveBeenCalledTimes(1);
       }
+    });
+
+    it("supports a custom duration", () => {
+      const update = vi.fn();
+      const complete = vi.fn();
+
+      animateSheetValue(0, 100, update, complete, false, SHEET_ENTER_MS);
+      frames.at(-1)?.(1000 + SHEET_ENTER_MS / 2);
+      expect(update.mock.lastCall![0]).toBeGreaterThan(50);
+      expect(complete).not.toHaveBeenCalled();
+      frames.at(-1)?.(1000 + SHEET_ENTER_MS);
+      expect(update).toHaveBeenLastCalledWith(100);
+      expect(complete).toHaveBeenCalledTimes(1);
     });
 
     it("supports cancellation without updates or completion from stale frames", () => {

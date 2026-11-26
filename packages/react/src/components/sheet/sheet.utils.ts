@@ -4,6 +4,9 @@ const HANDLE_DRAG_VELOCITY = 0.4;
 const SHEET_CLOSE_THRESHOLD = 0.25;
 const SHEET_RELEASE_MS = 500;
 
+/** Opening glide: the same curve, shortened because it only covers the visible part of the way. */
+export const SHEET_ENTER_MS = 250;
+
 /** CSS cubic-bezier(0.32, 0.72, 0, 1), sampled over unit time. */
 export function sheetReleaseEase(time: number) {
   if (time <= 0) return 0;
@@ -112,6 +115,7 @@ export function animateSheetValue(
   update: (value: number) => void,
   complete: () => void,
   reducedMotion: boolean,
+  duration = SHEET_RELEASE_MS,
 ) {
   let cancelled = false;
   let frame = 0;
@@ -130,7 +134,7 @@ export function animateSheetValue(
 
   const step = (now: number) => {
     if (cancelled) return;
-    const progress = Math.min(1, Math.max(0, (now - start) / SHEET_RELEASE_MS));
+    const progress = Math.min(1, Math.max(0, (now - start) / duration));
 
     update(from + (to - from) * sheetReleaseEase(progress));
     if (progress < 1) frame = requestAnimationFrame(step);
